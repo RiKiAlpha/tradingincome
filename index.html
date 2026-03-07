@@ -72,7 +72,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   text-transform:none;margin-top:2px;}
 
 /* CONTENT AREA */
-#content{-webkit-flex:1;flex:1;position:relative;overflow:hidden;}
+#content{-webkit-flex:1;flex:1;position:relative;overflow:hidden;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));box-sizing:border-box;}
 
 /* ALL PANES — scrollable, iOS-safe */
 .pane{
@@ -97,7 +97,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
 
 /* BOTTOM TABS */
-#tabs-wrap{-webkit-flex-shrink:0;flex-shrink:0;margin-top:auto;background:var(--bg2);border-top:1px solid var(--border);}
+#tabs-wrap{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--bg2);border-top:1px solid var(--border);
+  z-index:100;}
 #tabs{height:60px;display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch;}
 #tabs-safe{height:env(safe-area-inset-bottom,0px);}
 .tab{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;

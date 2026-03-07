@@ -53,7 +53,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--green);}
 .sdot.exp{background:var(--gold);}.sdot.dead{background:var(--red);}
 #utime{font-size:10px;color:var(--text2);}
-#rbtn{width:40px;height:40px;border-radius:50%;border:none;
+#rbtn{width:26px;height:26px;border-radius:50%;border:none;
   background:transparent;display:-webkit-flex;display:flex;-webkit-align-items:center;
   align-items:center;-webkit-justify-content:center;justify-content:center;
   cursor:pointer;-webkit-flex-shrink:0;flex-shrink:0;touch-action:manipulation;}
@@ -61,7 +61,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 #rbtn.spin svg{-webkit-animation:spin 0.7s linear infinite;animation:spin 0.7s linear infinite;}
 @-webkit-keyframes spin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg);}}
 @keyframes spin{to{transform:rotate(360deg);}}
-#rbtn svg{width:18px;height:18px;color:var(--text2);}
+#rbtn svg{width:11px;height:11px;color:var(--text2);}
 
 /* WORDMARK */
 #wm{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;
@@ -102,11 +102,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   padding-bottom:env(safe-area-inset-bottom,0px);
   box-sizing:content-box;
   display:-webkit-flex;display:flex;
-  background:var(--bg2);border-top:1px solid var(--border);}
-.tab{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;
+  background:var(--bg2);border-top:1px solid var(--border);
+  margin-top:auto;}
+.tab{-webkit-flex:1;flex:1;height:60px;display:-webkit-flex;display:flex;
   -webkit-flex-direction:column;flex-direction:column;
-  -webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;
-  gap:4px;cursor:pointer;position:relative;touch-action:manipulation;}
+  -webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;
+  gap:3px;cursor:pointer;position:relative;touch-action:manipulation;}
 .tab::after{content:'';position:absolute;bottom:auto;top:0;left:10%;right:10%;
   height:3px;border-radius:2px;background:var(--blue);-webkit-transform:scaleX(0);transform:scaleX(0);
   -webkit-transition:-webkit-transform 0.2s;transition:transform 0.2s;}
@@ -216,43 +218,35 @@ tbody tr:last-child td{border-bottom:none;}
 .abtn{padding:5px 10px;background:var(--blue);color:#fff;border-radius:6px;
   font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;touch-action:manipulation;}
 .tog{
-  position:relative;width:58px;height:24px;
+  position:relative;width:51px;height:31px;
   cursor:pointer;flex-shrink:0;
-  border-radius:3px;
-  border:1px solid var(--border);
-  background:transparent;
-  overflow:hidden;
-  -webkit-transition:border-color .2s,box-shadow .2s;
-  transition:border-color .2s,box-shadow .2s;
   -webkit-tap-highlight-color:transparent;
 }
-.tog.on{
+.tog-track{
+  width:100%;height:100%;
+  border-radius:31px;
+  background:var(--bg4);
+  border:1px solid var(--border);
+  -webkit-transition:background .2s,border-color .2s;
+  transition:background .2s,border-color .2s;
+}
+.tog.on .tog-track{
+  background:var(--blue);
   border-color:var(--blue);
-  box-shadow:0 0 8px rgba(0,119,182,.3),inset 0 0 10px rgba(0,119,182,.07);
 }
-.tog-lbl{
-  position:absolute;top:50%;
-  font-size:8px;font-weight:700;letter-spacing:.08em;
-  font-family:monospace;
-  -webkit-transform:translateY(-50%);transform:translateY(-50%);
-  -webkit-transition:opacity .15s;transition:opacity .15s;
-}
-.tog-off{right:6px;color:var(--text3);}
-.tog-on{left:6px;color:var(--blue);opacity:0;}
-.tog.on .tog-off{opacity:0;}
-.tog.on .tog-on{opacity:1;}
 .tog-thumb{
-  position:absolute;top:3px;left:3px;
-  width:16px;height:16px;
-  border-radius:2px;
-  background:var(--text3);
-  -webkit-transition:-webkit-transform .2s cubic-bezier(.4,0,.2,1),background .2s,box-shadow .2s;
-  transition:transform .2s cubic-bezier(.4,0,.2,1),background .2s,box-shadow .2s;
+  position:absolute;
+  top:2px;left:2px;
+  width:27px;height:27px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
+  -webkit-transition:-webkit-transform .2s cubic-bezier(.4,0,.2,1);
+  transition:transform .2s cubic-bezier(.4,0,.2,1);
 }
 .tog.on .tog-thumb{
-  -webkit-transform:translateX(34px);transform:translateX(34px);
-  background:var(--blue);
-  box-shadow:0 0 6px rgba(0,119,182,.7);
+  -webkit-transform:translateX(20px);
+  transform:translateX(20px);
 }
 .sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
 
@@ -285,7 +279,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div id="hright">
       <div style="display:flex;align-items:center;gap:4px;"><div class="sdot" id="sdot"></div><span id="utime">Loading&hellip;</span></div>
       <div id="rbtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
         </svg>
       </div>
@@ -329,8 +323,7 @@ tbody tr:last-child td{border-bottom:none;}
         <div class="srow">
           <div class="slbl">Dark Mode</div>
           <div class="tog on" id="dtog" onclick="this.classList.toggle('on');toggleTheme(this.classList.contains('on'))">
-            <span class="tog-lbl tog-off">OFF</span>
-            <span class="tog-lbl tog-on">ON</span>
+            <div class="tog-track"></div>
             <div class="tog-thumb"></div>
           </div>
         </div>

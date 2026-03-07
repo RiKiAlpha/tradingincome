@@ -28,7 +28,7 @@
 [data-theme="light"] .tab svg{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tlabel{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tab.on svg{color:var(--blue);}
-[data-theme="light"] #tabs{background:var(--bg2);}
+[data-theme="light"] #tabs-wrap{background:var(--bg2);}
 [data-theme="light"] .tbtn{color:rgba(10,10,15,0.5);}
 [data-theme="light"] .tbtn.on{color:var(--text);}
 [data-theme="light"] .mhdr{color:rgba(10,10,15,0.4);}
@@ -97,19 +97,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
 
 /* BOTTOM TABS */
-#tabs{-webkit-flex-shrink:0;flex-shrink:0;
-  height:calc(60px + env(safe-area-inset-bottom,0px));
-  box-sizing:border-box;
-  display:-webkit-flex;display:flex;
-  -webkit-align-items:stretch;align-items:stretch;
-  background:var(--bg2);border-top:1px solid var(--border);
-  margin-top:auto;}
+#tabs-wrap{-webkit-flex-shrink:0;flex-shrink:0;margin-top:auto;background:var(--bg2);border-top:1px solid var(--border);}
+#tabs{height:60px;display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch;}
+#tabs-safe{height:env(safe-area-inset-bottom,0px);}
 .tab{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;
   -webkit-flex-direction:column;flex-direction:column;
   -webkit-align-items:center;align-items:center;
   -webkit-justify-content:center;justify-content:center;
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  box-sizing:border-box;
   gap:3px;cursor:pointer;position:relative;touch-action:manipulation;}
 .tab::after{content:'';position:absolute;bottom:auto;top:0;left:10%;right:10%;
   height:3px;border-radius:2px;background:var(--blue);-webkit-transform:scaleX(0);transform:scaleX(0);
@@ -341,6 +335,7 @@ tbody tr:last-child td{border-bottom:none;}
 
   </div>
 
+  <div id="tabs-wrap">
   <div id="tabs">
     <div class="tab on" id="t-d">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -358,6 +353,8 @@ tbody tr:last-child td{border-bottom:none;}
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span class="tlabel">Settings</span>
     </div>
+  </div>
+  <div id="tabs-safe"></div>
   </div>
 
 </div>
@@ -707,8 +704,22 @@ function renderHist(){
   } else {
     // Merge active week banked gains into monthly totals
     var monthly = {};
+    // Normalize any date key that came through in US format (M/D/YYYY or MM/DD/YYYY)
+    function normMon(k) {
+      var us = k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(us) return us[3]+'-'+us[1].padStart(2,'0')+'-'+us[2].padStart(2,'0');
+      var usShort = k.match(/^(\d{1,2})\/(\d{4})$/);
+      if(usShort) return usShort[2]+'-'+usShort[1].padStart(2,'0');
+      return k; // already YYYY-MM or YYYY-MM-DD
+    }
     var mBase = d.monthly || {};
-    Object.keys(mBase).forEach(function(k){ monthly[k] = {a1:mBase[k].a1||0, a2:mBase[k].a2||0, total:mBase[k].total||0}; });
+    Object.keys(mBase).forEach(function(k){
+      var nk = normMon(k).substring(0,7); // ensure YYYY-MM
+      if(!monthly[nk]) monthly[nk] = {a1:0, a2:0, total:0};
+      monthly[nk].a1    += mBase[k].a1||0;
+      monthly[nk].a2    += mBase[k].a2||0;
+      monthly[nk].total += mBase[k].total||0;
+    });
     // Add banked (not potential) from active archRows into their month bucket
     var archRows = d.archRows || [];
     archRows.forEach(function(row){

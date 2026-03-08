@@ -420,15 +420,15 @@ var TAB_IDS = {
 function switchTab(key){
   if(activeTab === key) return;
   haptic();
-  // hide current
-  var cur = ge(TAB_IDS[activeTab]);
-  if(cur) cur.classList.remove('on');
-  ge('t-' + activeTab).classList.remove('on');
-  // show new
+  // remove 'on' from ALL tabs and panes to avoid any stale state
+  Object.keys(TAB_IDS).forEach(function(k){
+    var pane = ge(TAB_IDS[k]); if(pane) pane.classList.remove('on');
+    var btn = ge('t-' + k); if(btn) btn.classList.remove('on');
+  });
+  // activate the new one
   activeTab = key;
-  var nxt = ge(TAB_IDS[key]);
-  if(nxt) nxt.classList.add('on');
-  ge('t-' + key).classList.add('on');
+  var nxt = ge(TAB_IDS[key]); if(nxt) nxt.classList.add('on');
+  var btn = ge('t-' + key); if(btn) btn.classList.add('on');
 }
 
 // ─── HISTORY TOGGLE ───────────────────────────────
@@ -818,10 +818,12 @@ var MOCK = {
 };
 
 // ─── WIRE UP ──────────────────────────────────────
-ge('t-d').onclick  = function(){ switchTab('d'); };
-ge('t-p').onclick  = function(){ switchTab('p'); };
-ge('t-h').onclick  = function(){ switchTab('h'); };
-ge('t-s').onclick  = function(){ switchTab('s'); };
+// Both onclick and ontouchend for PWA standalone reliability
+['d','p','h','s'].forEach(function(k){
+  var el = ge('t-'+k);
+  el.onclick = function(){ switchTab(k); };
+  el.ontouchend = function(e){ e.preventDefault(); switchTab(k); };
+});
 ge('rbtn').onclick = doRefresh;
 ge('bw').onclick   = function(){ switchHist('weeks'); };
 ge('bm').onclick   = function(){ switchHist('monthly'); };
@@ -833,302 +835,6 @@ fetch(BACKEND + '?action=data')
   .then(function(r){ return r.json(); })
   .then(renderAll)
   .catch(function(e){ console.error(e); renderAll(MOCK); });
-</script>
-</body>
-</html>html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
-  font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;}
-
-/* APP SHELL */
-#app{width:100%;height:100%;display:flex;flex-direction:column;
-  padding-top:env(safe-area-inset-top, 20px);}
-
-/* HEADER */
-#header{flex-shrink:0;height:80px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;background:var(--bg);border-bottom:1px solid var(--border2);}
-#hright{display:flex;align-items:center;gap:8px;}
-.sdot{width:8px;height:8px;border-radius:50%;background:var(--green);}
-.sdot.exp{background:var(--gold);}.sdot.dead{background:var(--red);}
-#utime{font-size:10px;color:var(--text2);}
-#rbtn{width:26px;height:26px;border-radius:50%;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation;}
-#rbtn:active{opacity:0.6;}
-#rbtn.spin svg{animation:spin 0.7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-#rbtn svg{width:11px;height:11px;color:var(--text2);}
-
-/* WORDMARK */
-#wm{display:flex;flex-direction:column;align-items:center;line-height:1;}
-#wmt{font-size:50px;color:var(--blue);letter-spacing:-0.03em;}
-#wmt .b{font-weight:600;}#wmt .t{font-weight:300;}
-#wms{font-size:11px;font-weight:300;letter-spacing:0.28em;color:var(--blue-dim);text-transform:none;margin-top:2px;}
-
-/* CONTENT AREA */
-#content{flex:1;position:relative;overflow:hidden;}
-
-/* PANES */
-.pane{display:none;position:absolute;top:0;left:0;right:0;bottom:0;overflow-x:auto;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
-.scroll-spacer{height:calc(85px + env(safe-area-inset-bottom, 0px));}
-.pane.on{display:block;}
-
-#ph{display:none;position:absolute;top:0;left:0;right:0;bottom:0;flex-direction:column;overflow:hidden;}
-#ph.on{display:flex;}
-#ph-top{flex-shrink:0;padding:14px 16px 0;background:var(--bg);}
-#ph-scroll{flex:1;overflow-x:auto;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
-
-/* BOTTOM TABS - CENTERED FIX */
-#tabs-wrap{
-  position:fixed;bottom:0;left:0;right:0;z-index:999;
-  background:var(--bg2);border-top:1px solid var(--border);
-  padding-bottom:env(safe-area-inset-bottom, 0px);
-}
-#tabs{height:65px;display:flex;align-items:stretch;}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative;touch-action:manipulation;}
-.tab::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:3px;border-radius:2px;background:var(--blue);transform:scaleX(0);transition:transform 0.2s;}
-.tab.on::after{transform:scaleX(1);}
-.tab svg{width:26px;height:26px;color:rgba(240,240,245,0.7);stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
-.tab.on svg{color:var(--blue);}
-.tlabel{font-size:9px;font-weight:700;color:rgba(240,240,245,0.7);text-transform:uppercase;}
-.tab.on .tlabel{color:var(--blue);}
-
-/* COMPONENTS */
-.tbar{display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:3px;}
-.tbtn{flex:1;padding:8px 0;text-align:center;font-size:16px;font-weight:700;border-radius:8px;color:var(--text3);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
-.tbtn.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
-.pos{color:var(--green);}.neg{color:var(--red);}.dim{color:var(--text2);}
-.mono{font-variant-numeric:tabular-nums;}
-.pill{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:13px;font-weight:700;text-transform:uppercase;}
-.pb{background:rgba(0,119,182,.15);color:var(--blue);}
-.pg{background:rgba(0,184,148,.15);color:var(--green);}
-.py{background:rgba(244,197,66,.15);color:var(--gold);}
-.pr{background:rgba(229,83,83,.15);color:var(--red);}
-.po{background:rgba(224,122,47,.15);color:var(--orange);}
-
-/* CARDS */
-.warn{margin:14px 16px 0;padding:13px 14px;border-radius:10px;font-size:12px;font-weight:500;display:flex;gap:9px;align-items:flex-start;background:rgba(244,197,66,.08);border:1px solid rgba(244,197,66,.2);color:var(--gold);}
-.warn.urg{background:rgba(229,83,83,.08);border-color:rgba(229,83,83,.2);color:var(--red);}
-.wcard{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 18px;display:flex;flex-direction:column;gap:20px;}
-.whdr{display:flex;align-items:baseline;justify-content:space-between;}
-.wlabel{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;color:var(--text);}
-.wexp{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;}
-.asect{display:flex;flex-direction:column;gap:10px;}
-.alabel{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.02em;}
-.anums{display:flex;}
-.aitem{flex:1;}
-.anum-lbl{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:4px;}
-.anum-val{font-size:13px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;}
-.prow{display:flex;align-items:center;gap:10px;margin-top:4px;}
-.pbg{flex:1;height:7px;border-radius:4px;background:var(--border);overflow:hidden;}
-.pfill{height:100%;border-radius:3px;background:var(--blue);width:0%;transition:width .6s ease;}
-.ppct{font-size:12px;font-weight:800;color:var(--blue);min-width:64px;text-align:right;font-variant-numeric:tabular-nums;}
-.ptgt{font-size:11px;color:var(--text3);margin-top:3px;}
-.wtot{border-top:1px solid var(--border);padding-top:16px;display:flex;}
-.wtot-val{font-size:13px;font-weight:800;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
-
-.cap{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 18px;}
-.cap-row{display:flex;align-items:stretch;}
-.cap-acct{font-size:13px;font-weight:700;color:var(--text2);width:56px;flex-shrink:0;display:flex;align-items:center;}
-.cap-side{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0;}
-.cap-div{width:1px;background:var(--border);margin:0 20px;flex-shrink:0;align-self:stretch;}
-.cap-n{font-size:21px;font-weight:800;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;line-height:1;}
-.cap-s{font-size:18px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;}
-
-/* TABLES */
-table{width:100%;border-collapse:collapse;}
-th{padding:6px 8px;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.03em;text-transform:uppercase;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3);}
-th:first-child{padding-left:18px;}
-th:last-child{padding-right:18px;}
-td{padding:7px 8px;font-size:13px;font-weight:500;color:var(--text);text-align:center;border-bottom:1px solid var(--border2);font-variant-numeric:tabular-nums;white-space:nowrap;}
-td:first-child{padding-left:18px;}
-td:last-child{padding-right:18px;}
-
-/* SETTINGS */
-.scard{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
-.srow{display:flex;align-items:center;justify-content:space-between;padding:18px;border-bottom:1px solid var(--border2);}
-.srow:last-child{border-bottom:none;}
-.slbl{font-size:13px;font-weight:600;}
-.ssub{font-size:10px;color:var(--text2);margin-top:2px;}
-.abtn{padding:3px 8px;background:rgba(0,119,182,.15);color:var(--blue);border-radius:20px;border:none;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;font-family:inherit;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;}
-.tog{position:relative;width:51px;height:31px;cursor:pointer;flex-shrink:0;}
-.tog-track{width:100%;height:100%;border-radius:31px;background:var(--bg4);border:1px solid var(--border);transition:background .2s,border-color .2s;}
-.tog.on .tog-track{background:var(--blue);border-color:var(--blue);}
-.tog-thumb{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);transition:transform .2s cubic-bezier(.4,0,.2,1);}
-.tog.on .tog-thumb{transform:translateX(20px);}
-.sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
-
-/* TOAST */
-#toast{position:fixed;bottom:130px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg4);border:1px solid var(--border);border-radius:24px;padding:11px 22px;font-size:16px;font-weight:600;color:var(--text);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap;}
-#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
-::-webkit-scrollbar{width:0;height:0;}
-</style>
-</head>
-<body>
-<div id="app">
-
-  <div id="header">
-    <div id="wm">
-      <div id="wmt"><span class="b">R</span><span class="t">ı</span><span class="b">K</span><span class="t">ı</span></div>
-      <div id="wms">trading</div>
-    </div>
-    <div id="hright">
-      <div style="display:flex;align-items:center;gap:4px;"><div class="sdot" id="sdot"></div><span id="utime">Loading&hellip;</span></div>
-      <div id="rbtn" onclick="doRefresh()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <div id="content">
-
-    <div class="pane on" id="pd">
-      <div id="dw"></div>
-      <div id="dc"></div>
-      <div id="dcp"></div>
-      <div class="scroll-spacer"></div>
-    </div>
-
-    <div class="pane" id="pp">
-      <table><thead id="pth"></thead><tbody id="ptb"></tbody></table>
-      <div class="scroll-spacer"></div>
-    </div>
-
-    <div id="ph">
-      <div id="ph-top">
-        <div class="tbar">
-          <div class="tbtn on" id="bw" onclick="switchHist('weeks')">Weeks</div>
-          <div class="tbtn" id="bm" onclick="switchHist('monthly')">Monthly</div>
-        </div>
-      </div>
-      <div id="ph-scroll">
-        <div id="hc"></div>
-        <div class="scroll-spacer"></div>
-      </div>
-    </div>
-
-    <div class="pane" id="ps">
-      <div class="scard">
-        <div class="srow">
-          <div><div class="slbl">Token Status</div><div class="ssub" id="tsub">Checking&hellip;</div></div>
-          <span class="pill" id="tpill">&mdash;</span>
-        </div>
-        <div class="srow">
-          <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
-          <button class="abtn" id="auth-btn" onclick="doAuth()">Connect</button>
-        </div>
-      </div>
-      <div class="scard">
-        <div class="srow">
-          <div class="slbl">Dark Mode</div>
-          <div class="tog on" id="dtog" onclick="this.classList.toggle('on');toggleTheme(this.classList.contains('on'))">
-            <div class="tog-track"></div>
-            <div class="tog-thumb"></div>
-          </div>
-        </div>
-      </div>
-      <div class="sver">RiKi Trading &middot; v2.3</div>
-      <div class="scroll-spacer"></div>
-    </div>
-
-  </div>
-
-  <div id="tabs-wrap">
-    <div id="tabs">
-      <div class="tab on" id="t-d" onclick="switchTab('d')">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span class="tlabel">Dashboard</span>
-      </div>
-      <div class="tab" id="t-p" onclick="switchTab('p')">
-        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span class="tlabel">Positions</span>
-      </div>
-      <div class="tab" id="t-h" onclick="switchTab('h')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span class="tlabel">History</span>
-      </div>
-      <div class="tab" id="t-s" onclick="switchTab('s')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span class="tlabel">Settings</span>
-      </div>
-    </div>
-  </div>
-
-</div>
-<div id="toast"></div>
-
-<script>
-var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
-
-function ge(id){ return document.getElementById(id); }
-function money(v){ return parseFloat(String(v||0).replace(/[$,\s]/g,'')) || 0; }
-function fmt(n){ var v=money(n), a=Math.abs(Math.round(v)).toLocaleString('en-US'); return (v<0?'\u2212':'')+'$'+a; }
-function fmtS(n){ var v=money(n), a=Math.abs(Math.round(v)).toLocaleString('en-US'); return v<0?'\u2212$'+a:'$'+a; }
-function cc(n){ var v=money(n); return v>0?'pos':v<0?'neg':'dim'; }
-function pct(a,b){ return b?Math.round(money(a)/money(b)*100):0; }
-function pc(p){ return p>=100?'#f4c542':p>=75?'#00b894':'#0077b6'; }
-function toast(msg, ms){ var t=ge('toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'), ms||2200); }
-function haptic(){ if(navigator.vibrate) navigator.vibrate(6); }
-
-var DATA = null;
-var activeTab = 'd';
-var histMode = 'weeks';
-var TAB_IDS = { d:'pd', p:'pp', h:'ph', s:'ps' };
-
-function switchTab(key){
-  if(activeTab === key) return;
-  haptic();
-  ge(TAB_IDS[activeTab]).classList.remove('on');
-  ge('t-'+activeTab).classList.remove('on');
-  activeTab = key;
-  ge(TAB_IDS[key]).classList.add('on');
-  ge('t-'+key).classList.add('on');
-}
-
-function toggleTheme(dark){
-  if(dark){ document.documentElement.removeAttribute('data-theme'); ge('meta-theme').content='#0a0a0f'; }
-  else { document.documentElement.setAttribute('data-theme','light'); ge('meta-theme').content='#f2f2f7'; }
-}
-
-function doRefresh(){
-  haptic(); ge('rbtn').classList.add('spin'); toast('Refreshing\u2026', 4000);
-  fetch(BACKEND + '?action=refresh').then(r=>r.json()).then(d=>{ ge('rbtn').classList.remove('spin'); renderAll(d); toast('Updated \u2713'); })
-  .catch(e=>{ ge('rbtn').classList.remove('spin'); toast('Error: '+e.message); });
-}
-
-function doAuth(){ haptic(); toast('Authenticating\u2026'); fetch(BACKEND+'?action=authUrl').then(r=>r.json()).then(d=>{ if(d.url) window.open(d.url,'_blank'); else toast('No URL returned'); }).catch(e=>toast('Auth error: '+e.message)); }
-
-function renderAll(d){
-  DATA = d;
-  renderHeader(d);
-  renderDash(d);
-  renderPositions(d);
-  // Add placeholder for History/Settings if needed
-}
-
-function renderHeader(d){
-  var el=ge('utime'); if(el) el.textContent=String(d.updated||'').replace(/^Updated:\s*/i,'').trim();
-  var dot=ge('sdot'); if(dot){ dot.className='sdot'; if(d.tokenState==='expiring') dot.classList.add('exp'); else if(d.tokenState==='expired') dot.classList.add('dead'); }
-}
-
-function renderDash(d){
-  var dc=ge('dc'); dc.innerHTML='';
-  (d.archRows||[]).forEach(row=>{
-    var card=document.createElement('div'); card.className='wcard';
-    card.innerHTML=`<div class="whdr"><span class="wlabel">${row[0]}</span></div><div class="wtot"><div class="aitem"><div class="anum-val wtot-val ${cc(row[6])}">${fmtS(row[6])}</div></div></div>`;
-    dc.appendChild(card);
-  });
-}
-
-function renderPositions(d){
-  var tb=ge('ptb'); tb.innerHTML='';
-  (d.invRows||[]).forEach(r=>{
-    var tr=document.createElement('tr');
-    tr.innerHTML=`<td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[0]}</td><td>${r[4]}</td><td>${fmt(r[8])}</td>`;
-    tb.appendChild(tr);
-  });
-}
-
-// Initial fetch
-fetch(BACKEND).then(r=>r.json()).then(renderAll);
 </script>
 </body>
 </html>

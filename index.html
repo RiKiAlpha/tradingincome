@@ -102,8 +102,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 #tabs-wrap{
   position:fixed;bottom:0;left:0;right:0;z-index:999;
   background:var(--bg);border-top:1px solid rgba(255,255,255,0.06);
-  /* safe area as padding so background extends to bezel — black matches iPhone bezel */
   padding-bottom:env(safe-area-inset-bottom,0px);}
+/* In PWA standalone, safe-area is handled by OS — reduce padding to avoid double gap */
+@media all and (display-mode:standalone){
+  #tabs-wrap{padding-bottom:max(8px,env(safe-area-inset-bottom,8px));}
+}
 #tabs{
   height:60px;  /* icons always live in exactly 60px */
   background:var(--bg);
@@ -128,7 +131,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 
 /* TOGGLE BAR */
 .tbar{display:-webkit-flex;display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:3px;}
-.tbtn{-webkit-flex:1;flex:1;padding:8px 0;text-align:center;font-size:16px;font-weight:700;
+.tbtn{-webkit-flex:1;flex:1;padding:5px 0;text-align:center;font-size:16px;font-weight:700;
   border-radius:8px;color:var(--text3);cursor:pointer;user-select:none;-webkit-user-select:none;
   touch-action:manipulation;}
 .tbtn.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
@@ -157,11 +160,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   -webkit-flex-direction:column;flex-direction:column;gap:20px;}
 .whdr{display:-webkit-flex;display:flex;-webkit-align-items:baseline;align-items:baseline;
   -webkit-justify-content:space-between;justify-content:space-between;}
-.wlabel{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;color:var(--text);}
+.wlabel{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;color:rgba(240,240,245,0.65);}
 .wexp{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;}
 .asect{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:10px;}
 .alabel{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.02em;}
-.anums{display:-webkit-flex;display:flex;}
+.anums{display:-webkit-flex;display:flex;width:100%;}
 .aitem{-webkit-flex:1;flex:1;}
 .anum-lbl{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:4px;}
 .anum-val{font-size:13px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;}
@@ -172,8 +175,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .ptgt{font-size:11px;color:var(--text3);margin-top:3px;}
 .wtot{border-top:1px solid var(--border);padding-top:16px;
   display:-webkit-flex;display:flex;
-  -webkit-align-items:center;align-items:center;
-  -webkit-justify-content:space-between;justify-content:space-between;}
+  -webkit-align-items:center;align-items:center;}
 .wtot-lbl{font-size:9px;color:var(--text3);font-weight:600;margin-bottom:4px;}
 .wtot-val{font-size:13px;font-weight:800;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
 
@@ -320,7 +322,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div id="ph">
       <div id="ph-top">
         <div class="tbar">
-          <div class="tbtn on" id="bw">Weeks</div>
+          <div class="tbtn on" id="bw">Weekly</div>
           <div class="tbtn" id="bm">Monthly</div>
         </div>
       </div>
@@ -599,7 +601,7 @@ function renderDash(d){
         '<div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
         '<div class="ptgt">of '+fmt(g2)+' target</div>'+
       '</div>'+
-      '<div class="wtot"><span style="font-size:16px;font-weight:600;color:var(--text2)">Grand Total</span><span class="anum-val wtot-val '+cc(grand)+'" style="font-size:16px">'+fmtS(grand)+'</span></div>';
+      '<div class="wtot">'+'<div class="anums">'+'<div class="aitem"><div style="font-size:16px;font-weight:600;color:var(--text2)">Grand Total</div></div>'+'<div class="aitem"></div>'+'<div class="aitem"><div class="'+cc(grand)+'" style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums">'+fmtS(grand)+'</div></div>'+'</div>'+'</div>';
     dc.appendChild(card);
   });
 
@@ -710,7 +712,7 @@ function renderHist(){
   if(histMode === 'weeks'){
     var rows = d.allClosed || [];
     var t = document.createElement('table');
-    t.innerHTML = '<thead><tr><th>Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total Net</th></tr></thead>';
+    t.innerHTML = '<thead><tr><th>Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
     var tb = document.createElement('tbody');
     if(!rows.length){
       tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';
@@ -759,7 +761,7 @@ function renderHist(){
     var months = Object.keys(monthly).sort(function(a,b){ return b.localeCompare(a); });
     if(!months.length){ el.innerHTML='<div class="empty">No monthly data</div>'; return; }
     var t=document.createElement('table');
-    t.innerHTML='<thead><tr><th style="text-align:left">Month</th><th>A1</th><th>A2</th><th>Total</th></tr></thead>';
+    t.innerHTML='<thead><tr><th style="text-align:left">Month</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
     var tb=document.createElement('tbody');
     var now=new Date(), cm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1);
     months.forEach(function(mo){

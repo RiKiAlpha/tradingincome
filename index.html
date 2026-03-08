@@ -28,6 +28,7 @@
 [data-theme="light"] .tab svg{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tlabel{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tab.on svg{color:var(--blue);}
+
 [data-theme="light"] .tbtn{color:rgba(10,10,15,0.5);}
 [data-theme="light"] .tbtn.on{color:var(--text);}
 [data-theme="light"] .mhdr{color:rgba(10,10,15,0.4);}
@@ -35,6 +36,806 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg, #0a0a0f);}
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+
+/* APP SHELL */
+#app{width:100%;height:100%;display:-webkit-flex;display:flex;
+  -webkit-flex-direction:column;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);}
+
+/* HEADER */
+#header{-webkit-flex-shrink:0;flex-shrink:0;height:80px;
+  display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:space-between;justify-content:space-between;
+  padding:0 16px;background:var(--bg);border-bottom:1px solid var(--border2);}
+#hright{display:-webkit-flex;display:flex;-webkit-flex-direction:row;flex-direction:row;-webkit-align-items:center;align-items:center;gap:8px;}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--green);}
+.sdot.exp{background:var(--gold);}.sdot.dead{background:var(--red);}
+#utime{font-size:10px;color:var(--text2);}
+#rbtn{width:26px;height:26px;border-radius:50%;border:none;
+  background:transparent;display:-webkit-flex;display:flex;-webkit-align-items:center;
+  align-items:center;-webkit-justify-content:center;justify-content:center;
+  cursor:pointer;-webkit-flex-shrink:0;flex-shrink:0;touch-action:manipulation;}
+#rbtn:active{opacity:0.6;}
+#rbtn.spin svg{-webkit-animation:spin 0.7s linear infinite;animation:spin 0.7s linear infinite;}
+@-webkit-keyframes spin{to{-webkit-transform:rotate(360deg);transform:rotate(360deg);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+#rbtn svg{width:11px;height:11px;color:var(--text2);}
+
+/* WORDMARK */
+#wm{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;
+  -webkit-align-items:center;align-items:center;line-height:1;}
+#wmt{font-size:50px;color:var(--blue);letter-spacing:-0.03em;}
+#wmt .b{font-weight:600;}#wmt .t{font-weight:300;}
+#wms{font-size:11px;font-weight:300;letter-spacing:0.28em;color:var(--blue-dim);
+  text-transform:none;margin-top:2px;}
+
+/* CONTENT AREA */
+#content{-webkit-flex:1;flex:1;position:relative;overflow:hidden;}
+
+/* ALL PANES — scrollable, iOS-safe */
+.pane{
+  display:none;
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  overflow-x:auto;overflow-y:scroll;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+}
+.scroll-spacer{height:calc(60px + env(safe-area-inset-bottom,0px));}
+.pane.on{display:block;}
+
+/* HISTORY PANE — special: flex column, inner div scrolls */
+#ph{
+  display:none;
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  -webkit-flex-direction:column;flex-direction:column;
+  overflow:hidden;
+  padding-bottom:0;
+}
+#ph.on{display:-webkit-flex;display:flex;}
+#ph-top{-webkit-flex-shrink:0;flex-shrink:0;padding:14px 16px 0;background:var(--bg);}
+#ph-scroll{-webkit-flex:1;flex:1;overflow-x:auto;overflow-y:scroll;
+  -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;}
+
+/* BOTTOM TABS */
+#tabs-wrap{
+  position:fixed;bottom:0;left:0;right:0;z-index:999;
+  background:var(--bg2);border-top:1px solid var(--border);
+  /* safe area as padding so background extends to bezel */
+  padding-bottom:env(safe-area-inset-bottom,0px);}
+#tabs{
+  height:60px;  /* icons always live in exactly 60px */
+  display:-webkit-flex;display:flex;}
+#tabs-safe{display:none;} /* no longer needed */
+.tab{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;
+  -webkit-flex-direction:column;flex-direction:column;
+  -webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;
+  gap:3px;cursor:pointer;position:relative;touch-action:manipulation;
+  /* do NOT inherit padding — icons must center in the 60px #tabs only */
+  padding-bottom:0;}
+.tab::after{content:'';position:absolute;top:auto;bottom:0;left:10%;right:10%;
+  height:3px;border-radius:2px;background:var(--blue);-webkit-transform:scaleX(0);transform:scaleX(0);
+  -webkit-transition:-webkit-transform 0.2s;transition:transform 0.2s;}
+.tab.on::after{-webkit-transform:scaleX(1);transform:scaleX(1);}
+.tab svg{width:28px;height:28px;color:rgba(240,240,245,0.7);stroke:currentColor;fill:none;
+  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.tab.on svg{color:var(--blue);}
+.tlabel{font-size:10px;font-weight:700;color:rgba(240,240,245,0.7);text-transform:uppercase;}
+.tab.on .tlabel{color:var(--blue);}
+
+/* TOGGLE BAR */
+.tbar{display:-webkit-flex;display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:3px;}
+.tbtn{-webkit-flex:1;flex:1;padding:8px 0;text-align:center;font-size:16px;font-weight:700;
+  border-radius:8px;color:var(--text3);cursor:pointer;user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;}
+.tbtn.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+
+/* SHARED */
+.pos{color:var(--green);}.neg{color:var(--red);}.dim{color:var(--text2);}
+.mono{font-variant-numeric:tabular-nums;}
+.pill{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;
+  font-size:13px;font-weight:700;text-transform:uppercase;}
+.pb{background:rgba(0,119,182,.15);color:var(--blue);}
+.pg{background:rgba(0,184,148,.15);color:var(--green);}
+.py{background:rgba(244,197,66,.15);color:var(--gold);}
+.pr{background:rgba(229,83,83,.15);color:var(--red);}
+.po{background:rgba(224,122,47,.15);color:var(--orange);}
+
+/* WARNINGS */
+.warn{margin:14px 16px 0;padding:13px 14px;border-radius:10px;
+  font-size:12px;font-weight:500;display:-webkit-flex;display:flex;gap:9px;align-items:flex-start;
+  background:rgba(244,197,66,.08);border:1px solid rgba(244,197,66,.2);color:var(--gold);}
+.warn.urg{background:rgba(229,83,83,.08);border-color:rgba(229,83,83,.2);color:var(--red);}
+
+/* WEEK CARDS */
+#pd{padding-bottom:32px;}
+.wcard{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
+  -webkit-flex-direction:column;flex-direction:column;gap:20px;}
+.whdr{display:-webkit-flex;display:flex;-webkit-align-items:baseline;align-items:baseline;
+  -webkit-justify-content:space-between;justify-content:space-between;}
+.wlabel{font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;color:var(--text);}
+.wexp{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;}
+.asect{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:10px;}
+.alabel{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.02em;}
+.anums{display:-webkit-flex;display:flex;}
+.aitem{-webkit-flex:1;flex:1;}
+.anum-lbl{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:4px;}
+.anum-val{font-size:13px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;}
+.prow{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:10px;margin-top:4px;}
+.pbg{-webkit-flex:1;flex:1;height:7px;border-radius:4px;background:var(--border);overflow:hidden;}
+.pfill{height:100%;border-radius:3px;background:var(--blue);width:0%;-webkit-transition:width .6s ease;transition:width .6s ease;}
+.ppct{font-size:12px;font-weight:800;color:var(--blue);min-width:64px;text-align:right;font-variant-numeric:tabular-nums;}
+.ptgt{font-size:11px;color:var(--text3);margin-top:3px;}
+.wtot{border-top:1px solid var(--border);padding-top:16px;
+  display:-webkit-flex;display:flex;}
+.wtot-lbl{font-size:9px;color:var(--text3);font-weight:600;margin-bottom:4px;}
+.wtot-val{font-size:13px;font-weight:800;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
+
+/* CAPACITY */
+.cap{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;padding:22px 18px;}
+.cap-title{font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;
+  text-transform:uppercase;text-align:center;margin-bottom:18px;}
+.cap-rows{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:0;position:relative;}
+.cap-row{display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch;}
+.cap-acct{font-size:13px;font-weight:700;color:var(--text2);width:56px;-webkit-flex-shrink:0;flex-shrink:0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
+.cap-side{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;
+  -webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;padding:10px 0;}
+.cap-div{width:1px;background:var(--border);margin:0 20px;-webkit-flex-shrink:0;flex-shrink:0;-webkit-align-self:stretch;align-self:stretch;}
+.cap-n{font-size:21px;font-weight:800;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;line-height:1;}
+.cap-n.c{color:var(--blue);}.cap-n.p{color:var(--orange);}
+.cap-s{font-size:18px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;}
+.cap-s.c{color:rgba(0,119,182,.45);}.cap-s.p{color:rgba(224,122,47,.45);}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;}
+th{padding:6px 8px;font-size:11px;font-weight:700;color:var(--text2);
+  letter-spacing:0.03em;text-transform:uppercase;text-align:center;
+  border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3);}
+th:first-child{padding-left:18px;}
+th:last-child{padding-right:18px;}
+td{padding:7px 8px;font-size:13px;font-weight:500;color:var(--text);
+  text-align:center;border-bottom:1px solid var(--border2);font-variant-numeric:tabular-nums;white-space:nowrap;}
+td:first-child{padding-left:18px;}
+td:last-child{padding-right:18px;}
+tbody tr:last-child td{border-bottom:none;}
+.atag{display:inline-block;font-size:13px;font-weight:700;padding:2px 6px;
+  border-radius:4px;}
+.pa1{background:rgba(0,184,148,.15);color:#00b894;}
+.pa2{background:rgba(244,197,66,.15);color:#f4c542;}
+.mhdr{padding:14px 12px 6px;font-size:14px;font-weight:700;color:var(--text3);
+  letter-spacing:0.1em;text-transform:uppercase;}
+#hc td:first-child{color:var(--text2);}
+
+/* SETTINGS */
+#ps{padding-bottom:32px;}
+.scard{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;}
+.srow{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:space-between;justify-content:space-between;
+  padding:18px;border-bottom:1px solid var(--border2);}
+.srow:last-child{border-bottom:none;}
+.slbl{font-size:13px;font-weight:600;}
+.ssub{font-size:10px;color:var(--text2);margin-top:2px;}
+.abtn{padding:3px 8px;background:rgba(0,119,182,.15);color:var(--blue);
+  border-radius:20px;border:none;
+  font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;font-family:inherit;touch-action:manipulation;
+  -webkit-flex-shrink:0;flex-shrink:0;
+  display:inline-flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;
+  line-height:1;-webkit-appearance:none;appearance:none;}
+.tog{
+  position:relative;width:51px;height:31px;
+  cursor:pointer;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.tog-track{
+  width:100%;height:100%;
+  border-radius:31px;
+  background:var(--bg4);
+  border:1px solid var(--border);
+  -webkit-transition:background .2s,border-color .2s;
+  transition:background .2s,border-color .2s;
+}
+.tog.on .tog-track{
+  background:var(--blue);
+  border-color:var(--blue);
+}
+.tog-thumb{
+  position:absolute;
+  top:2px;left:2px;
+  width:27px;height:27px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 5px rgba(0,0,0,.3);
+  -webkit-transition:-webkit-transform .2s cubic-bezier(.4,0,.2,1);
+  transition:transform .2s cubic-bezier(.4,0,.2,1);
+}
+.tog.on .tog-thumb{
+  -webkit-transform:translateX(20px);
+  transform:translateX(20px);
+}
+.sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
+
+/* TOAST */
+#toast{position:fixed;bottom:130px;left:50%;
+  -webkit-transform:translateX(-50%) translateY(16px);transform:translateX(-50%) translateY(16px);
+  background:var(--bg4);border:1px solid var(--border);border-radius:24px;
+  padding:11px 22px;font-size:22px;font-weight:600;color:var(--text);
+  opacity:0;-webkit-transition:opacity .2s,-webkit-transform .2s;transition:opacity .2s,transform .2s;
+  pointer-events:none;z-index:999;white-space:nowrap;}
+#toast.on{opacity:1;-webkit-transform:translateX(-50%) translateY(0);transform:translateX(-50%) translateY(0);}
+.empty{padding:48px 16px;text-align:center;color:var(--text3);font-size:23px;}
+::-webkit-scrollbar{width:0;height:0;}
+@-webkit-keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+</style>
+<link rel="apple-touch-icon" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
+<link rel="apple-touch-icon" sizes="120x120" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
+</head>
+<body>
+<div id="app">
+
+  <div id="header">
+    <div id="wm">
+      <div id="wmt"><span class="b">R</span><span class="t">ı</span><span class="b">K</span><span class="t">ı</span></div>
+      <div id="wms">trading</div>
+    </div>
+    <div id="hright">
+      <div style="display:flex;align-items:center;gap:4px;"><div class="sdot" id="sdot"></div><span id="utime">Loading&hellip;</span></div>
+      <div id="rbtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <div class="pane on" id="pd">
+      <div id="dw"></div>
+      <div id="dc"></div>
+      <div id="dcp"></div>
+      <div class="scroll-spacer"></div>
+    </div>
+
+    <div class="pane" id="pp">
+      <table><thead id="pth"></thead><tbody id="ptb"></tbody></table>
+    </div>
+
+    <div id="ph">
+      <div id="ph-top">
+        <div class="tbar">
+          <div class="tbtn on" id="bw">Weeks</div>
+          <div class="tbtn" id="bm">Monthly</div>
+        </div>
+      </div>
+      <div id="ph-scroll"><div id="hc"></div></div>
+    </div>
+
+    <div class="pane" id="ps">
+      <div class="scard">
+        <div class="srow">
+          <div><div class="slbl">Token Status</div><div class="ssub" id="tsub">Checking&hellip;</div></div>
+          <span class="pill" id="tpill">&mdash;</span>
+        </div>
+        <div class="srow">
+          <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
+          <button class="abtn" id="auth-btn">Connect</button>
+        </div>
+      </div>
+      <div class="scard">
+        <div class="srow">
+          <div class="slbl">Dark Mode</div>
+          <div class="tog on" id="dtog" onclick="this.classList.toggle('on');toggleTheme(this.classList.contains('on'))">
+            <div class="tog-track"></div>
+            <div class="tog-thumb"></div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-spacer"></div>
+      <div class="sver">RiKi Trading &middot; v2.3</div>
+    </div>
+
+  </div>
+
+  <div id="tabs-wrap">
+  <div id="tabs">
+    <div class="tab on" id="t-d">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="tlabel">Dashboard</span>
+    </div>
+    <div class="tab" id="t-p">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span class="tlabel">Positions</span>
+    </div>
+    <div class="tab" id="t-h">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span class="tlabel">History</span>
+    </div>
+    <div class="tab" id="t-s">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="tlabel">Settings</span>
+    </div>
+  </div>
+  <div id="tabs-safe"></div>
+  </div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
+
+// ─── UTILS ────────────────────────────────────────
+function ge(id){ return document.getElementById(id); }
+
+function money(v){
+  if(v == null || v === '') return 0;
+  if(typeof v === 'number') return v;
+  return parseFloat(String(v).replace(/[$,\s]/g,'')) || 0;
+}
+function fmt(n){
+  var v = money(n), a = Math.abs(Math.round(v)).toLocaleString('en-US');
+  return (v < 0 ? '\u2212' : '') + '$' + a;
+}
+function fmtS(n){
+  var v = money(n), a = Math.abs(Math.round(v)).toLocaleString('en-US');
+  return v < 0 ? '\u2212$' + a : '$' + a;
+}
+function cc(n){ var v = money(n); return v > 0 ? 'pos' : v < 0 ? 'neg' : 'dim'; }
+function pct(a,b){ return b ? Math.round(money(a)/money(b)*100) : 0; }
+function pc(p){ return p>=100?'#f4c542':p>=75?'#00b894':'#0077b6'; }
+
+function toast(msg, ms){
+  var t = ge('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('on'); }, ms||2200);
+}
+function haptic(){ if(navigator.vibrate) navigator.vibrate(6); }
+
+// ─── STATE ────────────────────────────────────────
+// Detect PWA standalone mode — iOS behaves differently than Safari
+if(window.navigator.standalone || window.matchMedia('(display-mode:standalone)').matches){
+  document.documentElement.classList.add('pwa');
+}
+var DATA = null;
+var activeTab = 'd';
+var histMode  = 'weeks';
+
+// ─── TABS ─────────────────────────────────────────
+var TAB_IDS = {
+  d: 'pd',
+  p: 'pp',
+  h: 'ph',
+  s: 'ps'
+};
+
+function switchTab(key){
+  if(activeTab === key) return;
+  haptic();
+  // hide current
+  var cur = ge(TAB_IDS[activeTab]);
+  if(cur) cur.classList.remove('on');
+  ge('t-' + activeTab).classList.remove('on');
+  // show new
+  activeTab = key;
+  var nxt = ge(TAB_IDS[key]);
+  if(nxt) nxt.classList.add('on');
+  ge('t-' + key).classList.add('on');
+}
+
+// ─── HISTORY TOGGLE ───────────────────────────────
+function switchHist(mode){
+  haptic();
+  histMode = mode;
+  ge('bw').className = 'tbtn' + (mode==='weeks'   ? ' on' : '');
+  ge('bm').className = 'tbtn' + (mode==='monthly' ? ' on' : '');
+  renderHist();
+}
+
+// ─── THEME ────────────────────────────────────────
+function toggleTheme(dark){
+  if(dark){
+    document.documentElement.removeAttribute('data-theme');
+    ge('meta-theme').content = '#0a0a0f';
+  } else {
+    document.documentElement.setAttribute('data-theme','light');
+    ge('meta-theme').content = '#f2f2f7';
+  }
+}
+
+// ─── REFRESH ──────────────────────────────────────
+function doRefresh(){
+  haptic();
+  ge('rbtn').classList.add('spin');
+  toast('Refreshing\u2026', 4000);
+  fetch(BACKEND + '?action=refresh')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ ge('rbtn').classList.remove('spin'); renderAll(d); toast('Updated \u2713'); })
+    .catch(function(e){ ge('rbtn').classList.remove('spin'); toast('Error: '+e.message); });
+}
+
+// ─── AUTH ─────────────────────────────────────────
+function doAuth(){
+  haptic(); toast('Authenticating\u2026');
+  fetch(BACKEND + '?action=authUrl')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.url) window.open(d.url,'_blank'); else toast('No URL returned'); })
+    .catch(function(e){ toast('Auth error: '+e.message); });
+}
+
+// ─── RENDER ALL ───────────────────────────────────
+function renderAll(d){
+  DATA = d;
+  renderHeader(d);
+  renderDash(d);
+  renderPositions(d);
+  renderHist();
+  renderSettings(d);
+}
+
+// ─── HEADER ───────────────────────────────────────
+function renderHeader(d){
+  var el = ge('utime');
+  if(el){
+    var raw = String(d.updated || '\u2014');
+    el.textContent = raw.replace(/^[●•▶\s]+/,'').replace(/^Updated:\s*/i,'').trim();
+  }
+  var dot = ge('sdot');
+  if(dot){
+    dot.className = 'sdot';
+    if(d.tokenState==='expiring') dot.classList.add('exp');
+    else if(d.tokenState==='expired') dot.classList.add('dead');
+  }
+}
+
+// ─── DASHBOARD ────────────────────────────────────
+function renderDash(d){
+  // Warnings
+  var dw = ge('dw'); dw.innerHTML = '';
+  var w = d.warnings || {};
+  // Truncation warning — show as urgent amber bar
+  if(d.truncationWarning){
+    var tw=document.createElement('div');
+    tw.className='warn urg';
+    tw.textContent='⚠️ Order fetch truncated — gains may be incomplete. Check K1 in sheet.';
+    var wc=ge('warnings'); if(wc){ wc.innerHTML=''; wc.appendChild(tw); }
+  }
+  // Reformat warnings: strip ticker names, add 3-week lookahead
+  function warnMsg(raw, isHoliday) {
+    if (!raw) return null;
+    // Extract date from message (YYYY-MM-DD or Month DD or similar)
+    var dm = String(raw).match(/(\d{4}-\d{2}-\d{2})/);
+    var dateStr = dm ? dm[1] : '';
+    if (dateStr) {
+      // Check if within 3 weeks (21 days) before the date
+      var evtDate = new Date(dateStr + 'T12:00:00');
+      var now = new Date();
+      var daysAway = (evtDate - now) / 86400000;
+      if (daysAway < -1 || daysAway > 21) return null; // outside window
+      if (isHoliday) return '\uD83D\uDCC5 Market holiday on ' + dateStr + ' \u2014 expiry shifts to Thursday';
+      return '\u26A0\uFE0F Earnings on ' + dateStr;
+    }
+    // Fallback: strip ticker symbols (all-caps words 1-5 chars before space/colon)
+    var cleaned = String(raw).replace(/\b[A-Z]{1,5}\b[:\s]*/g, '').trim();
+    if (isHoliday) return '\uD83D\uDCC5 ' + cleaned + ' \u2014 expiry shifts to Thursday';
+    return '\u26A0\uFE0F Earnings on ' + cleaned;
+  }
+  var holidayMsg  = warnMsg(w.holiday, true);
+  var earningsMsg = warnMsg(w.earnings, false);
+  [ {msg:holidayMsg, urg:false}, {msg:earningsMsg, urg:w.earningsUrgent} ]
+    .forEach(function(x){
+      if(!x.msg) return;
+      var el = document.createElement('div');
+      el.className = 'warn' + (x.urg ? ' urg' : '');
+      el.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' + x.msg;
+      dw.appendChild(el);
+    });
+
+  // Week cards
+  var dc = ge('dc'); dc.innerHTML = '';
+  var rows = d.archRows || [];
+  var gv   = Object.values(d.goals || {});
+  var g1   = parseFloat(gv[0]) || 4000;
+  var g2   = parseFloat(gv[1]) || 3000;
+  var KEYS = ['THIS WEEK','NEXT WEEK','WEEK AFTER'];
+  var LBLS = ['This Week','Next Week','Week After'];
+
+  var sorted = rows.slice().sort(function(a,b){
+    var ia = KEYS.findIndex(function(l){ return String(a[0]).toUpperCase().indexOf(l)>=0; });
+    var ib = KEYS.findIndex(function(l){ return String(b[0]).toUpperCase().indexOf(l)>=0; });
+    return (ia<0?99:ia) - (ib<0?99:ib);
+  });
+
+  sorted.forEach(function(row){
+    var raw   = String(row[0]);
+    var dm    = raw.match(/(\d{4}-\d{2}-\d{2})/);
+    var exp   = dm ? dm[1] : '';
+    var wi    = KEYS.findIndex(function(l){ return raw.toUpperCase().indexOf(l)>=0; });
+    var lbl   = wi>=0 ? LBLS[wi] : raw;
+    var a1b   = money(row[1]), a1p = money(row[2]);
+    var a2b   = money(row[3]), a2p = money(row[4]);
+    var grand = money(row[6]);
+    var p1    = pct(a1b+a1p, g1), p2 = pct(a2b+a2p, g2);
+
+    var card  = document.createElement('div');
+    card.className = 'wcard';
+    card.innerHTML =
+      '<div class="whdr"><span class="wlabel">'+lbl+'</span><span class="wexp">'+exp+'</span></div>'+
+      '<div class="asect">'+
+        '<div class="alabel">Account 1</div>'+
+        '<div class="anums">'+
+          '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">'+fmt(a1b)+'</div></div>'+
+          '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+'</div></div>'+
+          '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a1b+a1p)+'">'+fmt(a1b+a1p)+'</div></div>'+
+        '</div>'+
+        '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div>'+
+        '<div class="ppct" style="color:'+pc(p1)+'">'+p1+'%</div></div>'+
+        '<div class="ptgt">of '+fmt(g1)+' target</div>'+
+      '</div>'+
+      '<div class="asect">'+
+        '<div class="alabel">Account 2</div>'+
+        '<div class="anums">'+
+          '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">'+fmt(a2b)+'</div></div>'+
+          '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+'</div></div>'+
+          '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">'+fmt(a2b+a2p)+'</div></div>'+
+        '</div>'+
+        '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div>'+
+        '<div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
+        '<div class="ptgt">of '+fmt(g2)+' target</div>'+
+      '</div>'+
+      '<div class="wtot"><div class="aitem"><div class="anum-lbl" style="font-size:13px">Grand Total</div></div><div class="aitem"></div><div class="aitem"><div class="anum-val wtot-val '+cc(grand)+'" style="font-size:16px">'+fmtS(grand)+'</div></div></div>';
+    dc.appendChild(card);
+  });
+
+  // Capacity
+  var dcp = ge('dcp'); dcp.innerHTML = '';
+  var dr  = (d.dashRows||[]).filter(function(r){ return r[0] && String(r[0])!=='GRAND TOTAL'; });
+  if(dr.length){
+    var panel = document.createElement('div');
+    panel.className = 'cap';
+    var inner = '<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
+    dr.forEach(function(row){
+      var acct = String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
+      var cRem = (parseInt(row[12])>=0) ? parseInt(row[12]) : (parseInt(row[9])||0);
+      var pRem = (parseInt(row[11])>=0) ? parseInt(row[11]) : (parseInt(row[8])||0);
+      inner +=
+        '<div class="cap-row">'+
+          '<div class="cap-acct">'+acct+'</div>'+
+          '<div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div>'+
+          '<div class="cap-div"></div>'+
+          '<div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div>'+
+        '</div>';
+    });
+    inner += '</div>';
+    panel.innerHTML = inner;
+    dcp.appendChild(panel);
+  }
+}
+
+// ─── POSITIONS ────────────────────────────────────
+// ─── POSITIONS SORT STATE ─────────────────────────
+var posSort = { col: 'exp', dir: 1 }; // col: exp|type|net, dir: 1=asc/-1=desc
+
+function posSortBy(col) {
+  if (posSort.col === col) { posSort.dir *= -1; }
+  else { posSort.col = col; posSort.dir = col === 'net' ? -1 : 1; }
+  renderPositions(DATA || MOCK);
+}
+
+function renderPositions(d){
+  var rows = d.invRows || [];
+    var arw = function(col){ 
+    var a = posSort.col===col ? (posSort.dir===1?'↑':'↓') : '↕';
+    var color = posSort.col===col ? 'color:var(--blue);' : 'color:var(--text3);';
+    return '<span style="'+color+'font-size:11px;margin-left:3px;">'+a+'</span>';
+  };
+  ge('pth').innerHTML = '<tr>' +
+    '<th>Acct</th>' +
+    '<th onclick="posSortBy(\'type\')" style="cursor:pointer">Type'+arw('type')+'</th>' +
+    '<th>Strike</th>' +
+    '<th onclick="posSortBy(\'exp\')" style="cursor:pointer">Expiry'+arw('exp')+'</th>' +
+    '<th>Qty</th>' +
+    '<th onclick="posSortBy(\'net\')" style="cursor:pointer">Net'+arw('net')+'</th>' +
+    '</tr>';
+  var tb = ge('ptb'); tb.innerHTML = '';
+  if(!rows.length){
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No open positions</td></tr>';
+    return;
+  }
+  rows = rows.slice().sort(function(a,b){
+    // Level 1: Account (always fixed)
+    var acctA=String(a[1]||''), acctB=String(b[1]||'');
+    if(acctA!==acctB) return acctA<acctB?-1:1;
+    // Level 2: chosen sort col
+    var isPutA=String(a[2]||'').toUpperCase().indexOf('PUT')>=0;
+    var isPutB=String(b[2]||'').toUpperCase().indexOf('PUT')>=0;
+    var expA=String(a[0]||''), expB=String(b[0]||'');
+    var stA=parseFloat(String(a[3]||'0').replace(/[^0-9.]/g,''))||0;
+    var stB=parseFloat(String(b[3]||'0').replace(/[^0-9.]/g,''))||0;
+    var netA=parseFloat(String(a[8]||'0').replace(/[^0-9.-]/g,''))||0;
+    var netB=parseFloat(String(b[8]||'0').replace(/[^0-9.-]/g,''))||0;
+    if(posSort.col==='type'){
+      // L2: type, L3: expiry, L4: strike
+      if(isPutA!==isPutB) return (isPutA?1:-1)*posSort.dir;
+      if(expA!==expB) return expA<expB?-1:1;
+      return isPutA ? stB-stA : stA-stB;
+    } else if(posSort.col==='net'){
+      // L2: net
+      if(netA!==netB) return (netB-netA)*posSort.dir;
+      if(expA!==expB) return expA<expB?-1:1;
+      return 0;
+    } else {
+      // L2: expiry (default), L3: type, L4: strike
+      if(expA!==expB) return (expA<expB?-1:1)*posSort.dir;
+      if(isPutA!==isPutB) return isPutA?1:-1;
+      return isPutA ? stB-stA : stA-stB;
+    }
+  });
+  rows.forEach(function(row){
+    var exp=String(row[0]||''), acct=String(row[1]||''), type=String(row[2]||'');
+    var strike=money(row[3]), qty=row[4]||'', net=money(row[8]);
+    var isPut = type.toUpperCase().indexOf('PUT')>=0;
+    var expStr=exp;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><span class="atag '+(acct.indexOf('1')>=0?'pa1':'pa2')+'">'+acct+'</span></td>'+
+      '<td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td>'+
+      '<td>'+(strike?'$'+Math.round(strike):'—')+'</td>'+
+      '<td>'+expStr+'</td><td>'+qty+'</td>'+
+      '<td class="'+cc(net)+'">'+fmt(net)+'</td>';
+    tb.appendChild(tr);
+  });
+}
+
+// ─── HISTORY ──────────────────────────────────────
+function renderHist(){
+  var d = DATA || MOCK;
+  var el = ge('hc'); el.innerHTML = '';
+  if(histMode === 'weeks'){
+    var rows = d.allClosed || [];
+    var t = document.createElement('table');
+    t.innerHTML = '<thead><tr><th>Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total Net</th></tr></thead>';
+    var tb = document.createElement('tbody');
+    if(!rows.length){
+      tb.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';
+    } else {
+      rows.forEach(function(row){
+        var lbl=String(row[0]||'—').replace(/\s*\(.*\)/,'').trim();
+        var a1=money(row[1]), a2=money(row[3]), tot=money(row[6]);
+        var tr=document.createElement('tr');
+        tr.innerHTML='<td>'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';
+        tb.appendChild(tr);
+      });
+    }
+    t.appendChild(tb); el.appendChild(t);
+  } else {
+    // Merge active week banked gains into monthly totals
+    var monthly = {};
+    // Normalize any date key that came through in US format (M/D/YYYY or MM/DD/YYYY)
+    function normMon(k) {
+      var us = k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(us) return us[3]+'-'+us[1].padStart(2,'0')+'-'+us[2].padStart(2,'0');
+      var usShort = k.match(/^(\d{1,2})\/(\d{4})$/);
+      if(usShort) return usShort[2]+'-'+usShort[1].padStart(2,'0');
+      return k; // already YYYY-MM or YYYY-MM-DD
+    }
+    var mBase = d.monthly || {};
+    Object.keys(mBase).forEach(function(k){
+      var nk = normMon(k).substring(0,7); // ensure YYYY-MM
+      if(!monthly[nk]) monthly[nk] = {a1:0, a2:0, total:0};
+      monthly[nk].a1    += mBase[k].a1||0;
+      monthly[nk].a2    += mBase[k].a2||0;
+      monthly[nk].total += mBase[k].total||0;
+    });
+    // Add banked (not potential) from active archRows into their month bucket
+    var archRows = d.archRows || [];
+    archRows.forEach(function(row){
+      var raw = String(row[0]||'');
+      var dm  = raw.match(/(\d{4}-\d{2})/);
+      if(!dm) return;
+      var mo  = dm[1];
+      var a1b = money(row[1]||0), a2b = money(row[3]||0);
+      if(!monthly[mo]) monthly[mo] = {a1:0, a2:0, total:0};
+      monthly[mo].a1    += a1b;
+      monthly[mo].a2    += a2b;
+      monthly[mo].total += a1b + a2b;
+    });
+    var months = Object.keys(monthly).sort(function(a,b){ return b.localeCompare(a); });
+    if(!months.length){ el.innerHTML='<div class="empty">No monthly data</div>'; return; }
+    var t=document.createElement('table');
+    t.innerHTML='<thead><tr><th style="text-align:left">Month</th><th>A1</th><th>A2</th><th>Total</th></tr></thead>';
+    var tb=document.createElement('tbody');
+    var now=new Date(), cm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1);
+    months.forEach(function(mo){
+      var e=monthly[mo];
+      var hdrtxt;
+      try{ hdrtxt=new Date(mo+'-02').toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
+      catch(x){ hdrtxt=mo; }
+      var a1=e.a1||0, a2=e.a2||0, tot=e.total||0;
+      var isCur=(mo===cm);
+      var dot=isCur ? '&nbsp;<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;vertical-align:middle;position:relative;top:-1px;-webkit-animation:blink 1.4s ease-in-out infinite;animation:blink 1.4s ease-in-out infinite"></span>' : '';
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td style="text-align:left;font-weight:600">'+hdrtxt+dot+'</td><td class="'+cc(a1)+'">'+fmtS(a1)+'</td><td class="'+cc(a2)+'">'+fmtS(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); el.appendChild(t);
+  }
+}
+
+// ─── SETTINGS ─────────────────────────────────────
+function renderSettings(d){
+  var pill=ge('tpill'), sub=ge('tsub'), state=d.tokenState||'unknown';
+  var map={
+    fresh:   {lbl:'Active',   cls:'pg', txt:'Token valid and fresh'},
+    expiring:{lbl:'Expiring', cls:'py', txt:'Expiring soon — re-auth recommended'},
+    expired: {lbl:'Expired',  cls:'pr', txt:'Token expired — re-auth required'}
+  };
+  var info=map[state]||{lbl:state,cls:'pb',txt:''};
+  if(pill){ pill.className='pill '+info.cls; pill.textContent=info.lbl; }
+  if(sub) sub.textContent=info.txt;
+}
+
+// ─── MOCK ─────────────────────────────────────────
+var MOCK = {
+  updated:'6:20 PM', tokenState:'fresh',
+  goals:{'A1':4000,'A2':3000},
+  warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f — check expirations!',earningsUrgent:true,
+            holiday:'Market holiday May 26 — verify expiry dates'},
+  dashRows:[
+    ['A1','OPEN','$1,240 ($1,310)','2P/3C','$800 ($850)','1P/2C','$300','0P/1C',3,6,0,4,8],
+    ['A2','OPEN','$980 ($1,020)','2P/2C','$500 ($530)','1P/1C','$0','0P/0C',3,3,0,3,5]
+  ],
+  archRows:[
+    ['2026-03-13 (THIS WEEK)','$840','$400','$620','$360','$2,220','$2,220',2,3,2,2,'ACTIVE'],
+    ['2026-03-20 (NEXT WEEK)','$1,057','$3,184','$515','$2,596','$7,352','$7,352',1,2,1,1,'ACTIVE'],
+    ['2026-03-27 (WEEK AFTER)','$0','$300','$0','$0','$300','$300',0,1,0,0,'ACTIVE']
+  ],
+  allClosed:[
+    ['2026-03-06','$1,800','$0','$1,200','$0','$3,000','$3,000',2,3,2,2,'CLOSED'],
+    ['2026-02-27','$2,100','$0','$1,400','$0','$3,500','$3,500',2,3,2,2,'CLOSED']
+  ],
+  invRows:[
+    ['2026-03-13','A1','CALL',420,2,4.20,840,6,834,'OPEN'],
+    ['2026-03-13','A1','PUT',360,2,3.80,760,6,754,'OPEN'],
+    ['2026-03-13','A2','CALL',440,2,3.60,720,6,714,'OPEN'],
+    ['2026-03-13','A2','PUT',340,2,3.10,620,6,614,'OPEN'],
+    ['2026-03-20','A1','CALL',450,1,4.00,400,3,397,'OPEN'],
+    ['2026-03-20','A2','PUT',330,1,2.50,250,3,247,'OPEN']
+  ],
+  monthly:{
+    '2026-03':{a1:2640,a2:1860,total:4500},
+    '2026-02':{a1:4300,a2:3100,total:7400},
+    '2026-01':{a1:3800,a2:2700,total:6500}
+  }
+};
+
+// ─── WIRE UP ──────────────────────────────────────
+ge('t-d').onclick  = function(){ switchTab('d'); };
+ge('t-p').onclick  = function(){ switchTab('p'); };
+ge('t-h').onclick  = function(){ switchTab('h'); };
+ge('t-s').onclick  = function(){ switchTab('s'); };
+ge('rbtn').onclick = doRefresh;
+ge('bw').onclick   = function(){ switchHist('weeks'); };
+ge('bm').onclick   = function(){ switchHist('monthly'); };
+ge('auth-btn').onclick = doAuth;
+// dtog uses inline onclick
+
+// ─── BOOT ─────────────────────────────────────────
+fetch(BACKEND + '?action=data')
+  .then(function(r){ return r.json(); })
+  .then(renderAll)
+  .catch(function(e){ console.error(e); renderAll(MOCK); });
+</script>
+</body>
+</html>html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
   font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;}
 
 /* APP SHELL */

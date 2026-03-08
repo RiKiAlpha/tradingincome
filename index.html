@@ -25,6 +25,7 @@
   --text:#0a0a0f;--text2:rgba(10,10,15,0.55);--text3:rgba(10,10,15,0.3);
 }
 [data-theme="light"] body,[data-theme="light"] #app,[data-theme="light"] .pane,[data-theme="light"] #ph{background:var(--bg);}
+[data-theme="light"] #tabs-wrap,[data-theme="light"] #tabs{background:var(--bg2);}
 [data-theme="light"] .tab svg{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tlabel{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tab.on svg{color:var(--blue);}
@@ -100,11 +101,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 /* BOTTOM TABS */
 #tabs-wrap{
   position:fixed;bottom:0;left:0;right:0;z-index:999;
-  background:var(--bg2);border-top:1px solid var(--border);
-  /* safe area as padding so background extends to bezel */
+  background:var(--bg);border-top:1px solid rgba(255,255,255,0.06);
+  /* safe area as padding so background extends to bezel — black matches iPhone bezel */
   padding-bottom:env(safe-area-inset-bottom,0px);}
 #tabs{
   height:60px;  /* icons always live in exactly 60px */
+  background:var(--bg);
   display:-webkit-flex;display:flex;}
 #tabs-safe{display:none;} /* no longer needed */
 .tab{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;
@@ -182,7 +184,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   text-transform:uppercase;text-align:center;margin-bottom:18px;}
 .cap-rows{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:0;position:relative;}
 .cap-row{display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch;}
-.cap-acct{font-size:13px;font-weight:700;color:var(--text2);width:56px;-webkit-flex-shrink:0;flex-shrink:0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
+.cap-acct{font-size:17px;font-weight:700;color:var(--text2);width:56px;-webkit-flex-shrink:0;flex-shrink:0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
 .cap-side{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;
   -webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;
   -webkit-justify-content:center;justify-content:center;padding:10px 0;}
@@ -222,7 +224,7 @@ tbody tr:last-child td{border-bottom:none;}
 .srow:last-child{border-bottom:none;}
 .slbl{font-size:13px;font-weight:600;}
 .ssub{font-size:10px;color:var(--text2);margin-top:2px;}
-.abtn{padding:3px 8px;background:rgba(0,119,182,.15);color:var(--blue);
+.abtn{padding:7px 16px;background:rgba(0,119,182,.15);color:var(--blue);
   border-radius:20px;border:none;
   font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
   cursor:pointer;font-family:inherit;touch-action:manipulation;

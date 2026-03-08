@@ -28,7 +28,7 @@
 [data-theme="light"] .tab svg{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tlabel{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tab.on svg{color:var(--blue);}
-[data-theme="light"] #tabs-wrap{background:var(--bg2);}
+
 [data-theme="light"] .tbtn{color:rgba(10,10,15,0.5);}
 [data-theme="light"] .tbtn.on{color:var(--text);}
 [data-theme="light"] .mhdr{color:rgba(10,10,15,0.4);}
@@ -98,9 +98,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 
 /* BOTTOM TABS */
 #tabs-wrap{
-  position:fixed;bottom:0;left:0;right:0;
-  background:var(--bg2);border-top:1px solid var(--border);
-  z-index:999;}
+  position:fixed;bottom:0;left:0;right:0;z-index:999;
+  background:var(--bg2);border-top:1px solid var(--border);}
 #tabs{height:60px;display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch;}
 #tabs-safe{height:env(safe-area-inset-bottom,0px);}
 .tab{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;

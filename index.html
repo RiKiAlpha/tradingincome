@@ -77,11 +77,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .pane{
   display:none;
   position:absolute;top:0;left:0;right:0;bottom:0;
-  padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));
   overflow-x:auto;overflow-y:scroll;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-y:contain;
 }
+.scroll-spacer{height:calc(60px + env(safe-area-inset-bottom,0px));}
 .pane.on{display:block;}
 
 /* HISTORY PANE — special: flex column, inner div scrolls */
@@ -90,6 +90,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   position:absolute;top:0;left:0;right:0;bottom:0;
   -webkit-flex-direction:column;flex-direction:column;
   overflow:hidden;
+  padding-bottom:0;
 }
 #ph.on{display:-webkit-flex;display:flex;}
 #ph-top{-webkit-flex-shrink:0;flex-shrink:0;padding:14px 16px 0;background:var(--bg);}
@@ -296,6 +297,7 @@ tbody tr:last-child td{border-bottom:none;}
       <div id="dw"></div>
       <div id="dc"></div>
       <div id="dcp"></div>
+      <div class="scroll-spacer"></div>
     </div>
 
     <div class="pane" id="pp">
@@ -332,6 +334,7 @@ tbody tr:last-child td{border-bottom:none;}
           </div>
         </div>
       </div>
+      <div class="scroll-spacer"></div>
       <div class="sver">RiKi Trading &middot; v2.3</div>
     </div>
 

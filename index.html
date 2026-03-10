@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -166,6 +165,22 @@ tbody tr:last-child td{border-bottom:none;}
 .sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
 #toast{position:fixed;bottom:130px;left:50%;-webkit-transform:translateX(-50%) translateY(16px);transform:translateX(-50%) translateY(16px);background:var(--bg4);border:1px solid var(--border);border-radius:24px;padding:11px 22px;font-size:22px;font-weight:600;color:var(--text);opacity:0;-webkit-transition:opacity .2s,-webkit-transform .2s;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap;}
 #toast.on{opacity:1;-webkit-transform:translateX(-50%) translateY(0);transform:translateX(-50%) translateY(0);}
+/* LOADING OVERLAY */
+#loverlay{position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;
+  opacity:0;pointer-events:none;-webkit-transition:opacity .3s;transition:opacity .3s;}
+#loverlay.on{opacity:1;pointer-events:all;}
+#loverlay.out{opacity:0;pointer-events:none;}
+@-webkit-keyframes arc-inner{0%,100%{opacity:0.15;filter:none;}40%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}60%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}}
+@keyframes arc-inner{0%,100%{opacity:0.15;filter:none;}40%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}60%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}}
+@-webkit-keyframes arc-outer{0%,100%{opacity:0.15;filter:none;}60%{opacity:1;filter:drop-shadow(0 0 10px #00b894);}80%{opacity:1;filter:drop-shadow(0 0 10px #00b894);}}
+@keyframes arc-outer{0%,100%{opacity:0.15;filter:none;}60%{opacity:1;filter:drop-shadow(0 0 10px #00b894);}80%{opacity:1;filter:drop-shadow(0 0 10px #00b894);}}
+@-webkit-keyframes ring-pulse{0%,100%{opacity:0.2;}50%{opacity:0.5;}}
+@keyframes ring-pulse{0%,100%{opacity:0.2;}50%{opacity:0.5;}}
+#loverlay svg .arc-i{-webkit-animation:arc-inner 1.6s ease-in-out infinite;animation:arc-inner 1.6s ease-in-out infinite;}
+#loverlay svg .arc-o{-webkit-animation:arc-outer 1.6s ease-in-out infinite;animation:arc-outer 1.6s ease-in-out infinite;}
+#loverlay svg .ring{-webkit-animation:ring-pulse 1.6s ease-in-out infinite;animation:ring-pulse 1.6s ease-in-out infinite;}
 .empty{padding:48px 16px;text-align:center;color:var(--text3);font-size:23px;}
 ::-webkit-scrollbar{width:0;height:0;}
 @-webkit-keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
@@ -181,13 +196,16 @@ tbody tr:last-child td{border-bottom:none;}
 
   <div id="header">
     <div id="wm">
-      <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="39" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
-        <circle cx="41" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
-        <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
-        <g transform="rotate(60 40 40) translate(0 -7)">
-          <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="4" stroke-linecap="round"/>
-          <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="2" stroke-linecap="round"/>
+      <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" overflow="hidden">
+        <defs><clipPath id="lc"><circle cx="40" cy="40" r="35"/></clipPath></defs>
+        <g clip-path="url(#lc)">
+          <circle cx="39" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
+          <circle cx="41" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
+          <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
+          <g transform="rotate(60 40 40) translate(0 -7)">
+            <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="4" stroke-linecap="round"/>
+            <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="2" stroke-linecap="round"/>
+          </g>
         </g>
       </svg>
     </div>
@@ -203,56 +221,54 @@ tbody tr:last-child td{border-bottom:none;}
 
   <div id="content">
 
-```
-<div class="pane on" id="pd">
-  <div id="dw"></div>
-  <div id="dc"></div>
-  <div id="dcp"></div>
-  <div class="scroll-spacer"></div>
-</div>
-
-<div class="pane" id="pp">
-  <div style="overflow-x:auto;">
-    <table><thead id="pth"></thead><tbody id="ptb"></tbody></table>
-  </div>
-  <div class="scroll-spacer"></div>
-</div>
-
-<div id="ph">
-  <div id="ph-top">
-    <div class="tbar">
-      <div class="tbtn on" id="bw">Weekly</div>
-      <div class="tbtn" id="bm">Monthly</div>
+    <div class="pane on" id="pd">
+      <div id="dw"></div>
+      <div id="dc"></div>
+      <div id="dcp"></div>
+      <div class="scroll-spacer"></div>
     </div>
-  </div>
-  <div id="ph-scroll"><div id="hc"></div><div class="scroll-spacer"></div></div>
-</div>
 
-<div class="pane" id="ps">
-  <div class="scard">
-    <div class="srow">
-      <div><div class="slbl">Token Status</div><div class="ssub" id="tsub">Checking&hellip;</div></div>
-      <span class="pill" id="tpill">&mdash;</span>
-    </div>
-    <div class="srow">
-      <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
-      <button class="abtn" id="auth-btn">Connect</button>
-    </div>
-  </div>
-  <div class="scard">
-    <div class="srow">
-      <div class="slbl">Dark Mode</div>
-      <div class="tog on" id="dtog" onclick="this.classList.toggle('on');toggleTheme(this.classList.contains('on'))">
-        <div class="tog-track"></div>
-        <div class="tog-thumb"></div>
+    <div class="pane" id="pp">
+      <div style="overflow-x:auto;">
+        <table><thead id="pth"></thead><tbody id="ptb"></tbody></table>
       </div>
+      <div class="scroll-spacer"></div>
     </div>
-  </div>
-  <div class="scroll-spacer"></div>
-  <div class="scroll-spacer"></div>
-  <div class="sver">RiKi Trading &middot; v2.3</div>
-</div>
-```
+
+    <div id="ph">
+      <div id="ph-top">
+        <div class="tbar">
+          <div class="tbtn on" id="bw">Weekly</div>
+          <div class="tbtn" id="bm">Monthly</div>
+        </div>
+      </div>
+      <div id="ph-scroll"><div id="hc"></div><div class="scroll-spacer"></div></div>
+    </div>
+
+    <div class="pane" id="ps">
+      <div class="scard">
+        <div class="srow">
+          <div><div class="slbl">Token Status</div><div class="ssub" id="tsub">Checking&hellip;</div></div>
+          <span class="pill" id="tpill">&mdash;</span>
+        </div>
+        <div class="srow">
+          <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
+          <button class="abtn" id="auth-btn">Connect</button>
+        </div>
+      </div>
+      <div class="scard">
+        <div class="srow">
+          <div class="slbl">Dark Mode</div>
+          <div class="tog on" id="dtog" onclick="this.classList.toggle('on');toggleTheme(this.classList.contains('on'))">
+            <div class="tog-track"></div>
+            <div class="tog-thumb"></div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-spacer"></div>
+      <div class="scroll-spacer"></div>
+      <div class="sver">RiKi Trading &middot; v2.3</div>
+    </div>
 
   </div>
 
@@ -280,6 +296,17 @@ tbody tr:last-child td{border-bottom:none;}
 
 </div>
 <div id="toast"></div>
+<div id="loverlay">
+  <svg viewBox="0 0 80 80" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
+    <circle class="ring" cx="39" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
+    <circle class="ring" cx="41" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
+    <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
+    <g transform="rotate(60 40 40) translate(0 -7)">
+      <path class="arc-o" d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="4" stroke-linecap="round"/>
+      <path class="arc-i" d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </svg>
+</div>
 
 <script>
 var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
@@ -312,9 +339,14 @@ function toggleTheme(dark){
   if(dark){ document.documentElement.removeAttribute('data-theme');ge('meta-theme').content='#0a0a0f'; }
   else { document.documentElement.setAttribute('data-theme','light');ge('meta-theme').content='#f2f2f7'; }
 }
+function showOverlay(){ var o=ge('loverlay');o.classList.remove('out');o.classList.add('on'); }
+function hideOverlay(){ var o=ge('loverlay');o.classList.remove('on');o.classList.add('out'); }
 function doRefresh(){
-  haptic();ge('rbtn').classList.add('spin');toast('Refreshing\u2026',4000);
-  fetch(BACKEND+'?action=refresh').then(function(r){return r.json();}).then(function(d){ge('rbtn').classList.remove('spin');renderAll(d);toast('Updated \u2713');}).catch(function(e){ge('rbtn').classList.remove('spin');toast('Error: '+e.message);});
+  haptic();showOverlay();
+  fetch(BACKEND+'?action=refresh')
+    .then(function(r){return r.json();})
+    .then(function(d){hideOverlay();renderAll(d);toast('Updated \u2713');})
+    .catch(function(e){hideOverlay();toast('Error: '+e.message);});
 }
 function doAuth(){
   haptic();toast('Authenticating\u2026');
@@ -488,11 +520,39 @@ ge('rbtn').onclick=doRefresh;
 ge('bw').onclick=function(){switchHist('weeks');};
 ge('bm').onclick=function(){switchHist('monthly');};
 ge('auth-btn').onclick=doAuth;
-fetch(BACKEND+'?action=data')
-  .then(function(r){return r.json();})
-  .then(renderAll)
-  .catch(function(e){console.error(e);renderAll(MOCK);});
+var oauthCode = new URLSearchParams(window.location.search).get('code');
+if(oauthCode){
+  window.history.replaceState({}, document.title, window.location.pathname);
+  switchTab('s');
+  toast('Completing authentication\u2026', 5000);
+  fetch(BACKEND+'?action=exchangeCode&code='+encodeURIComponent(oauthCode))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.success){
+        toast('\u2713 Connected to Schwab!');
+        fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(renderAll).catch(function(){renderAll(MOCK);});
+      } else {
+        toast('Auth failed: '+(d.error||'unknown'));
+        renderAll(MOCK);
+      }
+    })
+    .catch(function(e){toast('Auth error: '+e.message);renderAll(MOCK);});
+} else {
+  fetch(BACKEND+'?action=data')
+    .then(function(r){return r.json();})
+    .then(function(d){renderAll(d);_lastFetch=Date.now();})
+    .catch(function(e){console.error(e);renderAll(MOCK);});
+}
+// Silent auto-refresh when app returns to foreground after 5+ mins
+var _lastFetch = Date.now();
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible' && Date.now() - _lastFetch > 5 * 60 * 1000){
+    fetch(BACKEND+'?action=data')
+      .then(function(r){return r.json();})
+      .then(function(d){renderAll(d);_lastFetch=Date.now();})
+      .catch(function(){});
+  }
+});
 </script>
-
 </body>
 </html>

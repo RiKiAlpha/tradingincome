@@ -29,7 +29,7 @@
 [data-theme="light"] #tabs-wrap,[data-theme="light"] #tabs{background:var(--bg2);}
 [data-theme="light"] .tab svg{color:rgba(10,10,15,0.6);}
 [data-theme="light"] .tlabel{color:rgba(10,10,15,0.6);}
-[data-theme="light"] .tab.on svg{color:#00CC6A;}
+[data-theme="light"] .tab.on svg{color:#00b894;}
 
 [data-theme=“light”] .tbtn{color:rgba(10,10,15,0.5);}
 [data-theme=“light”] .tbtn.on{color:var(–text);}
@@ -122,14 +122,14 @@ gap:4px;cursor:pointer;position:relative;touch-action:manipulation;
 /* do NOT inherit padding — icons must center in the 60px #tabs only */
 padding-bottom:0;}
 .tab::after{content:’’;position:absolute;top:auto;bottom:0;left:10%;right:10%;
-height:3px;border-radius:2px;background:#00CC6A;-webkit-transform:scaleX(0);transform:scaleX(0);
+height:3px;border-radius:2px;background:#00b894;-webkit-transform:scaleX(0);transform:scaleX(0);
 -webkit-transition:-webkit-transform 0.2s;transition:transform 0.2s;}
 .tab.on::after{-webkit-transform:scaleX(1);transform:scaleX(1);}
 .tab svg{width:28px;height:28px;color:rgba(240,240,245,0.7);stroke:currentColor;fill:none;
 stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
-.tab.on svg{color:#00CC6A;}
+.tab.on svg{color:#00b894;}
 .tlabel{font-size:10px;font-weight:700;color:rgba(240,240,245,0.7);text-transform:uppercase;}
-.tab.on .tlabel{color:#00CC6A;}
+.tab.on .tlabel{color:#00b894;}
 
 /* TOGGLE BAR */
 .tbar{display:-webkit-flex;display:flex;background:var(–bg3);border-radius:10px;padding:4px;gap:3px;}
@@ -294,12 +294,12 @@ pointer-events:none;z-index:999;white-space:nowrap;}
   <div id="header">
     <div id="wm">
       <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="39" cy="40" r="34" fill="none" stroke="#00CC6A" stroke-width="0.9"/>
-        <circle cx="41" cy="40" r="34" fill="none" stroke="#00CC6A" stroke-width="0.9"/>
-        <circle cx="40" cy="40" r="32" fill="var(--bg)"/>
+        <circle cx="39" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
+        <circle cx="41" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
+        <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
         <g transform="rotate(60 40 40) translate(0 -7)">
-          <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00CC6A" stroke-width="4" stroke-linecap="round"/>
-          <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00CC6A" stroke-width="2" stroke-linecap="round"/>
+          <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="4" stroke-linecap="round"/>
+          <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="2" stroke-linecap="round"/>
         </g>
       </svg>
     </div>

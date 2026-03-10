@@ -36,8 +36,8 @@
 [data-theme=“light”] .mhdr{color:rgba(10,10,15,0.4);}
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;text-size-adjust:100%;background:var(–bg, #0a0a0f);}
-html,body{width:100%;height:100%;overflow:hidden;background:var(–bg);color:var(–text);
+html{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;text-size-adjust:100%;background:#0a0a0f;}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0f;color:var(–text);
 font-family:‘Plus Jakarta Sans’,sans-serif;-webkit-font-smoothing:antialiased;}
 
 /* APP SHELL */
@@ -468,11 +468,22 @@ function toggleTheme(dark){
   if(dark){
     document.documentElement.removeAttribute('data-theme');
     ge('meta-theme').content = '#0a0a0f';
+    try{localStorage.setItem('riki-theme','dark');}catch(e){}
   } else {
     document.documentElement.setAttribute('data-theme','light');
     ge('meta-theme').content = '#f2f2f7';
+    try{localStorage.setItem('riki-theme','light');}catch(e){}
   }
 }
+// Restore theme on load
+(function(){
+  try{
+    var t = localStorage.getItem('riki-theme');
+    if(t==='light'){
+      document.documentElement.setAttribute('data-theme','light');
+    }
+  }catch(e){}
+})();
 
 // ─── REFRESH ──────────────────────────────────────
 function doRefresh(){

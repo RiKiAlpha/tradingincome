@@ -166,7 +166,6 @@ tbody tr:last-child td{border-bottom:none;}
 .tog-thumb{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);-webkit-transition:-webkit-transform .2s cubic-bezier(.4,0,.2,1);transition:transform .2s cubic-bezier(.4,0,.2,1);}
 .tog.on .tog-thumb{-webkit-transform:translateX(20px);transform:translateX(20px);}
 .sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
-/* HWM warning card in Settings */
 .hwm-card{margin:14px 16px 0;background:rgba(229,83,83,.06);border:1px solid rgba(229,83,83,.2);border-radius:16px;overflow:hidden;}
 .hwm-hdr{padding:14px 18px 10px;display:-webkit-flex;display:flex;align-items:center;gap:9px;}
 .hwm-title{font-size:13px;font-weight:700;color:var(--red);}
@@ -176,7 +175,6 @@ tbody tr:last-child td{border-bottom:none;}
 .hwm-detail{font-size:11px;color:var(--text2);margin-top:2px;}
 #toast{position:fixed;bottom:130px;left:50%;-webkit-transform:translateX(-50%) translateY(16px);transform:translateX(-50%) translateY(16px);background:var(--bg4);border:1px solid var(--border);border-radius:24px;padding:11px 22px;font-size:22px;font-weight:600;color:var(--text);opacity:0;-webkit-transition:opacity .2s,-webkit-transform .2s;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap;}
 #toast.on{opacity:1;-webkit-transform:translateX(-50%) translateY(0);transform:translateX(-50%) translateY(0);}
-/* LOADING OVERLAY */
 body.overlaying #tabs-wrap{display:none !important;}
 #loverlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:9999;background:#0a0a0f;
   display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
@@ -205,7 +203,6 @@ body.overlaying #tabs-wrap{display:none !important;}
 </head>
 <body>
 <div id="app">
-
   <div id="header">
     <div id="wm">
       <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" overflow="hidden">
@@ -230,23 +227,19 @@ body.overlaying #tabs-wrap{display:none !important;}
       </div>
     </div>
   </div>
-
   <div id="content">
-
 <div class="pane on" id="pd">
   <div id="dw"></div>
   <div id="dc"></div>
   <div id="dcp"></div>
   <div class="scroll-spacer"></div>
 </div>
-
 <div class="pane" id="pp">
   <div style="overflow-x:auto;">
     <table><thead id="pth"></thead><tbody id="ptb"></tbody></table>
   </div>
   <div class="scroll-spacer"></div>
 </div>
-
 <div id="ph">
   <div id="ph-top">
     <div class="tbar">
@@ -256,12 +249,11 @@ body.overlaying #tabs-wrap{display:none !important;}
   </div>
   <div id="ph-scroll"><div id="hc"></div><div class="scroll-spacer"></div></div>
 </div>
-
 <div class="pane" id="ps">
   <div class="scard">
     <div class="srow">
-      <div><div class="slbl">Token Status</div><div class="ssub" id="tsub">Checking&hellip;</div></div>
-      <span class="pill" id="tpill">&mdash;</span>
+      <div><div class="slbl">Token Status</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center"><span class="pill" id="tpill">&mdash;</span><div class="ssub" id="tdays" style="margin-top:4px"></div></div>
     </div>
     <div class="srow">
       <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
@@ -282,9 +274,7 @@ body.overlaying #tabs-wrap{display:none !important;}
   <div class="scroll-spacer"></div>
   <div class="sver">RiKi Trading &middot; v2.4</div>
 </div>
-
   </div>
-
   <div id="tabs-wrap">
   <div id="tabs">
     <div class="tab on" id="t-d">
@@ -306,7 +296,6 @@ body.overlaying #tabs-wrap{display:none !important;}
   </div>
   <div id="tabs-safe"></div>
   </div>
-
 </div>
 <div id="toast"></div>
 <div id="loverlay">
@@ -318,7 +307,6 @@ body.overlaying #tabs-wrap{display:none !important;}
     </g>
   </svg>
 </div>
-
 <script>
 var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
 function ge(id){ return document.getElementById(id); }
@@ -334,8 +322,6 @@ function pct(a,b){ return b?Math.round(money(a)/money(b)*100):0; }
 function pc(p){ return p>=100?'#f4c542':p>=75?'#00b894':'#0077b6'; }
 function toast(msg,ms){ var t=ge('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},ms||2200); }
 function haptic(){ if(navigator.vibrate)navigator.vibrate(6); }
-// Normalize error messages — strips any leading "Error:"/"TypeError:" prefix so
-// we never show "Error: Error: Load failed" or "Error: TypeError: Load failed"
 function errMsg(e){
   var s = (e && e.message) ? String(e.message) : String(e);
   return s.replace(/^(TypeError|Error|ReferenceError|SyntaxError):\s*/i,'').trim();
@@ -379,10 +365,6 @@ function doAuth(){
   haptic();toast('Authenticating\u2026');
   fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
 }
-
-// ── Clear HWM baseline + warnings — call after manually correcting Archive ──
-// Flow: fix Archive row in Sheets → tap Clear HWM here →
-//       next refresh re-anchors HWM from scratch → warning auto-gone
 function doClearHWM(btn){
   haptic();
   btn.disabled = true;
@@ -391,8 +373,7 @@ function doClearHWM(btn){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.success){
-        toast('\u2713 HWM cleared — refresh to re-anchor');
-        // Re-fetch data so the warning card disappears immediately
+        toast('\u2713 HWM cleared \u2014 refresh to re-anchor');
         return fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(renderAll);
       } else {
         toast('Clear failed');
@@ -401,11 +382,10 @@ function doClearHWM(btn){
     })
     .catch(function(e){toast('Error: '+errMsg(e));btn.disabled=false;btn.textContent='Clear HWM';});
 }
-
 function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
 function renderHeader(d){
   var el=ge('utime');
-  if(el){ var raw=String(d.updated||'\u2014');el.textContent=raw.replace(/^[●•▶\s]+/,'').replace(/^Updated:\s*/i,'').trim(); }
+  if(el){ var raw=String(d.updated||'\u2014');el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,'').replace(/^Updated:\s*/i,'').trim(); }
   var dot=ge('sdot');
   if(dot){ dot.className='sdot';if(d.tokenState==='expiring')dot.classList.add('exp');else if(d.tokenState==='expired')dot.classList.add('dead'); }
 }
@@ -436,30 +416,6 @@ function renderDash(d){
     el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+x.msg;
     dw.appendChild(el);
   });
-  var dc=ge('dc');dc.innerHTML='';
-  var rows=d.archRows||[];
-  var gv=Object.values(d.goals||{});
-  var g1=parseFloat(gv[0])||4000,g2=parseFloat(gv[1])||3000;
-  var KEYS=['THIS WEEK','NEXT WEEK','WEEK AFTER'],LBLS=['This Week','Next Week','Week After'];
-
-  // Build open position lookup from dashRows: account label → [wk1 P/C, wk2 P/C, wk3 P/C]
-  // dashRows col 3 = "2P/3C" wk1, col 5 = wk2, col 7 = wk3
-  // Reformat to "3C/2P" (calls first, then puts)
-  function parsePCstr(s){
-    var m=String(s||'').match(/(\d+)P\s*\/\s*(\d+)C/i);
-    return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
-  }
-  function fmtPC(s){var o=parsePCstr(s);return o.c+'C/'+o.p+'P';}
-  var openPos={};  // "Account 1" → ["3C/2P","1C/1P","0C/0P"]
-  (d.dashRows||[]).forEach(function(row){
-    var acct=String(row[0]||'');
-    if(!acct||acct==='GRAND TOTAL')return;
-    // Normalize "A1"→"Account 1", "A2"→"Account 2" (mock uses short form)
-    var key=acct.replace(/^A(\d+)$/,'Account $1');
-    openPos[key]=[fmtPC(row[3]),fmtPC(row[5]),fmtPC(row[7])];
-  });
-
-  // HWM warnings on dashboard — same banner style as earnings
   var hwmW=d.hwmWarnings||{};
   Object.keys(hwmW).forEach(function(k){
     var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
@@ -469,7 +425,23 @@ function renderDash(d){
       acct+' \u00b7 '+expiry+' \u2014 $'+excess+' unexplained drop (hedge+API gap). Fix Archive \u2192 clear in Settings.';
     dw.appendChild(el);
   });
-
+  var dc=ge('dc');dc.innerHTML='';
+  var rows=d.archRows||[];
+  var gv=Object.values(d.goals||{});
+  var g1=parseFloat(gv[0])||4000,g2=parseFloat(gv[1])||3000;
+  var KEYS=['THIS WEEK','NEXT WEEK','WEEK AFTER'],LBLS=['This Week','Next Week','Week After'];
+  function parsePCstr(s){
+    var m=String(s||'').match(/(\d+)P\s*\/\s*(\d+)C/i);
+    return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
+  }
+  function fmtPC(s){var o=parsePCstr(s);return o.c+'C/'+o.p+'P';}
+  var openPos={};
+  (d.dashRows||[]).forEach(function(row){
+    var acct=String(row[0]||'');
+    if(!acct||acct==='GRAND TOTAL')return;
+    var key=acct.replace(/^A(\d+)$/,'Account $1');
+    openPos[key]=[fmtPC(row[3]),fmtPC(row[5]),fmtPC(row[7])];
+  });
   var sorted=rows.slice().sort(function(a,b){
     var ia=KEYS.findIndex(function(l){return String(a[0]).toUpperCase().indexOf(l)>=0;});
     var ib=KEYS.findIndex(function(l){return String(b[0]).toUpperCase().indexOf(l)>=0;});
@@ -481,7 +453,6 @@ function renderDash(d){
     var lbl=wi>=0?LBLS[wi]:raw;
     var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
     var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
-    // Open position counts for this week — wi is 0/1/2 matching wk1/wk2/wk3
     var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
     var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
     var card=document.createElement('div');card.className='wcard';
@@ -519,7 +490,7 @@ var posSort={col:'exp',dir:1};
 function posSortBy(col){ if(posSort.col===col){posSort.dir*=-1;}else{posSort.col=col;posSort.dir=col==='net'?-1:1;} renderPositions(DATA||MOCK); }
 function renderPositions(d){
   var rows=d.invRows||[];
-  var arw=function(col){var a=posSort.col===col?(posSort.dir===1?'↑':'↓'):'↕';var color=posSort.col===col?'color:var(--blue);':'color:var(--text3);';return '<span style="'+color+'font-size:11px;margin-left:3px;">'+a+'</span>';};
+  var arw=function(col){var a=posSort.col===col?(posSort.dir===1?'\u2191':'\u2193'):'\u2195';var color=posSort.col===col?'color:var(--blue);':'color:var(--text3);';return '<span style="'+color+'font-size:11px;margin-left:3px;">'+a+'</span>';};
   ge('pth').innerHTML='<tr><th>Acct</th><th onclick="posSortBy(\'type\')" style="cursor:pointer">Type'+arw('type')+'</th><th>Strike</th><th onclick="posSortBy(\'exp\')" style="cursor:pointer">Expiry'+arw('exp')+'</th><th>Qty</th><th onclick="posSortBy(\'net\')" style="cursor:pointer">Net'+arw('net')+'</th></tr>';
   var tb=ge('ptb');tb.innerHTML='';
   if(!rows.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No open positions</td></tr>';return;}
@@ -542,7 +513,7 @@ function renderPositions(d){
     var tr=document.createElement('tr');
     tr.innerHTML='<td><span class="atag '+(acct.indexOf('1')>=0?'pa1':'pa2')+'">'+acct+'</span></td>'+
       '<td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td>'+
-      '<td>'+(strike?'$'+Math.round(strike):'—')+'</td><td>'+exp+'</td><td>'+qty+'</td><td class="'+cc(net)+'">'+fmt(net)+'</td>';
+      '<td>'+(strike?'$'+Math.round(strike):'\u2014')+'</td><td>'+exp+'</td><td>'+qty+'</td><td class="'+cc(net)+'">'+fmt(net)+'</td>';
     tb.appendChild(tr);
   });
 }
@@ -554,7 +525,7 @@ function renderHist(){
     t.innerHTML='<thead><tr><th style="text-align:left">Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
     var tb=document.createElement('tbody');
     if(!rows.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';}
-    else{rows.forEach(function(row){var lbl=String(row[0]||'—').replace(/\s*\(.*\)/,'').trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tb.appendChild(tr);});}
+    else{rows.forEach(function(row){var lbl=String(row[0]||'\u2014').replace(/\s*\(.*\)/,'').trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tb.appendChild(tr);});}
     t.appendChild(tb);el.appendChild(t);
   } else {
     var monthly={};
@@ -582,54 +553,45 @@ function renderHist(){
   }
 }
 function renderSettings(d){
-  // ── Token status ──
   var pill=ge('tpill'),sub=ge('tsub'),state=d.tokenState||'unknown';
-  var map={fresh:{lbl:'Active',cls:'pg',txt:'Token valid and fresh'},expiring:{lbl:'Expiring',cls:'py',txt:'Expiring soon — re-auth recommended'},expired:{lbl:'Expired',cls:'pr',txt:'Token expired — re-auth required'}};
+  var expMs=d.tokenExpiry||0;
+  var daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null;
+  var daysStr=daysLeft!==null?(daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'';
+  var map={fresh:{lbl:'Active',cls:'pg',txt:daysStr},expiring:{lbl:'Expiring',cls:'py',txt:'Expiring soon — re-auth recommended'},expired:{lbl:'Expired',cls:'pr',txt:'Token expired — re-auth required'}};
   var info=map[state]||{lbl:state,cls:'pb',txt:''};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
   if(sub)sub.textContent=info.txt;
-
-  // ── HWM warnings ──
+  var td=ge('tdays');if(td)td.textContent=daysStr;
   var sec=ge('hwm-section');
   sec.innerHTML='';
   var warns=d.hwmWarnings||{};
   var keys=Object.keys(warns);
-  if(!keys.length) return;  // no warnings — section stays empty
-
+  if(!keys.length) return;
   var card=document.createElement('div');
   card.className='hwm-card';
-
-  // Header row
   var hdr=document.createElement('div');
   hdr.className='hwm-hdr';
   hdr.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e55353" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
     '<span class="hwm-title">Banked Gain Anomaly Detected</span>';
   card.appendChild(hdr);
-
-  // One row per warning (account + week)
   keys.forEach(function(k){
     var w=warns[k];
-    // key format: "Account 1:2026-03-14"
     var parts=k.split(':');
     var acct=parts[0]||k, expiry=parts[1]||'';
     var row=document.createElement('div');
     row.className='hwm-row';
     row.innerHTML='<div class="hwm-info">'+
       '<div class="hwm-key">'+acct+' &middot; '+expiry+'</div>'+
-      '<div class="hwm-detail">Hedge explains <span style="color:var(--green)">$'+
-        (w.hedge||0).toFixed(0)+'</span> of drop &mdash; '+
-        '<span style="color:var(--red)">$'+(w.excess||0).toFixed(0)+'</span> unexplained'+
-      '</div>'+
+      '<div class="hwm-detail">Hedge explains <span style="color:var(--green)">$'+(w.hedge||0).toFixed(0)+'</span> of drop &mdash; <span style="color:var(--red)">$'+(w.excess||0).toFixed(0)+'</span> unexplained</div>'+
       '<div class="hwm-detail" style="margin-top:3px;color:var(--text3)">Fix Archive row, then Clear HWM to dismiss</div>'+
     '</div>'+
     '<button class="abtn red" onclick="doClearHWM(this)">Clear HWM</button>';
     card.appendChild(row);
   });
-
   sec.appendChild(card);
 }
 var MOCK={
-  updated:'6:20 PM',tokenState:'fresh',goals:{'A1':4000,'A2':3000},
+  updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
   warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
   hwmWarnings:{'Account 1:2026-03-13':{excess:487,hedge:300,drop:787}},
   dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C',3,3,0,3,5]],
@@ -666,7 +628,6 @@ if(oauthCode){
     .then(function(d){renderAll(d);_lastFetch=Date.now();})
     .catch(function(e){console.error(e);renderAll(MOCK);});
 }
-// Silent auto-refresh when app returns to foreground after 5+ mins
 var _lastFetch = Date.now();
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState === 'visible' && Date.now() - _lastFetch > 5 * 60 * 1000){
@@ -677,6 +638,5 @@ document.addEventListener('visibilitychange', function(){
   }
 });
 </script>
-
 </body>
 </html>

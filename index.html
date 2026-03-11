@@ -359,8 +359,8 @@ function toggleTheme(dark){
   if(dark){ document.documentElement.removeAttribute('data-theme');ge('meta-theme').content='#0a0a0f'; }
   else { document.documentElement.setAttribute('data-theme','light');ge('meta-theme').content='#f2f2f7'; }
 }
-function showOverlay(){ var o=ge('loverlay');o.classList.remove('out');o.classList.add('on'); }
-function hideOverlay(){ var o=ge('loverlay');o.classList.remove('on');o.classList.add('out'); }
+function showOverlay(){ var o=ge('loverlay');o.classList.remove('out');o.classList.add('on');var t=ge('tabs-wrap');if(t)t.style.display='none'; }
+function hideOverlay(){ var o=ge('loverlay');o.classList.remove('on');o.classList.add('out');var t=ge('tabs-wrap');if(t)t.style.display=''; }
 function doRefresh(){
   haptic();showOverlay();
   fetch(BACKEND+'?action=refresh')

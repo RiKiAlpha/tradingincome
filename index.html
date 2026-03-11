@@ -480,13 +480,13 @@ function renderDash(d){
     card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class="wexp">'+exp+'</span></div>'+
       '<div class="asect"><div class="alabel">Account 1</div><div class="anums">'+
       '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">'+fmt(a1b)+'</div></div>'+
-      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+(a1pc?'<span style="margin-left:6px;font-size:13px;font-weight:700;color:var(--text2)">('+a1pc+')</span>':'')+'</div></div>'+
+      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+'</div>'+(a1pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a1pc+')</div>':'')+'</div>'+
       '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a1b+a1p)+'">'+fmt(a1b+a1p)+'</div></div></div>'+
       '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div><div class="ppct" style="color:'+pc(p1)+'">'+p1+'%</div></div>'+
       '<div class="ptgt">of '+fmt(g1)+' target</div></div>'+
       '<div class="asect"><div class="alabel">Account 2</div><div class="anums">'+
       '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">'+fmt(a2b)+'</div></div>'+
-      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+(a2pc?'<span style="margin-left:6px;font-size:13px;font-weight:700;color:var(--text2)">('+a2pc+')</span>':'')+'</div></div>'+
+      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+'</div>'+(a2pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a2pc+')</div>':'')+'</div>'+
       '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">'+fmt(a2b+a2p)+'</div></div></div>'+
       '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
       '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+

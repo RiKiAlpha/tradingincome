@@ -157,12 +157,21 @@ tbody tr:last-child td{border-bottom:none;}
 .slbl{font-size:13px;font-weight:600;}
 .ssub{font-size:10px;color:var(--text2);margin-top:2px;}
 .abtn{padding:7px 16px;background:rgba(0,119,182,.15);color:var(--blue);border-radius:20px;border:none;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;font-family:inherit;touch-action:manipulation;-webkit-flex-shrink:0;flex-shrink:0;display:inline-flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;line-height:1;-webkit-appearance:none;appearance:none;}
+.abtn.red{background:rgba(229,83,83,.15);color:var(--red);}
 .tog{position:relative;width:51px;height:31px;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
 .tog-track{width:100%;height:100%;border-radius:31px;background:var(--bg4);border:1px solid var(--border);-webkit-transition:background .2s,border-color .2s;transition:background .2s,border-color .2s;}
 .tog.on .tog-track{background:var(--blue);border-color:var(--blue);}
 .tog-thumb{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);-webkit-transition:-webkit-transform .2s cubic-bezier(.4,0,.2,1);transition:transform .2s cubic-bezier(.4,0,.2,1);}
 .tog.on .tog-thumb{-webkit-transform:translateX(20px);transform:translateX(20px);}
 .sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
+/* HWM warning card in Settings */
+.hwm-card{margin:14px 16px 0;background:rgba(229,83,83,.06);border:1px solid rgba(229,83,83,.2);border-radius:16px;overflow:hidden;}
+.hwm-hdr{padding:14px 18px 10px;display:-webkit-flex;display:flex;align-items:center;gap:9px;}
+.hwm-title{font-size:13px;font-weight:700;color:var(--red);}
+.hwm-row{padding:10px 18px;border-top:1px solid rgba(229,83,83,.12);display:-webkit-flex;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.hwm-info{flex:1;}
+.hwm-key{font-size:12px;font-weight:700;color:var(--text);}
+.hwm-detail{font-size:11px;color:var(--text2);margin-top:2px;}
 #toast{position:fixed;bottom:130px;left:50%;-webkit-transform:translateX(-50%) translateY(16px);transform:translateX(-50%) translateY(16px);background:var(--bg4);border:1px solid var(--border);border-radius:24px;padding:11px 22px;font-size:22px;font-weight:600;color:var(--text);opacity:0;-webkit-transition:opacity .2s,-webkit-transform .2s;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap;}
 #toast.on{opacity:1;-webkit-transform:translateX(-50%) translateY(0);transform:translateX(-50%) translateY(0);}
 /* LOADING OVERLAY */
@@ -196,15 +205,16 @@ tbody tr:last-child td{border-bottom:none;}
 
   <div id="header">
     <div id="wm">
+      <!-- Logo: rings outside clip so they're fully visible; arcs clipped to circle -->
       <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" overflow="hidden">
         <defs><clipPath id="lc"><circle cx="40" cy="40" r="35"/></clipPath></defs>
+        <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
+        <circle cx="36" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="2.7"/>
+        <circle cx="44" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="2.7"/>
         <g clip-path="url(#lc)">
-          <circle cx="39" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
-          <circle cx="41" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
-          <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
           <g transform="rotate(60 40 40) translate(0 -7)">
-            <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="4" stroke-linecap="round"/>
-            <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="2" stroke-linecap="round"/>
+            <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="6.3" stroke-linecap="round"/>
+            <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="3.68" stroke-linecap="round"/>
           </g>
         </g>
       </svg>
@@ -265,9 +275,11 @@ tbody tr:last-child td{border-bottom:none;}
           </div>
         </div>
       </div>
+      <!-- HWM warnings injected here by renderSettings -->
+      <div id="hwm-section"></div>
       <div class="scroll-spacer"></div>
       <div class="scroll-spacer"></div>
-      <div class="sver">RiKi Trading &middot; v2.3</div>
+      <div class="sver">RiKi Trading &middot; v2.4</div>
     </div>
 
   </div>
@@ -297,13 +309,14 @@ tbody tr:last-child td{border-bottom:none;}
 </div>
 <div id="toast"></div>
 <div id="loverlay">
+  <!-- Loading overlay: arcs thickened to match header logo -->
   <svg viewBox="0 0 80 80" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
-    <circle class="ring" cx="39" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
-    <circle class="ring" cx="41" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="0.9"/>
     <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
+    <circle class="ring" cx="36" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="2.7"/>
+    <circle class="ring" cx="44" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="2.7"/>
     <g transform="rotate(60 40 40) translate(0 -7)">
-      <path class="arc-o" d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="4" stroke-linecap="round"/>
-      <path class="arc-i" d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="2" stroke-linecap="round"/>
+      <path class="arc-o" d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="6.3" stroke-linecap="round"/>
+      <path class="arc-i" d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="3.68" stroke-linecap="round"/>
     </g>
   </svg>
 </div>
@@ -323,6 +336,12 @@ function pct(a,b){ return b?Math.round(money(a)/money(b)*100):0; }
 function pc(p){ return p>=100?'#f4c542':p>=75?'#00b894':'#0077b6'; }
 function toast(msg,ms){ var t=ge('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},ms||2200); }
 function haptic(){ if(navigator.vibrate)navigator.vibrate(6); }
+// Normalize error messages — strips any leading "Error:"/"TypeError:" prefix so
+// we never show "Error: Error: Load failed" or "Error: TypeError: Load failed"
+function errMsg(e){
+  var s = (e && e.message) ? String(e.message) : String(e);
+  return s.replace(/^(TypeError|Error|ReferenceError|SyntaxError):\s*/i,'').trim();
+}
 if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){ document.documentElement.classList.add('pwa'); }
 var DATA=null, activeTab='d', histMode='weeks';
 var TAB_IDS={d:'pd',p:'pp',h:'ph',s:'ps'};
@@ -346,12 +365,35 @@ function doRefresh(){
   fetch(BACKEND+'?action=refresh')
     .then(function(r){return r.json();})
     .then(function(d){hideOverlay();renderAll(d);toast('Updated \u2713');})
-    .catch(function(e){hideOverlay();toast('Error: '+e.message);});
+    .catch(function(e){hideOverlay();toast('Error: '+errMsg(e));});
 }
 function doAuth(){
   haptic();toast('Authenticating\u2026');
-  fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+e.message);});
+  fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
 }
+
+// ── Clear HWM baseline + warnings — call after manually correcting Archive ──
+// Flow: fix Archive row in Sheets → tap Clear HWM here →
+//       next refresh re-anchors HWM from scratch → warning auto-gone
+function doClearHWM(btn){
+  haptic();
+  btn.disabled = true;
+  btn.textContent = 'Clearing\u2026';
+  fetch(BACKEND+'?action=clearHWM')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.success){
+        toast('\u2713 HWM cleared — refresh to re-anchor');
+        // Re-fetch data so the warning card disappears immediately
+        return fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(renderAll);
+      } else {
+        toast('Clear failed');
+        btn.disabled=false;btn.textContent='Clear HWM';
+      }
+    })
+    .catch(function(e){toast('Error: '+errMsg(e));btn.disabled=false;btn.textContent='Clear HWM';});
+}
+
 function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
 function renderHeader(d){
   var el=ge('utime');
@@ -391,6 +433,35 @@ function renderDash(d){
   var gv=Object.values(d.goals||{});
   var g1=parseFloat(gv[0])||4000,g2=parseFloat(gv[1])||3000;
   var KEYS=['THIS WEEK','NEXT WEEK','WEEK AFTER'],LBLS=['This Week','Next Week','Week After'];
+
+  // Build open position lookup from dashRows: account label → [wk1 P/C, wk2 P/C, wk3 P/C]
+  // dashRows col 3 = "2P/3C" wk1, col 5 = wk2, col 7 = wk3
+  // Reformat to "3C/2P" (calls first, then puts)
+  function parsePCstr(s){
+    var m=String(s||'').match(/(\d+)P\s*\/\s*(\d+)C/i);
+    return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
+  }
+  function fmtPC(s){var o=parsePCstr(s);return o.c+'C/'+o.p+'P';}
+  var openPos={};  // "Account 1" → ["3C/2P","1C/1P","0C/0P"]
+  (d.dashRows||[]).forEach(function(row){
+    var acct=String(row[0]||'');
+    if(!acct||acct==='GRAND TOTAL')return;
+    // Normalize "A1"→"Account 1", "A2"→"Account 2" (mock uses short form)
+    var key=acct.replace(/^A(\d+)$/,'Account $1');
+    openPos[key]=[fmtPC(row[3]),fmtPC(row[5]),fmtPC(row[7])];
+  });
+
+  // HWM warnings on dashboard — same banner style as earnings
+  var hwmW=d.hwmWarnings||{};
+  Object.keys(hwmW).forEach(function(k){
+    var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
+    var excess=(hwmW[k].excess||0).toFixed(0);
+    var el=document.createElement('div');el.className='warn urg';
+    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
+      acct+' \u00b7 '+expiry+' \u2014 $'+excess+' unexplained drop (hedge+API gap). Fix Archive \u2192 clear in Settings.';
+    dw.appendChild(el);
+  });
+
   var sorted=rows.slice().sort(function(a,b){
     var ia=KEYS.findIndex(function(l){return String(a[0]).toUpperCase().indexOf(l)>=0;});
     var ib=KEYS.findIndex(function(l){return String(b[0]).toUpperCase().indexOf(l)>=0;});
@@ -402,17 +473,20 @@ function renderDash(d){
     var lbl=wi>=0?LBLS[wi]:raw;
     var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
     var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
+    // Open position counts for this week — wi is 0/1/2 matching wk1/wk2/wk3
+    var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
+    var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
     var card=document.createElement('div');card.className='wcard';
     card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class="wexp">'+exp+'</span></div>'+
       '<div class="asect"><div class="alabel">Account 1</div><div class="anums">'+
       '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">'+fmt(a1b)+'</div></div>'+
-      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+'</div></div>'+
+      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+(a1pc?'<span style="margin-left:6px;font-size:13px;font-weight:700;color:var(--text2)">('+a1pc+')</span>':'')+'</div></div>'+
       '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a1b+a1p)+'">'+fmt(a1b+a1p)+'</div></div></div>'+
       '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div><div class="ppct" style="color:'+pc(p1)+'">'+p1+'%</div></div>'+
       '<div class="ptgt">of '+fmt(g1)+' target</div></div>'+
       '<div class="asect"><div class="alabel">Account 2</div><div class="anums">'+
       '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">'+fmt(a2b)+'</div></div>'+
-      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+'</div></div>'+
+      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+(a2pc?'<span style="margin-left:6px;font-size:13px;font-weight:700;color:var(--text2)">('+a2pc+')</span>':'')+'</div></div>'+
       '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">'+fmt(a2b+a2p)+'</div></div></div>'+
       '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
       '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+
@@ -426,8 +500,8 @@ function renderDash(d){
     var inner='<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
     dr.forEach(function(row){
       var acct=String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
-      var cRem=(parseInt(row[12])>=0)?parseInt(row[12]):(parseInt(row[9])||0);
-      var pRem=(parseInt(row[11])>=0)?parseInt(row[11]):(parseInt(row[8])||0);
+      var cRem=parseInt(row[12])||0;
+      var pRem=parseInt(row[11])||0;
       inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>';
     });
     inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
@@ -500,15 +574,56 @@ function renderHist(){
   }
 }
 function renderSettings(d){
+  // ── Token status ──
   var pill=ge('tpill'),sub=ge('tsub'),state=d.tokenState||'unknown';
   var map={fresh:{lbl:'Active',cls:'pg',txt:'Token valid and fresh'},expiring:{lbl:'Expiring',cls:'py',txt:'Expiring soon — re-auth recommended'},expired:{lbl:'Expired',cls:'pr',txt:'Token expired — re-auth required'}};
   var info=map[state]||{lbl:state,cls:'pb',txt:''};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
   if(sub)sub.textContent=info.txt;
+
+  // ── HWM warnings ──
+  var sec=ge('hwm-section');
+  sec.innerHTML='';
+  var warns=d.hwmWarnings||{};
+  var keys=Object.keys(warns);
+  if(!keys.length) return;  // no warnings — section stays empty
+
+  var card=document.createElement('div');
+  card.className='hwm-card';
+
+  // Header row
+  var hdr=document.createElement('div');
+  hdr.className='hwm-hdr';
+  hdr.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e55353" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
+    '<span class="hwm-title">Banked Gain Anomaly Detected</span>';
+  card.appendChild(hdr);
+
+  // One row per warning (account + week)
+  keys.forEach(function(k){
+    var w=warns[k];
+    // key format: "Account 1:2026-03-14"
+    var parts=k.split(':');
+    var acct=parts[0]||k, expiry=parts[1]||'';
+    var row=document.createElement('div');
+    row.className='hwm-row';
+    row.innerHTML='<div class="hwm-info">'+
+      '<div class="hwm-key">'+acct+' &middot; '+expiry+'</div>'+
+      '<div class="hwm-detail">Hedge explains <span style="color:var(--green)">$'+
+        (w.hedge||0).toFixed(0)+'</span> of drop &mdash; '+
+        '<span style="color:var(--red)">$'+(w.excess||0).toFixed(0)+'</span> unexplained'+
+      '</div>'+
+      '<div class="hwm-detail" style="margin-top:3px;color:var(--text3)">Fix Archive row, then Clear HWM to dismiss</div>'+
+    '</div>'+
+    '<button class="abtn red" onclick="doClearHWM(this)">Clear HWM</button>';
+    card.appendChild(row);
+  });
+
+  sec.appendChild(card);
 }
 var MOCK={
   updated:'6:20 PM',tokenState:'fresh',goals:{'A1':4000,'A2':3000},
   warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
+  hwmWarnings:{'Account 1:2026-03-13':{excess:487,hedge:300,drop:787}},
   dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C',3,3,0,3,5]],
   archRows:[['2026-03-13 (THIS WEEK)','$840','$400','$620','$360','$2,220','$2,220',2,3,2,2,'ACTIVE'],['2026-03-20 (NEXT WEEK)','$1,057','$3,184','$515','$2,596','$7,352','$7,352',1,2,1,1,'ACTIVE'],['2026-03-27 (WEEK AFTER)','$0','$300','$0','$0','$300','$300',0,1,0,0,'ACTIVE']],
   allClosed:[['2026-03-06','$1,800','$0','$1,200','$0','$3,000','$3,000',2,3,2,2,'CLOSED'],['2026-02-27','$2,100','$0','$1,400','$0','$3,500','$3,500',2,3,2,2,'CLOSED']],
@@ -536,7 +651,7 @@ if(oauthCode){
         renderAll(MOCK);
       }
     })
-    .catch(function(e){toast('Auth error: '+e.message);renderAll(MOCK);});
+    .catch(function(e){toast('Auth error: '+errMsg(e));renderAll(MOCK);});
 } else {
   fetch(BACKEND+'?action=data')
     .then(function(r){return r.json();})

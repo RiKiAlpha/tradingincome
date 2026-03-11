@@ -360,11 +360,12 @@ function toggleTheme(dark){
   else { document.documentElement.setAttribute('data-theme','light');ge('meta-theme').content='#f2f2f7'; }
 }
 function showOverlay(){
-  var t=ge('tabs-wrap');
-  if(t){t.style.visibility='hidden';t.style.opacity='0';}
   var o=ge('loverlay');
-  document.body.appendChild(o); // re-append as last DOM child so it paints last
-  o.offsetHeight; // force reflow before class change
+  var t=ge('tabs-wrap');
+  // Move tabs-wrap INSIDE the overlay so it's in the same stacking context
+  // then hide it — iOS can't paint it above overlay if it's a child of it
+  if(t){o.appendChild(t);t.style.display='none';}
+  document.body.appendChild(o);
   o.classList.remove('out');
   o.classList.add('on');
 }
@@ -372,8 +373,10 @@ function hideOverlay(){
   var o=ge('loverlay');
   o.classList.remove('on');
   o.classList.add('out');
+  // Move tabs-wrap back to app div and restore
   var t=ge('tabs-wrap');
-  if(t){t.style.visibility='';t.style.opacity='';}
+  var app=ge('app');
+  if(t&&app){t.style.display='';app.appendChild(t);}
 }
 function doRefresh(){
   haptic();showOverlay();

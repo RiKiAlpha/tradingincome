@@ -177,12 +177,11 @@ tbody tr:last-child td{border-bottom:none;}
 #toast.on{opacity:1;-webkit-transform:translateX(-50%) translateY(0);transform:translateX(-50%) translateY(0);}
 /* LOADING OVERLAY */
 body.overlaying #tabs-wrap{display:none !important;}
-#loverlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:9999;background:#0a0a0f;
-  display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
-  -webkit-justify-content:center;justify-content:center;
-  opacity:0;pointer-events:none;-webkit-transform:translateZ(0);transform:translateZ(0);-webkit-transition:none;transition:none;}
-#loverlay.on{opacity:1;pointer-events:all;}
-#loverlay.out{opacity:0;pointer-events:none;}
+#loverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:9999;background-color:#0a0a0f;
+  -webkit-align-items:center;align-items:center;
+  -webkit-justify-content:center;justify-content:center;}
+#loverlay.on{display:-webkit-flex;display:flex;}
+
 @-webkit-keyframes arc-inner{0%,100%{opacity:0.15;filter:none;}40%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}60%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}}
 @keyframes arc-inner{0%,100%{opacity:0.15;filter:none;}40%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}60%{opacity:1;filter:drop-shadow(0 0 6px #00b894);}}
 @-webkit-keyframes arc-outer{0%,100%{opacity:0.15;filter:none;}60%{opacity:1;filter:drop-shadow(0 0 10px #00b894);}80%{opacity:1;filter:drop-shadow(0 0 10px #00b894);}}
@@ -192,11 +191,12 @@ body.overlaying #tabs-wrap{display:none !important;}
 #loverlay svg .arc-i{-webkit-animation:arc-inner 1.6s ease-in-out infinite;animation:arc-inner 1.6s ease-in-out infinite;}
 #loverlay svg .arc-o{-webkit-animation:arc-outer 1.6s ease-in-out infinite;animation:arc-outer 1.6s ease-in-out infinite;}
 #loverlay svg .ring{-webkit-animation:ring-pulse 1.6s ease-in-out infinite;animation:ring-pulse 1.6s ease-in-out infinite;}
-.empty{padding:48px 16px;text-align:center;color:var(--text3);font-size:23px;}
+.empty{padding:48px 16px;text-align:center;color:var(–text3);font-size:23px;}
 ::-webkit-scrollbar{width:0;height:0;}
 @-webkit-keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 </style>
+
 <link rel="apple-touch-icon" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
 <link rel="apple-touch-icon" sizes="152x152" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
@@ -360,18 +360,8 @@ function toggleTheme(dark){
   if(dark){ document.documentElement.removeAttribute('data-theme');ge('meta-theme').content='#0a0a0f'; }
   else { document.documentElement.setAttribute('data-theme','light');ge('meta-theme').content='#f2f2f7'; }
 }
-function showOverlay(){
-  document.body.classList.add('overlaying');
-  var o=ge('loverlay');
-  o.classList.remove('out');
-  o.classList.add('on');
-}
-function hideOverlay(){
-  var o=ge('loverlay');
-  o.classList.remove('on');
-  o.classList.add('out');
-  document.body.classList.remove('overlaying');
-}
+function showOverlay(){ document.body.classList.add('overlaying');ge('loverlay').classList.add('on'); }
+function hideOverlay(){ ge('loverlay').classList.remove('on');document.body.classList.remove('overlaying'); }
 function doRefresh(){
   haptic();showOverlay();
   fetch(BACKEND+'?action=refresh')

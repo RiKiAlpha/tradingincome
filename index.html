@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -209,12 +210,12 @@ tbody tr:last-child td{border-bottom:none;}
       <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" overflow="hidden">
         <defs><clipPath id="lc"><circle cx="40" cy="40" r="35"/></clipPath></defs>
         <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
-        <circle cx="36" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="2.7"/>
-        <circle cx="44" cy="40" r="34" fill="none" stroke="#00b894" stroke-width="2.7"/>
+        <circle cx="36" cy="40" r="34" fill="none" stroke="#00d4a6" stroke-width="2.7"/>
+        <circle cx="44" cy="40" r="34" fill="none" stroke="#00d4a6" stroke-width="2.7"/>
         <g clip-path="url(#lc)">
           <g transform="rotate(60 40 40) translate(0 -7)">
-            <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="6.3" stroke-linecap="round"/>
-            <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="3.68" stroke-linecap="round"/>
+            <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00d4a6" stroke-width="6.3" stroke-linecap="round"/>
+            <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00d4a6" stroke-width="3.68" stroke-linecap="round"/>
           </g>
         </g>
       </svg>
@@ -231,56 +232,58 @@ tbody tr:last-child td{border-bottom:none;}
 
   <div id="content">
 
-    <div class="pane on" id="pd">
-      <div id="dw"></div>
-      <div id="dc"></div>
-      <div id="dcp"></div>
-      <div class="scroll-spacer"></div>
-    </div>
+```
+<div class="pane on" id="pd">
+  <div id="dw"></div>
+  <div id="dc"></div>
+  <div id="dcp"></div>
+  <div class="scroll-spacer"></div>
+</div>
 
-    <div class="pane" id="pp">
-      <div style="overflow-x:auto;">
-        <table><thead id="pth"></thead><tbody id="ptb"></tbody></table>
-      </div>
-      <div class="scroll-spacer"></div>
-    </div>
+<div class="pane" id="pp">
+  <div style="overflow-x:auto;">
+    <table><thead id="pth"></thead><tbody id="ptb"></tbody></table>
+  </div>
+  <div class="scroll-spacer"></div>
+</div>
 
-    <div id="ph">
-      <div id="ph-top">
-        <div class="tbar">
-          <div class="tbtn on" id="bw">Weekly</div>
-          <div class="tbtn" id="bm">Monthly</div>
-        </div>
-      </div>
-      <div id="ph-scroll"><div id="hc"></div><div class="scroll-spacer"></div></div>
+<div id="ph">
+  <div id="ph-top">
+    <div class="tbar">
+      <div class="tbtn on" id="bw">Weekly</div>
+      <div class="tbtn" id="bm">Monthly</div>
     </div>
+  </div>
+  <div id="ph-scroll"><div id="hc"></div><div class="scroll-spacer"></div></div>
+</div>
 
-    <div class="pane" id="ps">
-      <div class="scard">
-        <div class="srow">
-          <div><div class="slbl">Token Status</div><div class="ssub" id="tsub">Checking&hellip;</div></div>
-          <span class="pill" id="tpill">&mdash;</span>
-        </div>
-        <div class="srow">
-          <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
-          <button class="abtn" id="auth-btn">Connect</button>
-        </div>
-      </div>
-      <div class="scard">
-        <div class="srow">
-          <div class="slbl">Dark Mode</div>
-          <div class="tog on" id="dtog" onclick="this.classList.toggle('on');toggleTheme(this.classList.contains('on'))">
-            <div class="tog-track"></div>
-            <div class="tog-thumb"></div>
-          </div>
-        </div>
-      </div>
-      <!-- HWM warnings injected here by renderSettings -->
-      <div id="hwm-section"></div>
-      <div class="scroll-spacer"></div>
-      <div class="scroll-spacer"></div>
-      <div class="sver">RiKi Trading &middot; v2.4</div>
+<div class="pane" id="ps">
+  <div class="scard">
+    <div class="srow">
+      <div><div class="slbl">Token Status</div><div class="ssub" id="tsub">Checking&hellip;</div></div>
+      <span class="pill" id="tpill">&mdash;</span>
     </div>
+    <div class="srow">
+      <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
+      <button class="abtn" id="auth-btn">Connect</button>
+    </div>
+  </div>
+  <div class="scard">
+    <div class="srow">
+      <div class="slbl">Dark Mode</div>
+      <div class="tog on" id="dtog" onclick="this.classList.toggle('on');toggleTheme(this.classList.contains('on'))">
+        <div class="tog-track"></div>
+        <div class="tog-thumb"></div>
+      </div>
+    </div>
+  </div>
+  <!-- HWM warnings injected here by renderSettings -->
+  <div id="hwm-section"></div>
+  <div class="scroll-spacer"></div>
+  <div class="scroll-spacer"></div>
+  <div class="sver">RiKi Trading &middot; v2.4</div>
+</div>
+```
 
   </div>
 
@@ -313,8 +316,8 @@ tbody tr:last-child td{border-bottom:none;}
   <svg viewBox="0 0 80 80" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
     <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
     <g transform="rotate(60 40 40) translate(0 -7)">
-      <path class="arc-o" d="M18,50 Q40,14 62,50" fill="none" stroke="#00b894" stroke-width="6.3" stroke-linecap="round"/>
-      <path class="arc-i" d="M28,63 Q40,42 52,63" fill="none" stroke="#00b894" stroke-width="3.68" stroke-linecap="round"/>
+      <path class="arc-o" d="M18,50 Q40,14 62,50" fill="none" stroke="#00d4a6" stroke-width="6.3" stroke-linecap="round"/>
+      <path class="arc-i" d="M28,63 Q40,42 52,63" fill="none" stroke="#00d4a6" stroke-width="3.68" stroke-linecap="round"/>
     </g>
   </svg>
 </div>
@@ -667,5 +670,6 @@ document.addEventListener('visibilitychange', function(){
   }
 });
 </script>
+
 </body>
 </html>

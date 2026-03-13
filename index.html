@@ -253,7 +253,9 @@ body.overlaying #tabs-wrap{display:none !important;}
   <div class="scard">
     <div class="srow">
       <div><div class="slbl">Token Status</div></div>
-      <div style="display:flex;flex-direction:column;align-items:center"><span class="pill" id="tpill">&mdash;</span><div class="ssub" id="tdays" style="margin-top:4px"></div></div>
+      <div style="display:flex;flex-direction:column;align-items:center"><span class="pill" id="tpill">&mdash;</span>
+<div class="ssub" id="tsub" style="margin-top:4px"></div>
+<div class="ssub" id="tdays" style="margin-top:4px"></div>
     </div>
     <div class="srow">
       <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
@@ -553,14 +555,13 @@ function renderHist(){
   }
 }
 function renderSettings(d){
-  var pill=ge('tpill'),sub=ge('tsub'),state=d.tokenState||'unknown';
+var pill=ge('tpill'),state=d.tokenState||'unknown';
   var expMs=d.tokenExpiry||0;
   var daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null;
   var daysStr=daysLeft!==null?(daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'';
-  var map={fresh:{lbl:'Active',cls:'pg',txt:daysStr},expiring:{lbl:'Expiring',cls:'py',txt:'Expiring soon — re-auth recommended'},expired:{lbl:'Expired',cls:'pr',txt:'Token expired — re-auth required'}};
-  var info=map[state]||{lbl:state,cls:'pb',txt:''};
+  var map={fresh:{lbl:'Active',cls:'pg'},expiring:{lbl:'Expiring',cls:'py'},expired:{lbl:'Expired',cls:'pr'}};
+  var info=map[state]||{lbl:state,cls:'pb'};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
-  if(sub)sub.textContent=info.txt;
   var td=ge('tdays');if(td)td.textContent=daysStr;
   var sec=ge('hwm-section');
   sec.innerHTML='';

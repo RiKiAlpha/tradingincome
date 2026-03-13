@@ -562,8 +562,7 @@ var pill=ge('tpill'),state=d.tokenState||'unknown';
   var map={fresh:{lbl:'Active',cls:'pg'},expiring:{lbl:'Expiring',cls:'py'},expired:{lbl:'Expired',cls:'pr'}};
   var info=map[state]||{lbl:state,cls:'pb'};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
-  var td=ge('tdays');if(td)td.textContent=daysStr;
-  var sec=ge('hwm-section');
+var td=ge('tdays');console.log('tokenExpiry:',d.tokenExpiry,'daysStr:',daysStr);if(td)td.textContent=daysStr;  var sec=ge('hwm-section');
   sec.innerHTML='';
   var warns=d.hwmWarnings||{};
   var keys=Object.keys(warns);

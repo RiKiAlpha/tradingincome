@@ -529,7 +529,7 @@ function renderHist(){
     t.innerHTML='<thead><tr><th style="text-align:left">Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
     var tb=document.createElement('tbody');
     if(!rows.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';}
-    else{rows.forEach(function(row){var lbl=String(row[0]||'\u2014').replace(/\s*\(.*\)/,'').trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tb.appendChild(tr);});}
+    else{rows.slice().reverse().forEach(function(row){var lbl=String(row[0]||'\u2014').replace(/\s*\(.*\)/,'').trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tb.appendChild(tr);});}
     t.appendChild(tb);el.appendChild(t);
   } else {
     var monthly={};
@@ -537,7 +537,8 @@ function renderHist(){
     var mBase=d.monthly||{};
     Object.keys(mBase).forEach(function(k){var nk=normMon(k).substring(0,7);if(!monthly[nk])monthly[nk]={a1:0,a2:0,total:0};monthly[nk].a1+=mBase[k].a1||0;monthly[nk].a2+=mBase[k].a2||0;monthly[nk].total+=mBase[k].total||0;});
     var archRows=d.archRows||[];
-    archRows.forEach(function(row){var raw=String(row[0]||'');var dm=raw.match(/(\d{4}-\d{2})/);if(!dm)return;var mo=dm[1];var a1b=money(row[1]||0),a2b=money(row[3]||0);if(!monthly[mo])monthly[mo]={a1:0,a2:0,total:0};monthly[mo].a1+=a1b;monthly[mo].a2+=a2b;monthly[mo].total+=a1b+a2b;});
+    var activeMonths=new Set();
+    archRows.forEach(function(row){var raw=String(row[0]||'');var dm=raw.match(/(\d{4}-\d{2})/);if(!dm)return;var mo=dm[1];var a1b=money(row[1]||0),a2b=money(row[3]||0);if(!monthly[mo])monthly[mo]={a1:0,a2:0,total:0};monthly[mo].a1+=a1b;monthly[mo].a2+=a2b;monthly[mo].total+=a1b+a2b;activeMonths.add(mo);});
     var months=Object.keys(monthly).sort(function(a,b){return b.localeCompare(a);});
     if(!months.length){el.innerHTML='<div class="empty">No monthly data</div>';return;}
     var t=document.createElement('table');
@@ -547,7 +548,7 @@ function renderHist(){
     months.forEach(function(mo){
       var e=monthly[mo];var hdrtxt;
       try{hdrtxt=new Date(mo+'-02').toLocaleDateString('en-US',{month:'long',year:'numeric'});}catch(x){hdrtxt=mo;}
-      var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm);
+      var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm)||activeMonths.has(mo);
       var dot=isCur?'&nbsp;<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;vertical-align:middle;position:relative;top:-1px;-webkit-animation:blink 1.4s ease-in-out infinite;animation:blink 1.4s ease-in-out infinite"></span>':'';
       var tr=document.createElement('tr');
       tr.innerHTML='<td style="text-align:left;font-weight:600">'+hdrtxt+dot+'</td><td class="'+cc(a1)+'">'+fmtS(a1)+'</td><td class="'+cc(a2)+'">'+fmtS(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';

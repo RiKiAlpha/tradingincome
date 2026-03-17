@@ -253,9 +253,10 @@ body.overlaying #tabs-wrap{display:none !important;}
   <div class="scard">
     <div class="srow">
       <div><div class="slbl">Token Status</div></div>
-      <div style="display:flex;flex-direction:column;align-items:center"><span class="pill" id="tpill">&mdash;</span>
-<div class="ssub" id="tsub" style="margin-top:4px"></div>
-<div class="ssub" id="tdays" style="margin-top:4px"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <span class="pill" id="tpill">&mdash;</span>
+        <div class="ssub" id="tdays" style="margin-top:4px;text-align:center;"></div>
+      </div>
     </div>
     <div class="srow">
       <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
@@ -356,11 +357,12 @@ function hideOverlay(){
   o.classList.add('out');
   document.body.classList.remove('overlaying');
 }
+function saveCache(d){ try{ localStorage.setItem('riki_data',JSON.stringify(d)); }catch(e){} }
 function doRefresh(){
   haptic();showOverlay();
   fetch(BACKEND+'?action=refresh')
     .then(function(r){return r.json();})
-    .then(function(d){hideOverlay();renderAll(d);toast('Updated \u2713');})
+    .then(function(d){hideOverlay();renderAll(d);saveCache(d);toast('Updated \u2713');})
     .catch(function(e){hideOverlay();toast('Error: '+errMsg(e));});
 }
 function doAuth(){
@@ -376,7 +378,7 @@ function doClearHWM(btn){
     .then(function(d){
       if(d.success){
         toast('\u2713 HWM cleared \u2014 refresh to re-anchor');
-        return fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(renderAll);
+        return fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);});
       } else {
         toast('Clear failed');
         btn.disabled=false;btn.textContent='Clear HWM';
@@ -555,14 +557,15 @@ function renderHist(){
   }
 }
 function renderSettings(d){
-var pill=ge('tpill'),state=d.tokenState||'unknown';
+  var pill=ge('tpill'),state=d.tokenState||'unknown';
   var expMs=d.tokenExpiry||0;
   var daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null;
   var daysStr=daysLeft!==null?(daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'';
   var map={fresh:{lbl:'Active',cls:'pg'},expiring:{lbl:'Expiring',cls:'py'},expired:{lbl:'Expired',cls:'pr'}};
   var info=map[state]||{lbl:state,cls:'pb'};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
-var td=ge('tdays');console.log('tokenExpiry:',d.tokenExpiry,'daysStr:',daysStr);if(td)td.textContent=daysStr;  var sec=ge('hwm-section');
+  var td=ge('tdays');if(td)td.textContent=daysStr;
+  var sec=ge('hwm-section');
   sec.innerHTML='';
   var warns=d.hwmWarnings||{};
   var keys=Object.keys(warns);
@@ -593,7 +596,7 @@ var td=ge('tdays');console.log('tokenExpiry:',d.tokenExpiry,'daysStr:',daysStr);
 var MOCK={
   updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
   warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
-  hwmWarnings:{'Account 1:2026-03-13':{excess:487,hedge:300,drop:787}},
+  hwmWarnings:{},
   dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C',3,3,0,3,5]],
   archRows:[['2026-03-13 (THIS WEEK)','$840','$400','$620','$360','$2,220','$2,220',2,3,2,2,'ACTIVE'],['2026-03-20 (NEXT WEEK)','$1,057','$3,184','$515','$2,596','$7,352','$7,352',1,2,1,1,'ACTIVE'],['2026-03-27 (WEEK AFTER)','$0','$300','$0','$0','$300','$300',0,1,0,0,'ACTIVE']],
   allClosed:[['2026-03-06','$1,800','$0','$1,200','$0','$3,000','$3,000',2,3,2,2,'CLOSED'],['2026-02-27','$2,100','$0','$1,400','$0','$3,500','$3,500',2,3,2,2,'CLOSED']],
@@ -615,7 +618,7 @@ if(oauthCode){
     .then(function(d){
       if(d.success){
         toast('\u2713 Connected to Schwab!');
-        fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(renderAll).catch(function(){renderAll(MOCK);});
+        fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
       } else {
         toast('Auth failed: '+(d.error||'unknown'));
         renderAll(MOCK);
@@ -623,17 +626,21 @@ if(oauthCode){
     })
     .catch(function(e){toast('Auth error: '+errMsg(e));renderAll(MOCK);});
 } else {
+  // Render cached data immediately for instant display, then fetch fresh silently
+  var _cached = null;
+  try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
+  if(_cached){ renderAll(_cached); }
   fetch(BACKEND+'?action=data')
     .then(function(r){return r.json();})
-    .then(function(d){renderAll(d);_lastFetch=Date.now();})
-    .catch(function(e){console.error(e);renderAll(MOCK);});
+    .then(function(d){renderAll(d);_lastFetch=Date.now();saveCache(d);})
+    .catch(function(e){console.error(e);if(!_cached)renderAll(MOCK);});
 }
 var _lastFetch = Date.now();
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState === 'visible' && Date.now() - _lastFetch > 5 * 60 * 1000){
     fetch(BACKEND+'?action=data')
       .then(function(r){return r.json();})
-      .then(function(d){renderAll(d);_lastFetch=Date.now();})
+      .then(function(d){renderAll(d);_lastFetch=Date.now();saveCache(d);})
       .catch(function(){});
   }
 });

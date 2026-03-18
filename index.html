@@ -757,18 +757,17 @@ setInterval(function(){
 }, 5 * 60 * 1000);
 
 document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState === 'visible' && Date.now() - _lastFetch > 5 * 60 * 1000){
-    fetch(DATA_JSON + '?_=' + Date.now())
-      .then(function(r){return r.json();})
-      .then(function(d){
-        var changed = DATA && d.updated !== DATA.updated;
-        renderAll(d);
-        _lastFetch=Date.now();
-        saveCache(d);
-        if(changed) flashLogo();
-      })
-      .catch(function(){});
-  }
+  if(document.visibilityState !== 'visible') return;
+  fetch(DATA_JSON + '?_=' + Date.now())
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var changed = DATA && d.updated !== DATA.updated;
+      renderAll(d);
+      _lastFetch=Date.now();
+      saveCache(d);
+      if(changed) flashLogo();
+    })
+    .catch(function(){});
 });
 </script>
 </body>

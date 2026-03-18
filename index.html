@@ -60,6 +60,9 @@ body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--tex
 #rbtn svg{width:11px;height:11px;color:var(--text2);}
 #wm{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
 #wm svg.logo{width:82px;height:82px;display:block;}
+@-webkit-keyframes logo-flash{0%,100%{opacity:1;filter:none;}40%{opacity:0.35;filter:drop-shadow(0 0 10px #00d4a6);}70%{opacity:1;filter:drop-shadow(0 0 14px #00d4a6);}}
+@keyframes logo-flash{0%,100%{opacity:1;filter:none;}40%{opacity:0.35;filter:drop-shadow(0 0 10px #00d4a6);}70%{opacity:1;filter:drop-shadow(0 0 14px #00d4a6);}}
+#wm.flash svg{-webkit-animation:logo-flash 0.55s ease-out;animation:logo-flash 0.55s ease-out;}
 #content{-webkit-flex:1;flex:1;position:relative;overflow:hidden;background:var(--bg);}
 .pane{display:none;position:absolute;top:0;left:0;right:0;bottom:0;
   overflow-x:auto;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;background:var(--bg);}
@@ -272,10 +275,11 @@ body.overlaying #tabs-wrap{display:none !important;}
       </div>
     </div>
   </div>
+  <div id="nc-section"></div>
   <div id="hwm-section"></div>
   <div class="scroll-spacer"></div>
   <div class="scroll-spacer"></div>
-  <div class="sver">RiKi Trading &middot; v2.4</div>
+  <div class="sver">RiKi Trading &middot; v2.5</div>
 </div>
   </div>
   <div id="tabs-wrap">
@@ -311,7 +315,8 @@ body.overlaying #tabs-wrap{display:none !important;}
   </svg>
 </div>
 <script>
-var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
+var BACKEND   = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
+var DATA_JSON = 'https://rikialpha.github.io/tradingincome/data.json';
 function ge(id){ return document.getElementById(id); }
 function money(v){
   if(v == null || v === '') return 0;
@@ -358,13 +363,47 @@ function hideOverlay(){
   document.body.classList.remove('overlaying');
 }
 function saveCache(d){ try{ localStorage.setItem('riki_data',JSON.stringify(d)); }catch(e){} }
-function doRefresh(){
-  haptic();showOverlay();
-  fetch(BACKEND+'?action=refresh')
-    .then(function(r){return r.json();})
-    .then(function(d){hideOverlay();renderAll(d);saveCache(d);toast('Updated \u2713');})
-    .catch(function(e){hideOverlay();toast('Error: '+errMsg(e));});
+
+// Flash the RiKi logo briefly — called when silent background refresh detects new data
+function flashLogo(){
+  var wm = ge('wm');
+  wm.classList.remove('flash');
+  void wm.offsetWidth; // reflow to restart animation
+  wm.classList.add('flash');
+  setTimeout(function(){ wm.classList.remove('flash'); }, 600);
 }
+
+function doRefresh(){
+  haptic();
+  // 1. Show overlay, fetch data.json immediately (~200ms — last trigger snapshot)
+  showOverlay();
+  fetch(DATA_JSON + '?_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(snap){
+      // Show snapshot instantly, dismiss overlay
+      hideOverlay();
+      renderAll(snap);
+      saveCache(snap);
+      // 2. Fire full Schwab refresh silently in background
+      fetch(BACKEND + '?action=refresh')
+        .then(function(r){ return r.json(); })
+        .then(function(fresh){
+          var changed = fresh.updated !== snap.updated;
+          renderAll(fresh);
+          saveCache(fresh);
+          if(changed) flashLogo();
+        })
+        .catch(function(){});
+    })
+    .catch(function(){
+      // data.json unavailable — fall back to full GAS refresh with overlay
+      fetch(BACKEND + '?action=refresh')
+        .then(function(r){ return r.json(); })
+        .then(function(d){ hideOverlay(); renderAll(d); saveCache(d); toast('Updated \u2713'); })
+        .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
+    });
+}
+
 function doAuth(){
   haptic();toast('Authenticating\u2026');
   fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
@@ -378,7 +417,7 @@ function doClearHWM(btn){
     .then(function(d){
       if(d.success){
         toast('\u2713 HWM cleared \u2014 refresh to re-anchor');
-        return fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);});
+        return fetch(DATA_JSON + '?_=' + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);});
       } else {
         toast('Clear failed');
         btn.disabled=false;btn.textContent='Clear HWM';
@@ -386,6 +425,25 @@ function doClearHWM(btn){
     })
     .catch(function(e){toast('Error: '+errMsg(e));btn.disabled=false;btn.textContent='Clear HWM';});
 }
+
+// Toggle nickel closer enabled/disabled for a specific expiry week
+function toggleNickelCloser(expiry){
+  haptic();
+  fetch(BACKEND + '?action=toggleNickelCloser&expiry=' + encodeURIComponent(expiry))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.success){
+        if(DATA) DATA.nickelCloserDisabled = d.nickelCloserDisabled;
+        renderSettings(DATA);
+        var isDisabled = d.nickelCloserDisabled.indexOf(expiry) >= 0;
+        toast(isDisabled ? '\u23F8 Auto-close off \u2014 '+expiry : '\u25B6 Auto-close on \u2014 '+expiry);
+      } else {
+        toast('Toggle failed');
+      }
+    })
+    .catch(function(e){ toast('Error: '+errMsg(e)); });
+}
+
 function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
 function renderHeader(d){
   var el=ge('utime');
@@ -572,6 +630,48 @@ function renderSettings(d){
   var info=map[state]||{lbl:state,cls:'pb'};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
   var td=ge('tdays');if(td)td.textContent=daysStr;
+
+  // ── Nickel Closer (Auto-close) toggle section ──────────────────────────────
+  var nc = ge('nc-section');
+  nc.innerHTML = '';
+  var archRows = d.archRows || [];
+  var ncDisabled = d.nickelCloserDisabled || [];
+  // Extract wk1 and wk2 expiry dates from archRows
+  var weeks = [];
+  ['THIS WEEK','NEXT WEEK'].forEach(function(label, i){
+    for(var r=0; r<archRows.length; r++){
+      var raw = String(archRows[r][0] || '');
+      if(raw.toUpperCase().indexOf(label) >= 0){
+        var m = raw.match(/(\d{4}-\d{2}-\d{2})/);
+        if(m) weeks.push({ expiry: m[1], label: i===0 ? 'This Week' : 'Next Week' });
+        break;
+      }
+    }
+  });
+  if(weeks.length > 0){
+    var ncCard = document.createElement('div');
+    ncCard.className = 'scard';
+    weeks.forEach(function(wk, idx){
+      var isEnabled = ncDisabled.indexOf(wk.expiry) < 0;
+      var row = document.createElement('div');
+      row.className = 'srow';
+      row.innerHTML =
+        '<div>' +
+          '<div class="slbl">Auto-close &middot; ' + wk.label + '</div>' +
+          '<div class="ssub">' + wk.expiry + ' &nbsp;&middot;&nbsp; Nickel closer ($0.03 BTC)</div>' +
+        '</div>' +
+        '<div class="tog' + (isEnabled ? ' on' : '') + '" ' +
+          'onclick="toggleNickelCloser(\'' + wk.expiry + '\')" ' +
+          'style="' + (isEnabled ? '' : 'opacity:0.6;') + '">' +
+          '<div class="tog-track" style="' + (!isEnabled ? 'background:var(--bg4);border-color:var(--border);' : '') + '"></div>' +
+          '<div class="tog-thumb"></div>' +
+        '</div>';
+      ncCard.appendChild(row);
+    });
+    nc.appendChild(ncCard);
+  }
+
+  // ── HWM warning section ────────────────────────────────────────────────────
   var sec=ge('hwm-section');
   sec.innerHTML='';
   var warns=d.hwmWarnings||{};
@@ -603,7 +703,7 @@ function renderSettings(d){
 var MOCK={
   updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
   warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
-  hwmWarnings:{},
+  hwmWarnings:{},nickelCloserDisabled:[],
   dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C',3,3,0,3,5]],
   archRows:[['2026-03-13 (THIS WEEK)','$840','$400','$620','$360','$2,220','$2,220',2,3,2,2,'ACTIVE'],['2026-03-20 (NEXT WEEK)','$1,057','$3,184','$515','$2,596','$7,352','$7,352',1,2,1,1,'ACTIVE'],['2026-03-27 (WEEK AFTER)','$0','$300','$0','$0','$300','$300',0,1,0,0,'ACTIVE']],
   allClosed:[['2026-03-06','$1,800','$0','$1,200','$0','$3,000','$3,000',2,3,2,2,'CLOSED'],['2026-02-27','$2,100','$0','$1,400','$0','$3,500','$3,500',2,3,2,2,'CLOSED']],
@@ -625,7 +725,7 @@ if(oauthCode){
     .then(function(d){
       if(d.success){
         toast('\u2713 Connected to Schwab!');
-        fetch(BACKEND+'?action=data').then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
+        fetch(DATA_JSON + '?_=' + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
       } else {
         toast('Auth failed: '+(d.error||'unknown'));
         renderAll(MOCK);
@@ -637,17 +737,30 @@ if(oauthCode){
   var _cached = null;
   try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
   if(_cached){ renderAll(_cached); }
-  fetch(BACKEND+'?action=data')
+  // Silent background fetch from GitHub CDN (~200ms vs ~1-2s GAS cold start)
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
-    .then(function(d){renderAll(d);_lastFetch=Date.now();saveCache(d);})
+    .then(function(d){
+      var changed = _cached && d.updated !== _cached.updated;
+      renderAll(d);
+      _lastFetch=Date.now();
+      saveCache(d);
+      if(changed) flashLogo();
+    })
     .catch(function(e){console.error(e);});
 }
 var _lastFetch = Date.now();
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState === 'visible' && Date.now() - _lastFetch > 5 * 60 * 1000){
-    fetch(BACKEND+'?action=data')
+    fetch(DATA_JSON + '?_=' + Date.now())
       .then(function(r){return r.json();})
-      .then(function(d){renderAll(d);_lastFetch=Date.now();saveCache(d);})
+      .then(function(d){
+        var changed = DATA && d.updated !== DATA.updated;
+        renderAll(d);
+        _lastFetch=Date.now();
+        saveCache(d);
+        if(changed) flashLogo();
+      })
       .catch(function(){});
   }
 });

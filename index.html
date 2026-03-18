@@ -179,7 +179,7 @@ tbody tr:last-child td{border-bottom:none;}
 #toast{position:fixed;bottom:130px;left:50%;-webkit-transform:translateX(-50%) translateY(16px);transform:translateX(-50%) translateY(16px);background:var(--bg4);border:1px solid var(--border);border-radius:24px;padding:11px 22px;font-size:22px;font-weight:600;color:var(--text);opacity:0;-webkit-transition:opacity .2s,-webkit-transform .2s;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap;}
 #toast.on{opacity:1;-webkit-transform:translateX(-50%) translateY(0);transform:translateX(-50%) translateY(0);}
 body.overlaying #tabs-wrap{display:none !important;}
-#loverlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:9999;background:#0a0a0f;
+#loverlay{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:9999;background:rgba(10,10,15,0.82);
   display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
   -webkit-justify-content:center;justify-content:center;
   opacity:0;pointer-events:none;-webkit-transform:translateZ(0);transform:translateZ(0);-webkit-transition:none;transition:none;}
@@ -375,33 +375,23 @@ function flashLogo(){
 
 function doRefresh(){
   haptic();
-  // 1. Show overlay, fetch data.json immediately (~200ms — last trigger snapshot)
+  // Show dim overlay immediately — arcs animate while Schwab refresh runs
   showOverlay();
+  // Fetch data.json in parallel (~200ms) — updates data visible through the dim overlay
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
-    .then(function(snap){
-      // Show snapshot instantly, dismiss overlay
+    .then(function(snap){ renderAll(snap); saveCache(snap); })
+    .catch(function(){}); // silent — overlay still up, Schwab fetch continues
+  // Full Schwab refresh — overlay stays until THIS completes
+  fetch(BACKEND + '?action=refresh')
+    .then(function(r){ return r.json(); })
+    .then(function(fresh){
       hideOverlay();
-      renderAll(snap);
-      saveCache(snap);
-      // 2. Fire full Schwab refresh silently in background
-      fetch(BACKEND + '?action=refresh')
-        .then(function(r){ return r.json(); })
-        .then(function(fresh){
-          var changed = fresh.updated !== snap.updated;
-          renderAll(fresh);
-          saveCache(fresh);
-          if(changed) flashLogo();
-        })
-        .catch(function(){});
+      renderAll(fresh);
+      saveCache(fresh);
+      flashLogo();
     })
-    .catch(function(){
-      // data.json unavailable — fall back to full GAS refresh with overlay
-      fetch(BACKEND + '?action=refresh')
-        .then(function(r){ return r.json(); })
-        .then(function(d){ hideOverlay(); renderAll(d); saveCache(d); toast('Updated \u2713'); })
-        .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
-    });
+    .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
 }
 
 function doAuth(){

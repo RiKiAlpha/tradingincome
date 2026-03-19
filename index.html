@@ -361,8 +361,6 @@ function hideOverlay(){
   o.classList.add('out');
   document.body.classList.remove('overlaying');
 }
-function saveCache(d){ try{ localStorage.setItem('riki_data',JSON.stringify(d)); }catch(e){} }
-
 function saveCache(d){
   try{
     localStorage.setItem('riki_data',JSON.stringify(d));
@@ -564,6 +562,7 @@ function renderDash(d){
     var ib=KEYS.findIndex(function(l){return String(b[0]).toUpperCase().indexOf(l)>=0;});
     return (ia<0?99:ia)-(ib<0?99:ib);
   });
+  var hedgeCosts = d.hedgeCosts || {};
   sorted.forEach(function(row){
     var raw=String(row[0]),dm=raw.match(/(\d{4}-\d{2}-\d{2})/),exp=dm?dm[1]:'';
     var wi=KEYS.findIndex(function(l){return raw.toUpperCase().indexOf(l)>=0;});
@@ -572,6 +571,20 @@ function renderDash(d){
     var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
     var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
     var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
+    // Hedge costs per account for this expiry
+    var hc1 = hedgeCosts['Account 1:' + exp] || 0;
+    var hc2 = hedgeCosts['Account 2:' + exp] || 0;
+    var totalHedge = hc1 + hc2;
+    var grandNet = grand - totalHedge;
+    var hedgeRow = totalHedge > 0
+      ? '<div class="wtot" style="border-top:none;padding-top:0;margin-top:-4px;">'+
+          '<div class="anums">'+
+            '<div class="aitem"><div style="font-size:12px;font-weight:500;color:var(--text3)">Protection cost</div></div>'+
+            '<div class="aitem"></div>'+
+            '<div class="aitem"><div class="neg" style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums">\u2212'+fmt(totalHedge)+'</div></div>'+
+          '</div>'+
+        '</div>'
+      : '';
     var card=document.createElement('div');card.className='wcard';
     card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class="wexp">'+exp+'</span></div>'+
       '<div class="asect"><div class="alabel">Account 1</div><div class="anums">'+
@@ -586,7 +599,8 @@ function renderDash(d){
       '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">'+fmt(a2b+a2p)+'</div></div></div>'+
       '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
       '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+
-      '<div class="wtot"><div class="anums"><div class="aitem"><div style="font-size:16px;font-weight:600;color:var(--text2)">Grand Total</div></div><div class="aitem"></div><div class="aitem"><div class="'+cc(grand)+'" style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums">'+fmtS(grand)+'</div></div></div></div>';
+      '<div class="wtot"><div class="anums"><div class="aitem"><div style="font-size:16px;font-weight:600;color:var(--text2)">Grand Total</div></div><div class="aitem"></div><div class="aitem"><div class="'+cc(grandNet)+'" style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums">'+fmtS(grandNet)+'</div></div></div></div>'+
+      hedgeRow;
     dc.appendChild(card);
   });
   var dcp=ge('dcp');dcp.innerHTML='';

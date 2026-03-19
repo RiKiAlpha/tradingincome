@@ -363,6 +363,51 @@ function hideOverlay(){
 }
 function saveCache(d){ try{ localStorage.setItem('riki_data',JSON.stringify(d)); }catch(e){} }
 
+function saveCache(d){
+  try{
+    localStorage.setItem('riki_data',JSON.stringify(d));
+    localStorage.setItem('riki_last_fresh', String(Date.now()));
+  }catch(e){}
+}
+function showTokenExpired(){
+  // Clear all pane content so no stale data shows through
+  ['dw','dc','dcp','ptb','hc','hwm-section','nc-section'].forEach(function(id){
+    var el=ge(id); if(el) el.innerHTML='';
+  });
+  // Hide tabs, show error card
+  var wrap=ge('tabs-wrap'); if(wrap) wrap.style.display='none';
+  var content=ge('content');
+  content.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;gap:20px;">'+
+    '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e55353" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
+    '<div style="text-align:center;">'+
+      '<div style="font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;">Schwab Token Expired</div>'+
+      '<div style="font-size:13px;color:var(--text2);line-height:1.6;">Your connection to Schwab has expired.<br>Re-authenticate to resume live data.</div>'+
+    '</div>'+
+    '<button class="abtn red" style="padding:12px 28px;font-size:14px;" onclick="doAuth()">Re-Authenticate</button>'+
+    '<div style="font-size:11px;color:var(--text3);text-align:center;">No data is shown to protect<br>against stale position information.</div>'+
+  '</div>';
+}
+
+// Check if data.json timestamp is stale during market hours
+function isDataStale(d){
+  if(!d || !d.updated) return false;
+  var now = new Date();
+  var et  = new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+  var day = et.getDay();
+  var t   = et.getHours()*60 + et.getMinutes();
+  var isMarket = day>=1 && day<=5 && t>=570 && t<=960;
+  if(!isMarket) return false; // outside market hours — staleness expected
+  // Parse updated timestamp and check if > 2 hours old
+  try {
+    var updStr = String(d.updated||'');
+    // Try to extract time from strings like "Mar 18 · 9:35 AM ET"
+    var cached = localStorage.getItem('riki_last_fresh');
+    if(!cached) return false;
+    var lastFreshMs = parseInt(cached);
+    return Date.now() - lastFreshMs > 2 * 60 * 60 * 1000; // 2 hours
+  } catch(e){ return false; }
+}
+
 // Flash the RiKi logo briefly — called when silent background refresh detects new data
 function flashLogo(){
   var wm = ge('wm');
@@ -386,6 +431,7 @@ function doRefresh(){
     .then(function(r){ return r.json(); })
     .then(function(fresh){
       hideOverlay();
+      if(fresh.tokenExpired){ showTokenExpired(); return; }
       renderAll(fresh);
       saveCache(fresh);
       flashLogo();
@@ -439,6 +485,20 @@ function renderHeader(d){
   if(el){ var raw=String(d.updated||'\u2014');el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,'').replace(/^Updated:\s*/i,'').trim(); }
   var dot=ge('sdot');
   if(dot){ dot.className='sdot';if(d.tokenState==='expiring')dot.classList.add('exp');else if(d.tokenState==='expired')dot.classList.add('dead'); }
+  // Staleness warning banner — only during market hours if data.json is > 2hrs old
+  var staleWarn=ge('stale-warn');
+  if(!staleWarn){
+    staleWarn=document.createElement('div');
+    staleWarn.id='stale-warn';
+    staleWarn.style.cssText='position:fixed;top:80px;left:0;right:0;z-index:998;background:rgba(244,197,66,0.12);border-bottom:1px solid rgba(244,197,66,0.3);color:var(--gold);font-size:12px;font-weight:600;padding:8px 16px;text-align:center;display:none;';
+    document.body.appendChild(staleWarn);
+  }
+  if(isDataStale(d)){
+    staleWarn.textContent='⚠️ Data may be outdated — tap refresh to reconnect';
+    staleWarn.style.display='block';
+  } else {
+    staleWarn.style.display='none';
+  }
 }
 function renderDash(d){
   var dw=ge('dw');dw.innerHTML='';
@@ -730,6 +790,7 @@ if(oauthCode){
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
+      if(d.tokenExpired){ showTokenExpired(); return; }
       var changed = _cached && d.updated !== _cached.updated;
       renderAll(d);
       _lastFetch=Date.now();
@@ -746,8 +807,9 @@ setInterval(function(){
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d){
+      if(d.tokenExpired){ showTokenExpired(); return; }
       var changed = DATA && d.updated !== DATA.updated;
-      if(!changed) return; // nothing new — skip render
+      if(!changed) return;
       renderAll(d);
       _lastFetch = Date.now();
       saveCache(d);
@@ -761,6 +823,7 @@ document.addEventListener('visibilitychange', function(){
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
+      if(d.tokenExpired){ showTokenExpired(); return; }
       var changed = DATA && d.updated !== DATA.updated;
       renderAll(d);
       _lastFetch=Date.now();

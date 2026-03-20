@@ -361,19 +361,8 @@ function hideOverlay(){
   o.classList.add('out');
   document.body.classList.remove('overlaying');
 }
-function saveCache(d, savedMs){
-  try{
-    var copy = JSON.parse(JSON.stringify(d));
-    copy._savedMs = savedMs || Date.now();
-    localStorage.setItem('riki_data', JSON.stringify(copy));
-    localStorage.setItem('riki_last_fresh', String(copy._savedMs));
-  }catch(e){}
-}
-function isFresher(newData, currentData){
-  // Returns true only if newData is genuinely fresher than what we have
-  var newMs     = newData._savedMs     || 0;
-  var currentMs = currentData ? (currentData._savedMs || 0) : 0;
-  return newMs > currentMs;
+function saveCache(d){
+  try{ localStorage.setItem('riki_data', JSON.stringify(d)); }catch(e){}
 }
 function showTokenExpired(){
   // Clear all pane content so no stale data shows through
@@ -430,7 +419,7 @@ function doRefresh(){
   // Fetch data.json in parallel (~200ms) — updates data visible through the dim overlay
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
-    .then(function(snap){ renderAll(snap); saveCache(snap); })
+    .then(function(snap){ renderAll(snap); }) // show through overlay, don't save — Schwab will overwrite
     .catch(function(){}); // silent — overlay still up, Schwab fetch continues
   // Full Schwab refresh — overlay stays until THIS completes
   fetch(BACKEND + '?action=refresh')
@@ -439,8 +428,7 @@ function doRefresh(){
       hideOverlay();
       if(fresh.tokenExpired){ showTokenExpired(); return; }
       renderAll(fresh);
-      var nowMs = Date.now();
-      saveCache(fresh, nowMs); // stamp with current time so data.json can't overwrite it
+      saveCache(fresh);
       flashLogo();
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
@@ -820,8 +808,7 @@ if(oauthCode){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      // Only render data.json if it's genuinely fresher than our cached data
-      if(_cached && !isFresher(d, _cached)) return; // cache is newer (e.g. from manual refresh)
+      // data.json is for instant display only — always render on open
       var changed = _cached && d.updated !== _cached.updated;
       renderAll(d);
       _lastFetch=Date.now();
@@ -832,14 +819,13 @@ if(oauthCode){
 }
 var _lastFetch = Date.now();
 
-// Poll data.json every 5 minutes while app is open and visible
+// Poll GAS every 5 minutes — avoids GitHub CDN caching issues
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
-  fetch(DATA_JSON + '?_=' + Date.now())
+  fetch(BACKEND + '?action=data')
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      if(DATA && !isFresher(d, DATA)) return; // cache is newer
       var changed = DATA && d.updated !== DATA.updated;
       if(!changed) return;
       renderAll(d);
@@ -852,11 +838,11 @@ setInterval(function(){
 
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-  fetch(DATA_JSON + '?_=' + Date.now())
+  // Use GAS ?action=data — always fresh, no CDN caching
+  fetch(BACKEND + '?action=data')
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      if(DATA && !isFresher(d, DATA)) return; // cache is newer
       var changed = DATA && d.updated !== DATA.updated;
       if(!changed) return;
       renderAll(d);

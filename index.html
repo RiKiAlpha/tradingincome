@@ -59,7 +59,7 @@ body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--tex
 @keyframes spin{to{transform:rotate(360deg);}}
 #rbtn svg{width:11px;height:11px;color:var(--text2);}
 #wm{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
-#wm svg.logo{width:82px;height:82px;display:block;}
+#wm svg.logo{width:82px;height:82px;display:block;opacity:0.8;}
 @-webkit-keyframes logo-flash{0%,100%{opacity:1;filter:none;}40%{opacity:0.35;filter:drop-shadow(0 0 10px #00d4a6);}70%{opacity:1;filter:drop-shadow(0 0 14px #00d4a6);}}
 @keyframes logo-flash{0%,100%{opacity:1;filter:none;}40%{opacity:0.35;filter:drop-shadow(0 0 10px #00d4a6);}70%{opacity:1;filter:drop-shadow(0 0 14px #00d4a6);}}
 #wm.flash svg{-webkit-animation:logo-flash 0.55s ease-out;animation:logo-flash 0.55s ease-out;}
@@ -532,6 +532,12 @@ function renderDash(d){
     dw.appendChild(el);
   }
   var hwmW=d.hwmWarnings||{};
+  if(d.staleData){
+    var el=document.createElement('div');el.className='warn urg';
+    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
+    '⚠️ Positions data unavailable — showing last known data. Schwab API returned empty positions.';
+    dw.appendChild(el);
+  }
   Object.keys(hwmW).forEach(function(k){
     var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
     var excess=(hwmW[k].excess||0).toFixed(0);
@@ -805,7 +811,9 @@ if(oauthCode){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
+      // Only render if data.json is newer than what we already have
       var changed = _cached && d.updated !== _cached.updated;
+      if(!changed && _cached) return; // data.json is stale vs cache — skip
       renderAll(d);
       _lastFetch=Date.now();
       saveCache(d);
@@ -839,10 +847,11 @@ document.addEventListener('visibilitychange', function(){
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
       var changed = DATA && d.updated !== DATA.updated;
+      if(!changed) return; // data.json stale vs current — skip
       renderAll(d);
       _lastFetch=Date.now();
       saveCache(d);
-      if(changed) flashLogo();
+      flashLogo();
     })
     .catch(function(){});
 });

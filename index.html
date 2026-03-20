@@ -362,7 +362,10 @@ function hideOverlay(){
   document.body.classList.remove('overlaying');
 }
 function saveCache(d){
-  try{ localStorage.setItem('riki_data', JSON.stringify(d)); }catch(e){}
+  try{
+    localStorage.setItem('riki_data', JSON.stringify(d));
+    localStorage.setItem('riki_last_fresh', String(Date.now()));
+  }catch(e){}
 }
 function showTokenExpired(){
   // Clear all pane content so no stale data shows through

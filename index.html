@@ -361,11 +361,19 @@ function hideOverlay(){
   o.classList.add('out');
   document.body.classList.remove('overlaying');
 }
-function saveCache(d){
+function saveCache(d, savedMs){
   try{
-    localStorage.setItem('riki_data',JSON.stringify(d));
-    localStorage.setItem('riki_last_fresh', String(Date.now()));
+    var copy = JSON.parse(JSON.stringify(d));
+    copy._savedMs = savedMs || Date.now();
+    localStorage.setItem('riki_data', JSON.stringify(copy));
+    localStorage.setItem('riki_last_fresh', String(copy._savedMs));
   }catch(e){}
+}
+function isFresher(newData, currentData){
+  // Returns true only if newData is genuinely fresher than what we have
+  var newMs     = newData._savedMs     || 0;
+  var currentMs = currentData ? (currentData._savedMs || 0) : 0;
+  return newMs > currentMs;
 }
 function showTokenExpired(){
   // Clear all pane content so no stale data shows through
@@ -431,9 +439,8 @@ function doRefresh(){
       hideOverlay();
       if(fresh.tokenExpired){ showTokenExpired(); return; }
       renderAll(fresh);
-      saveCache(fresh);
-      // Mark this as a manual refresh — newer than any data.json
-      localStorage.setItem('riki_last_fresh', String(Date.now()));
+      var nowMs = Date.now();
+      saveCache(fresh, nowMs); // stamp with current time so data.json can't overwrite it
       flashLogo();
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
@@ -813,16 +820,12 @@ if(oauthCode){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      // Only render if data.json is fresher than what we already have
-      // Compare riki_last_fresh timestamp — if cache was saved more recently than data.json, skip
-      var lastFreshMs = parseInt(localStorage.getItem('riki_last_fresh') || '0');
-      var dataJsonMs  = parseInt(localStorage.getItem('riki_datajson_ts') || '0');
-      if(lastFreshMs > dataJsonMs && _cached) return; // manual refresh was more recent — keep it
+      // Only render data.json if it's genuinely fresher than our cached data
+      if(_cached && !isFresher(d, _cached)) return; // cache is newer (e.g. from manual refresh)
       var changed = _cached && d.updated !== _cached.updated;
       renderAll(d);
       _lastFetch=Date.now();
       saveCache(d);
-      localStorage.setItem('riki_datajson_ts', String(Date.now()));
       if(changed) flashLogo();
     })
     .catch(function(e){console.error(e);});
@@ -836,12 +839,12 @@ setInterval(function(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
+      if(DATA && !isFresher(d, DATA)) return; // cache is newer
       var changed = DATA && d.updated !== DATA.updated;
       if(!changed) return;
       renderAll(d);
       _lastFetch = Date.now();
       saveCache(d);
-      localStorage.setItem('riki_datajson_ts', String(Date.now()));
       flashLogo();
     })
     .catch(function(){});
@@ -853,15 +856,12 @@ document.addEventListener('visibilitychange', function(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var lastFreshMs = parseInt(localStorage.getItem('riki_last_fresh') || '0');
-      var dataJsonMs  = parseInt(localStorage.getItem('riki_datajson_ts') || '0');
-      if(lastFreshMs > dataJsonMs) return; // manual refresh was more recent -- keep it
+      if(DATA && !isFresher(d, DATA)) return; // cache is newer
       var changed = DATA && d.updated !== DATA.updated;
       if(!changed) return;
       renderAll(d);
       _lastFetch=Date.now();
       saveCache(d);
-      localStorage.setItem('riki_datajson_ts', String(Date.now()));
       flashLogo();
     })
     .catch(function(){});

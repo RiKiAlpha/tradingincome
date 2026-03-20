@@ -414,14 +414,8 @@ function flashLogo(){
 
 function doRefresh(){
   haptic();
-  // Show dim overlay immediately — arcs animate while Schwab refresh runs
   showOverlay();
-  // Fetch data.json in parallel (~200ms) — updates data visible through the dim overlay
-  fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(snap){ renderAll(snap); }) // show through overlay, don't save — Schwab will overwrite
-    .catch(function(){}); // silent — overlay still up, Schwab fetch continues
-  // Full Schwab refresh — overlay stays until THIS completes
+  // Full Schwab refresh — overlay stays until complete
   fetch(BACKEND + '?action=refresh')
     .then(function(r){ return r.json(); })
     .then(function(fresh){
@@ -803,12 +797,11 @@ if(oauthCode){
   var _cached = null;
   try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
   if(_cached){ renderAll(_cached); }
-  // Silent background fetch from GitHub CDN (~200ms vs ~1-2s GAS cold start)
-  fetch(DATA_JSON + '?_=' + Date.now())
+  // Fetch fresh data from GAS — no CDN caching issues
+  fetch(BACKEND + '?action=data')
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      // data.json is for instant display only — always render on open
       var changed = _cached && d.updated !== _cached.updated;
       renderAll(d);
       _lastFetch=Date.now();

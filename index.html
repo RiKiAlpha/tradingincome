@@ -590,6 +590,8 @@ function renderDash(d){
     var wi=KEYS.findIndex(function(l){return raw.toUpperCase().indexOf(l)>=0;});
     var lbl=wi>=0?LBLS[wi]:raw;
     var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
+    // Hide +3 WEEKS card if no positions and no banked amount
+    if(wi===3 && a1b===0 && a1p===0 && a2b===0 && a2p===0) return;
     var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
     var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
     var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';

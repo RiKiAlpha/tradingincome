@@ -824,8 +824,8 @@ if(oauthCode){
   var _cached = null;
   try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
   if(_cached){ renderAll(_cached); }
-  // Fetch fresh data from GAS — no CDN caching issues
-  fetch(BACKEND + '?action=data')
+  // Fetch fresh data from CDN — GAS only called on manual refresh
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }

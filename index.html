@@ -842,7 +842,8 @@ var _lastFetch = Date.now();
 // Poll GAS every 5 minutes — avoids GitHub CDN caching issues
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
-  fetch(BACKEND + '?action=data')
+  // Use CDN — GAS is only called on manual refresh
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
@@ -858,8 +859,10 @@ setInterval(function(){
 
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-  // Use GAS ?action=data — always fresh, no CDN caching
-  fetch(BACKEND + '?action=data')
+  // Skip if fetched less than 60s ago — prevents duplicate calls on app open
+  if(Date.now() - _lastFetch < 60000) return;
+  // Use CDN — GAS is only called on manual refresh
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }

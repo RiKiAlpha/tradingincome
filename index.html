@@ -444,7 +444,7 @@ function doClearHWM(btn){
     .then(function(d){
       if(d.success){
         toast('\u2713 HWM cleared \u2014 refresh to re-anchor');
-        return fetch(BACKEND + '?action=data').then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);});
+        return fetch(DATA_JSON + '?_=' + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);});
       } else {
         toast('Clear failed');
         btn.disabled=false;btn.textContent='Clear HWM';
@@ -525,6 +525,18 @@ function renderDash(d){
     '📅 '+w.ccReminder;
     dw.appendChild(el);
   }
+  var tallyW=d.tallyWarnings||{};
+  Object.keys(tallyW).forEach(function(k){
+    var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
+    var w=tallyW[k];
+    var diff=(w.diff||0).toFixed(0);
+    var raw=(w.rawNet||0).toFixed(0);
+    var arch=(w.archived||0).toFixed(0);
+    var el=document.createElement('div');el.className='warn urg';
+    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
+      '🔴 TALLY: '+acct+' \u00b7 '+expiry+' \u2014 Archive $'+arch+' vs Orders $'+raw+' (diff $'+diff+'). Verify fills.';
+    dw.appendChild(el);
+  });
   var hwmW=d.hwmWarnings||{};
   if(d.staleData){
     var el=document.createElement('div');el.className='warn urg';
@@ -534,10 +546,20 @@ function renderDash(d){
   }
   Object.keys(hwmW).forEach(function(k){
     var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
-    var excess=(hwmW[k].excess||0).toFixed(0);
+    var w=hwmW[k];
+    var drop=(w.drop||0).toFixed(0);
+    var type=w.type||'';
+    var msg;
+    if(type==='banked_gap'){
+      msg=acct+' \u00b7 '+expiry+' \u2014 Banked dropped $'+drop+' with no closes. Schwab orders gap — protected.';
+    } else if(type==='potential_gap'){
+      msg=acct+' \u00b7 '+expiry+' \u2014 Potential dropped $'+drop+' (orders gap) — protected. Verify fills.';
+    } else {
+      var excess=(w.excess||0).toFixed(0);
+      msg=acct+' \u00b7 '+expiry+' \u2014 $'+excess+' unexplained drop (hedge+API gap). Fix Archive \u2192 clear in Settings.';
+    }
     var el=document.createElement('div');el.className='warn urg';
-    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-      acct+' \u00b7 '+expiry+' \u2014 $'+excess+' unexplained drop (hedge+API gap). Fix Archive \u2192 clear in Settings.';
+    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+msg;
     dw.appendChild(el);
   });
   var dc=ge('dc');dc.innerHTML='';
@@ -788,7 +810,7 @@ if(oauthCode){
     .then(function(d){
       if(d.success){
         toast('\u2713 Connected to Schwab!');
-        fetch(BACKEND + '?action=data').then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
+        fetch(DATA_JSON + '?_=' + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
       } else {
         toast('Auth failed: '+(d.error||'unknown'));
         renderAll(MOCK);

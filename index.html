@@ -169,13 +169,6 @@ tbody tr:last-child td{border-bottom:none;}
 .tog-thumb{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);-webkit-transition:-webkit-transform .2s cubic-bezier(.4,0,.2,1);transition:transform .2s cubic-bezier(.4,0,.2,1);}
 .tog.on .tog-thumb{-webkit-transform:translateX(20px);transform:translateX(20px);}
 .sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
-.hwm-card{margin:14px 16px 0;background:rgba(229,83,83,.06);border:1px solid rgba(229,83,83,.2);border-radius:16px;overflow:hidden;}
-.hwm-hdr{padding:14px 18px 10px;display:-webkit-flex;display:flex;align-items:center;gap:9px;}
-.hwm-title{font-size:13px;font-weight:700;color:var(--red);}
-.hwm-row{padding:10px 18px;border-top:1px solid rgba(229,83,83,.12);display:-webkit-flex;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.hwm-info{flex:1;}
-.hwm-key{font-size:12px;font-weight:700;color:var(--text);}
-.hwm-detail{font-size:11px;color:var(--text2);margin-top:2px;}
 #toast{position:fixed;bottom:130px;left:50%;-webkit-transform:translateX(-50%) translateY(16px);transform:translateX(-50%) translateY(16px);background:var(--bg4);border:1px solid var(--border);border-radius:24px;padding:11px 22px;font-size:22px;font-weight:600;color:var(--text);opacity:0;-webkit-transition:opacity .2s,-webkit-transform .2s;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap;}
 #toast.on{opacity:1;-webkit-transform:translateX(-50%) translateY(0);transform:translateX(-50%) translateY(0);}
 body.overlaying #tabs-wrap{display:none !important;}
@@ -276,7 +269,7 @@ body.overlaying #tabs-wrap{display:none !important;}
     </div>
   </div>
   <div id="nc-section"></div>
-  <div id="hwm-section"></div>
+  <div id="tally-section"></div>
   <div class="scroll-spacer"></div>
   <div class="scroll-spacer"></div>
   <div class="sver">RiKi Trading &middot; v2.5</div>
@@ -369,7 +362,7 @@ function saveCache(d){
 }
 function showTokenExpired(){
   // Clear all pane content so no stale data shows through
-  ['dw','dc','dcp','ptb','hc','hwm-section','nc-section'].forEach(function(id){
+  ['dw','dc','dcp','ptb','hc','nc-section','tally-section'].forEach(function(id){
     var el=ge(id); if(el) el.innerHTML='';
   });
   // Hide tabs, show error card
@@ -435,23 +428,6 @@ function doAuth(){
   haptic();toast('Authenticating\u2026');
   fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
 }
-function doClearHWM(btn){
-  haptic();
-  btn.disabled = true;
-  btn.textContent = 'Clearing\u2026';
-  fetch(BACKEND+'?action=clearHWM')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.success){
-        toast('\u2713 HWM cleared \u2014 refresh to re-anchor');
-        return fetch(DATA_JSON + '?_=' + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);});
-      } else {
-        toast('Clear failed');
-        btn.disabled=false;btn.textContent='Clear HWM';
-      }
-    })
-    .catch(function(e){toast('Error: '+errMsg(e));btn.disabled=false;btn.textContent='Clear HWM';});
-}
 
 // Toggle nickel closer enabled/disabled for a specific expiry week
 function toggleNickelCloser(expiry){
@@ -469,6 +445,24 @@ function toggleNickelCloser(expiry){
       }
     })
     .catch(function(e){ toast('Error: '+errMsg(e)); });
+}
+
+function doClearTally(btn){
+  haptic();
+  btn.disabled = true;
+  btn.textContent = 'Clearing…';
+  fetch(BACKEND+'?action=clearHWM')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.success){
+        toast('✓ Tally warnings cleared');
+        if(DATA){ DATA.tallyWarnings={}; renderAll(DATA); }
+      } else {
+        toast('Clear failed');
+        btn.disabled=false; btn.textContent='Clear';
+      }
+    })
+    .catch(function(e){toast('Error: '+errMsg(e));btn.disabled=false;btn.textContent='Clear';});
 }
 
 function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
@@ -537,31 +531,12 @@ function renderDash(d){
       '🔴 TALLY: '+acct+' \u00b7 '+expiry+' \u2014 Archive $'+arch+' vs Orders $'+raw+' (diff $'+diff+'). Verify fills.';
     dw.appendChild(el);
   });
-  var hwmW=d.hwmWarnings||{};
   if(d.staleData){
     var el=document.createElement('div');el.className='warn urg';
     el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
     '⚠️ Positions data unavailable — showing last known data. Schwab API returned empty positions.';
     dw.appendChild(el);
   }
-  Object.keys(hwmW).forEach(function(k){
-    var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
-    var w=hwmW[k];
-    var drop=(w.drop||0).toFixed(0);
-    var type=w.type||'';
-    var msg;
-    if(type==='banked_gap'){
-      msg=acct+' \u00b7 '+expiry+' \u2014 Banked dropped $'+drop+' with no closes. Schwab orders gap — protected.';
-    } else if(type==='potential_gap'){
-      msg=acct+' \u00b7 '+expiry+' \u2014 Potential dropped $'+drop+' (orders gap) — protected. Verify fills.';
-    } else {
-      var excess=(w.excess||0).toFixed(0);
-      msg=acct+' \u00b7 '+expiry+' \u2014 $'+excess+' unexplained drop (hedge+API gap). Fix Archive \u2192 clear in Settings.';
-    }
-    var el=document.createElement('div');el.className='warn urg';
-    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+msg;
-    dw.appendChild(el);
-  });
   var dc=ge('dc');dc.innerHTML='';
   var rows=d.archRows||[];
   var gv=Object.values(d.goals||{});
@@ -758,39 +733,47 @@ function renderSettings(d){
     nc.appendChild(ncCard);
   }
 
-  // ── HWM warning section ────────────────────────────────────────────────────
-  var sec=ge('hwm-section');
-  sec.innerHTML='';
-  var warns=d.hwmWarnings||{};
-  var keys=Object.keys(warns);
-  if(!keys.length) return;
-  var card=document.createElement('div');
-  card.className='hwm-card';
-  var hdr=document.createElement('div');
-  hdr.className='hwm-hdr';
-  hdr.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e55353" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-    '<span class="hwm-title">Banked Gain Anomaly Detected</span>';
-  card.appendChild(hdr);
-  keys.forEach(function(k){
-    var w=warns[k];
-    var parts=k.split(':');
-    var acct=parts[0]||k, expiry=parts[1]||'';
-    var row=document.createElement('div');
-    row.className='hwm-row';
-    row.innerHTML='<div class="hwm-info">'+
-      '<div class="hwm-key">'+acct+' &middot; '+expiry+'</div>'+
-      '<div class="hwm-detail">Hedge explains <span style="color:var(--green)">$'+(w.hedge||0).toFixed(0)+'</span> of drop &mdash; <span style="color:var(--red)">$'+(w.excess||0).toFixed(0)+'</span> unexplained</div>'+
-      '<div class="hwm-detail" style="margin-top:3px;color:var(--text3)">Fix Archive row, then Clear HWM to dismiss</div>'+
-    '</div>'+
-    '<button class="abtn red" onclick="doClearHWM(this)">Clear HWM</button>';
-    card.appendChild(row);
-  });
-  sec.appendChild(card);
+  // ── Tally warning section ─────────────────────────────────────────────────
+  var tallySection = ge('tally-section');
+  tallySection.innerHTML = '';
+  var tallyW = d.tallyWarnings || {};
+  var tallyKeys = Object.keys(tallyW).filter(function(k){ return k.indexOf('checked:') < 0; });
+  if(tallyKeys.length > 0){
+    var tcard = document.createElement('div');
+    tcard.className = 'scard';
+    // Header row
+    var thdr = document.createElement('div');
+    thdr.className = 'srow';
+    thdr.innerHTML =
+      '<div>' +
+        '<div class="slbl" style="color:var(--gold)">&#x26A0;&#xFE0F; Tally Mismatch</div>' +
+        '<div class="ssub">Wednesday tally detected a diff &gt; $10</div>' +
+      '</div>' +
+      '<button class="abtn" onclick="doClearTally(this)">Clear</button>';
+    tcard.appendChild(thdr);
+    // One row per warning
+    tallyKeys.forEach(function(k){
+      var w = tallyW[k];
+      var parts = k.split(':');
+      var acct = parts[0] || '', expiry = parts[1] || '';
+      var row = document.createElement('div');
+      row.className = 'srow';
+      row.style.borderTop = '1px solid var(--border2)';
+      row.innerHTML =
+        '<div>' +
+          '<div class="slbl" style="font-size:12px">' + acct + ' · ' + expiry + '</div>' +
+          '<div class="ssub">Archive $' + (w.archived||0).toFixed(0) + ' · Transactions $' + (w.rawNet||0).toFixed(0) + ' · Diff $' + (w.diff||0).toFixed(0) + '</div>' +
+        '</div>';
+      tcard.appendChild(row);
+    });
+    tallySection.appendChild(tcard);
+  }
+
 }
 var MOCK={
   updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
   warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
-  hwmWarnings:{},nickelCloserDisabled:[],
+  nickelCloserDisabled:[],
   dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C','$0','0P/0C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C','$0','0P/0C',3,3,0,3,5]],
   archRows:[['2026-03-13 (THIS WEEK)','$840','$400','$620','$360','$2,220','$2,220',2,3,2,2,'ACTIVE'],['2026-03-20 (NEXT WEEK)','$1,057','$3,184','$515','$2,596','$7,352','$7,352',1,2,1,1,'ACTIVE'],['2026-03-27 (WEEK AFTER)','$0','$300','$0','$0','$300','$300',0,1,0,0,'ACTIVE']],
   allClosed:[['2026-03-06','$1,800','$0','$1,200','$0','$3,000','$3,000',2,3,2,2,'CLOSED'],['2026-02-27','$2,100','$0','$1,400','$0','$3,500','$3,500',2,3,2,2,'CLOSED']],

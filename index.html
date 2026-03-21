@@ -566,7 +566,7 @@ function renderDash(d){
   var rows=d.archRows||[];
   var gv=Object.values(d.goals||{});
   var g1=parseFloat(gv[0])||4000,g2=parseFloat(gv[1])||3000;
-  var KEYS=['THIS WEEK','NEXT WEEK','WEEK AFTER'],LBLS=['This Week','Next Week','Week After'];
+  var KEYS=['THIS WEEK','NEXT WEEK','WEEK AFTER','+3 WEEKS'],LBLS=['This Week','Next Week','Week After','+3 Weeks'];
   function parsePCstr(s){
     var m=String(s||'').match(/(\d+)P\s*\/\s*(\d+)C/i);
     return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
@@ -577,7 +577,7 @@ function renderDash(d){
     var acct=String(row[0]||'');
     if(!acct||acct==='GRAND TOTAL')return;
     var key=acct.replace(/^A(\d+)$/,'Account $1');
-    openPos[key]=[fmtPC(row[3]),fmtPC(row[5]),fmtPC(row[7])];
+    openPos[key]=[fmtPC(row[3]),fmtPC(row[5]),fmtPC(row[7]),fmtPC(row[9])];
   });
   var sorted=rows.slice().sort(function(a,b){
     var ia=KEYS.findIndex(function(l){return String(a[0]).toUpperCase().indexOf(l)>=0;});
@@ -632,8 +632,8 @@ function renderDash(d){
     var inner='<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
     dr.forEach(function(row){
       var acct=String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
-      var cRem=parseInt(row[12])||0;
-      var pRem=parseInt(row[11])||0;
+      var cRem=parseInt(row[14])||0;
+      var pRem=parseInt(row[13])||0;
       inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>';
     });
     inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
@@ -789,7 +789,7 @@ var MOCK={
   updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
   warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
   hwmWarnings:{},nickelCloserDisabled:[],
-  dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C',3,3,0,3,5]],
+  dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C','$0','0P/0C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C','$0','0P/0C',3,3,0,3,5]],
   archRows:[['2026-03-13 (THIS WEEK)','$840','$400','$620','$360','$2,220','$2,220',2,3,2,2,'ACTIVE'],['2026-03-20 (NEXT WEEK)','$1,057','$3,184','$515','$2,596','$7,352','$7,352',1,2,1,1,'ACTIVE'],['2026-03-27 (WEEK AFTER)','$0','$300','$0','$0','$300','$300',0,1,0,0,'ACTIVE']],
   allClosed:[['2026-03-06','$1,800','$0','$1,200','$0','$3,000','$3,000',2,3,2,2,'CLOSED'],['2026-02-27','$2,100','$0','$1,400','$0','$3,500','$3,500',2,3,2,2,'CLOSED']],
   invRows:[['2026-03-13','A1','CALL',420,2,4.20,840,6,834,'OPEN'],['2026-03-13','A1','PUT',360,2,3.80,760,6,754,'OPEN'],['2026-03-13','A2','CALL',440,2,3.60,720,6,714,'OPEN'],['2026-03-13','A2','PUT',340,2,3.10,620,6,614,'OPEN'],['2026-03-20','A1','CALL',450,1,4.00,400,3,397,'OPEN'],['2026-03-20','A2','PUT',330,1,2.50,250,3,247,'OPEN']],

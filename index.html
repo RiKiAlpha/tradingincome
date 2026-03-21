@@ -356,6 +356,8 @@ function hideOverlay(){
 }
 function saveCache(d){
   try{
+    // Stamp _savedMs so CDN data can never overwrite newer manual/GAS data
+    if(!d._savedMs) d._savedMs = Date.now();
     localStorage.setItem('riki_data', JSON.stringify(d));
     localStorage.setItem('riki_last_fresh', String(Date.now()));
   }catch(e){}
@@ -812,11 +814,15 @@ if(oauthCode){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var changed = _cached && d.updated !== _cached.updated;
-      renderAll(d);
-      _lastFetch=Date.now();
-      saveCache(d);
-      if(changed) flashLogo();
+      // Only update if CDN data is genuinely newer than cached data
+      var cdnMs = d._savedMs || 0;
+      var curMs = (_cached && _cached._savedMs) || 0;
+      if(cdnMs > curMs){
+        renderAll(d);
+        _lastFetch=Date.now();
+        saveCache(d);
+        if(_cached) flashLogo();
+      }
     })
     .catch(function(e){console.error(e);});
 }
@@ -830,8 +836,10 @@ setInterval(function(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var changed = DATA && d.updated !== DATA.updated;
-      if(!changed) return;
+      // Only update if CDN data is genuinely newer than what we have
+      var cdnMs = d._savedMs || 0;
+      var curMs = (DATA && DATA._savedMs) || 0;
+      if(cdnMs <= curMs) return;
       renderAll(d);
       _lastFetch = Date.now();
       saveCache(d);
@@ -849,8 +857,10 @@ document.addEventListener('visibilitychange', function(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var changed = DATA && d.updated !== DATA.updated;
-      if(!changed) return;
+      // Only update if CDN data is genuinely newer than what we have
+      var cdnMs = d._savedMs || 0;
+      var curMs = (DATA && DATA._savedMs) || 0;
+      if(cdnMs <= curMs) return;
       renderAll(d);
       _lastFetch=Date.now();
       saveCache(d);

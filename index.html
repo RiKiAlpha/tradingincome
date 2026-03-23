@@ -809,14 +809,14 @@ if(oauthCode){
   var _cached = null;
   try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
   if(_cached){ renderAll(_cached); }
-  // Fetch fresh data from GAS — single call on app open, no CDN cache delays
-  fetch(BACKEND + '?action=data')
+  // Background CDN fetch — fast ~200ms, _savedMs guard prevents stale overwrite
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var gasMs = d._savedMs || Date.now();
+      var cdnMs = d._savedMs || 0;
       var curMs = (_cached && _cached._savedMs) || 0;
-      if(gasMs > curMs){
+      if(cdnMs > curMs){
         renderAll(d);
         _lastFetch=Date.now();
         saveCache(d);
@@ -850,14 +850,14 @@ document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
   // Skip if fetched less than 60s ago — prevents duplicate calls on app open
   if(Date.now() - _lastFetch < 60000) return;
-  // Use GAS directly — no CDN cache delays
-  fetch(BACKEND + '?action=data')
+  // CDN fetch — fast ~200ms, _savedMs guard prevents stale overwrite
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var gasMs = d._savedMs || Date.now();
+      var cdnMs = d._savedMs || 0;
       var curMs = (DATA && DATA._savedMs) || 0;
-      if(gasMs <= curMs) return;
+      if(cdnMs <= curMs) return;
       renderAll(d);
       _lastFetch=Date.now();
       saveCache(d);

@@ -771,6 +771,32 @@ function renderSettings(d){
     tallySection.appendChild(tcard);
   }
 
+  // ── Tally result pill (green on pass, dismissable) ────────────────────────
+  var tr = d.tallyResult;
+  var TALLY_DISMISSED_KEY = 'tallyDismissed:' + (tr ? tr.expiry : '');
+  if(tr && !localStorage.getItem(TALLY_DISMISSED_KEY)){
+    var tpillDiv = document.createElement('div');
+    tpillDiv.style.cssText = 'padding:6px 12px 2px;';
+    var diffParts = Object.keys(tr.results||{}).map(function(lbl){
+      var r = tr.results[lbl];
+      return lbl.replace('Account ','A') + ': $' + (r.diff||0).toFixed(2);
+    }).join(' · ');
+    var bg   = tr.pass ? '#d9ead3' : '#f4cccc';
+    var col  = tr.pass ? '#274e13' : '#990000';
+    var icon = tr.pass ? '✓' : '⚠';
+    tpillDiv.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;' +
+        'background:' + bg + ';border-radius:10px;padding:8px 12px;cursor:pointer;"' +
+        ' onclick="this.parentNode.parentNode.removeChild(this.parentNode);localStorage.setItem('' + TALLY_DISMISSED_KEY + '','1');">' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:700;color:' + col + '">' + icon + ' Tally ' + (tr.pass ? 'Passed' : 'Mismatch') + ' · ' + (tr.date||'') + ' · ' + (tr.expiry||'') + '</div>' +
+          '<div style="font-size:11px;color:' + col + ';opacity:0.85;margin-top:2px;">' + diffParts + '</div>' +
+        '</div>' +
+        '<div style="font-size:16px;color:' + col + ';opacity:0.6;margin-left:10px;">&#x2715;</div>' +
+      '</div>';
+    tallySection.appendChild(tpillDiv);
+  }
+
 }
 var MOCK={
   updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -383,506 +384,505 @@ function showTokenExpired(){
 
 // Check if data.json timestamp is stale during market hours
 function isDataStale(d){
-  if(!d || !d.updated) return false;
-  var now = new Date();
-  var et  = new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
-  var day = et.getDay();
-  var t   = et.getHours()*60 + et.getMinutes();
-  var isMarket = day>=1 && day<=5 && t>=570 && t<=960;
-  if(!isMarket) return false; // outside market hours — staleness expected
-  // Parse updated timestamp and check if > 2 hours old
-  try {
-    var updStr = String(d.updated||'');
-    // Try to extract time from strings like "Mar 18 · 9:35 AM ET"
-    var cached = localStorage.getItem('riki_last_fresh');
-    if(!cached) return false;
-    var lastFreshMs = parseInt(cached);
-    return Date.now() - lastFreshMs > 2 * 60 * 60 * 1000; // 2 hours
-  } catch(e){ return false; }
+if(!d || !d.updated) return false;
+var now = new Date();
+var et  = new Date(now.toLocaleString(‘en-US’,{timeZone:‘America/New_York’}));
+var day = et.getDay();
+var t   = et.getHours()*60 + et.getMinutes();
+var isMarket = day>=1 && day<=5 && t>=570 && t<=960;
+if(!isMarket) return false; // outside market hours — staleness expected
+// Parse updated timestamp and check if > 2 hours old
+try {
+var updStr = String(d.updated||’’);
+// Try to extract time from strings like “Mar 18 · 9:35 AM ET”
+var cached = localStorage.getItem(‘riki_last_fresh’);
+if(!cached) return false;
+var lastFreshMs = parseInt(cached);
+return Date.now() - lastFreshMs > 2 * 60 * 60 * 1000; // 2 hours
+} catch(e){ return false; }
 }
 
 // Flash the RiKi logo briefly — called when silent background refresh detects new data
 function flashLogo(){
-  var wm = ge('wm');
-  wm.classList.remove('flash');
-  void wm.offsetWidth; // reflow to restart animation
-  wm.classList.add('flash');
-  setTimeout(function(){ wm.classList.remove('flash'); }, 600);
+var wm = ge(‘wm’);
+wm.classList.remove(‘flash’);
+void wm.offsetWidth; // reflow to restart animation
+wm.classList.add(‘flash’);
+setTimeout(function(){ wm.classList.remove(‘flash’); }, 600);
 }
 
 function doRefresh(){
-  haptic();
-  showOverlay();
-  // Full Schwab refresh — overlay stays until complete
-  fetch(BACKEND + '?action=refresh')
-    .then(function(r){ return r.json(); })
-    .then(function(fresh){
-      hideOverlay();
-      if(fresh.tokenExpired){ showTokenExpired(); return; }
-      renderAll(fresh);
-      saveCache(fresh);
-      flashLogo();
-    })
-    .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
+haptic();
+showOverlay();
+// Full Schwab refresh — overlay stays until complete
+fetch(BACKEND + ‘?action=refresh’)
+.then(function(r){ return r.json(); })
+.then(function(fresh){
+hideOverlay();
+if(fresh.tokenExpired){ showTokenExpired(); return; }
+renderAll(fresh);
+saveCache(fresh);
+flashLogo();
+})
+.catch(function(e){ hideOverlay(); toast(’Error: ’+errMsg(e)); });
 }
 
 function doAuth(){
-  haptic();toast('Authenticating\u2026');
-  fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
+haptic();toast(‘Authenticating\u2026’);
+fetch(BACKEND+’?action=authUrl’).then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,’_blank’);else toast(‘No URL returned’);}).catch(function(e){toast(’Auth error: ’+errMsg(e));});
 }
 
 // Toggle nickel closer enabled/disabled for a specific expiry week
 function toggleNickelCloser(expiry){
-  haptic();
-  fetch(BACKEND + '?action=toggleNickelCloser&expiry=' + encodeURIComponent(expiry))
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d.success){
-        if(DATA) DATA.nickelCloserDisabled = d.nickelCloserDisabled;
-        renderSettings(DATA);
-        var isDisabled = d.nickelCloserDisabled.indexOf(expiry) >= 0;
-        toast(isDisabled ? '\u23F8 Auto-close off \u2014 '+expiry : '\u25B6 Auto-close on \u2014 '+expiry);
-      } else {
-        toast('Toggle failed');
-      }
-    })
-    .catch(function(e){ toast('Error: '+errMsg(e)); });
+haptic();
+fetch(BACKEND + ‘?action=toggleNickelCloser&expiry=’ + encodeURIComponent(expiry))
+.then(function(r){ return r.json(); })
+.then(function(d){
+if(d.success){
+if(DATA) DATA.nickelCloserDisabled = d.nickelCloserDisabled;
+renderSettings(DATA);
+var isDisabled = d.nickelCloserDisabled.indexOf(expiry) >= 0;
+toast(isDisabled ? ’\u23F8 Auto-close off \u2014 ’+expiry : ’\u25B6 Auto-close on \u2014 ’+expiry);
+} else {
+toast(‘Toggle failed’);
+}
+})
+.catch(function(e){ toast(’Error: ’+errMsg(e)); });
 }
 
 function doClearTally(btn){
-  haptic();
-  btn.disabled = true;
-  btn.textContent = 'Clearing…';
-  fetch(BACKEND+'?action=clearHWM')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.success){
-        toast('✓ Tally warnings cleared');
-        if(DATA){ DATA.tallyWarnings={}; renderAll(DATA); }
-      } else {
-        toast('Clear failed');
-        btn.disabled=false; btn.textContent='Clear';
-      }
-    })
-    .catch(function(e){toast('Error: '+errMsg(e));btn.disabled=false;btn.textContent='Clear';});
+haptic();
+btn.disabled = true;
+btn.textContent = ‘Clearing…’;
+fetch(BACKEND+’?action=clearHWM’)
+.then(function(r){return r.json();})
+.then(function(d){
+if(d.success){
+toast(‘✓ Tally warnings cleared’);
+if(DATA){ DATA.tallyWarnings={}; renderAll(DATA); }
+} else {
+toast(‘Clear failed’);
+btn.disabled=false; btn.textContent=‘Clear’;
+}
+})
+.catch(function(e){toast(’Error: ’+errMsg(e));btn.disabled=false;btn.textContent=‘Clear’;});
 }
 
 function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
 function renderHeader(d){
-  var el=ge('utime');
-  if(el){ var raw=String(d.updated||'\u2014');el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,'').replace(/^Updated:\s*/i,'').trim(); }
-  var dot=ge('sdot');
-  if(dot){ dot.className='sdot';if(d.tokenState==='expiring')dot.classList.add('exp');else if(d.tokenState==='expired')dot.classList.add('dead'); }
-  // Staleness warning banner — only during market hours if data.json is > 2hrs old
-  var staleWarn=ge('stale-warn');
-  if(!staleWarn){
-    staleWarn=document.createElement('div');
-    staleWarn.id='stale-warn';
-    staleWarn.style.cssText='position:fixed;top:80px;left:0;right:0;z-index:998;background:rgba(244,197,66,0.12);border-bottom:1px solid rgba(244,197,66,0.3);color:var(--gold);font-size:12px;font-weight:600;padding:8px 16px;text-align:center;display:none;';
-    document.body.appendChild(staleWarn);
-  }
-  if(isDataStale(d)){
-    staleWarn.textContent='⚠️ Data may be outdated — tap refresh to reconnect';
-    staleWarn.style.display='block';
-  } else {
-    staleWarn.style.display='none';
-  }
+var el=ge(‘utime’);
+if(el){ var raw=String(d.updated||’\u2014’);el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,’’).replace(/^Updated:\s*/i,’’).trim(); }
+var dot=ge(‘sdot’);
+if(dot){ dot.className=‘sdot’;if(d.tokenState===‘expiring’)dot.classList.add(‘exp’);else if(d.tokenState===‘expired’)dot.classList.add(‘dead’); }
+// Staleness warning banner — only during market hours if data.json is > 2hrs old
+var staleWarn=ge(‘stale-warn’);
+if(!staleWarn){
+staleWarn=document.createElement(‘div’);
+staleWarn.id=‘stale-warn’;
+staleWarn.style.cssText=‘position:fixed;top:80px;left:0;right:0;z-index:998;background:rgba(244,197,66,0.12);border-bottom:1px solid rgba(244,197,66,0.3);color:var(–gold);font-size:12px;font-weight:600;padding:8px 16px;text-align:center;display:none;’;
+document.body.appendChild(staleWarn);
+}
+if(isDataStale(d)){
+staleWarn.textContent=‘⚠️ Data may be outdated — tap refresh to reconnect’;
+staleWarn.style.display=‘block’;
+} else {
+staleWarn.style.display=‘none’;
+}
 }
 function renderDash(d){
-  var dw=ge('dw');dw.innerHTML='';
-  var w=d.warnings||{};
-  function warnMsg(raw,isHoliday){
-    if(!raw)return null;
-    var dm=String(raw).match(/(\d{4}-\d{2}-\d{2})/);
-    var dateStr=dm?dm[1]:'';
-    if(dateStr){
-      var evtDate=new Date(dateStr+'T12:00:00');
-      var now=new Date();
-      var daysAway=(evtDate-now)/86400000;
-      if(daysAway<-1||daysAway>21)return null;
-      if(isHoliday)return '\uD83D\uDCC5 Market holiday on '+dateStr+' \u2014 expiry shifts to Thursday';
-      return '\u26A0\uFE0F Earnings on '+dateStr;
-    }
-    var cleaned=String(raw).replace(/\b[A-Z]{1,5}\b[:\s]*/g,'').trim();
-    if(isHoliday)return '\uD83D\uDCC5 '+cleaned+' \u2014 expiry shifts to Thursday';
-    return '\u26A0\uFE0F Earnings on '+cleaned;
-  }
-  var holidayMsg=warnMsg(w.holiday,true);
-  var earningsMsg=warnMsg(w.earnings,false);
-  [{msg:holidayMsg,urg:false},{msg:earningsMsg,urg:w.earningsUrgent}].forEach(function(x){
-    if(!x.msg)return;
-    var el=document.createElement('div');el.className='warn'+(x.urg?' urg':'');
-    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+x.msg;
-    dw.appendChild(el);
-  });
-  if(w.ccReminder){
-    var el=document.createElement('div');el.className='warn urg';
-    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-    '📅 '+w.ccReminder;
-    dw.appendChild(el);
-  }
-  // ── Tally result pill — green on pass, red on mismatch, dismissable ─────────
-  var tr=d.tallyResult;
-  var tallyW=d.tallyWarnings||{};
-  var tallyMismatches=Object.keys(tallyW).filter(function(k){ return k.indexOf('checked:') < 0 && k.indexOf(':tally') > 0; });
-  // Show tally result pill (pass OR mismatch) — keyed to expiry so it reappears after new tally
-  var tallyDismissKey = 'tallyDismiss:' + (tr ? tr.expiry : '');
-  if(tr && !localStorage.getItem(tallyDismissKey)){
-    var isPass = tr.pass;
-    var diffParts = Object.keys(tr.results||{}).map(function(lbl){
-      var r=tr.results[lbl]; return lbl.replace('Account ','A')+': $'+(r.diff||0).toFixed(2);
-    }).join(' · ');
-    var tp=document.createElement('div');
-    tp.style.cssText='margin:14px 16px 0;padding:11px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;'+
-      (isPass ? 'background:rgba(39,78,19,.08);border:1px solid rgba(39,78,19,.2);color:#274e13;'
-               : 'background:rgba(229,83,83,.08);border:1px solid rgba(229,83,83,.2);color:var(--red);');
-    tp.innerHTML=
-      '<div>'+
-        '<div style="font-size:12px;font-weight:700;">'+(isPass?'✓ Tally Passed':'⚠ Tally Mismatch')+' · '+(tr.expiry||'')+'</div>'+
-        '<div style="font-size:11px;opacity:0.85;margin-top:2px;">'+diffParts+' · '+(tr.date||'')+'</div>'+
-      '</div>'+
-      '<div style="font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;" id="tally-close">✕</div>';
-    tp.querySelector('#tally-close').onclick=function(e){
-      e.stopPropagation();
-      tp.parentNode.removeChild(tp);
-      localStorage.setItem(tallyDismissKey,'1');
-    };
-    dw.appendChild(tp);
-  }
-  if(d.staleData){
-    var el=document.createElement('div');el.className='warn urg';
-    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-    '⚠️ Positions data unavailable — showing last known data. Schwab API returned empty positions.';
-    dw.appendChild(el);
-  }
-  var dc=ge('dc');dc.innerHTML='';
-  var rows=d.archRows||[];
-  var gv=Object.values(d.goals||{});
-  var g1=parseFloat(gv[0])||4000,g2=parseFloat(gv[1])||3000;
-  var KEYS=['THIS WEEK','NEXT WEEK','WEEK AFTER','+3 WEEKS'],LBLS=['This Week','Next Week','Week After','+3 Weeks'];
-  function parsePCstr(s){
-    var m=String(s||'').match(/(\d+)P\s*\/\s*(\d+)C/i);
-    return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
-  }
-  function fmtPC(s){var o=parsePCstr(s);return o.c+'C/'+o.p+'P';}
-  var openPos={};
-  (d.dashRows||[]).forEach(function(row){
-    var acct=String(row[0]||'');
-    if(!acct||acct==='GRAND TOTAL')return;
-    var key=acct.replace(/^A(\d+)$/,'Account $1');
-    openPos[key]=[fmtPC(row[3]),fmtPC(row[5]),fmtPC(row[7]),fmtPC(row[9])];
-  });
-  var sorted=rows.slice().sort(function(a,b){
-    var ia=KEYS.findIndex(function(l){return String(a[0]).toUpperCase().indexOf(l)>=0;});
-    var ib=KEYS.findIndex(function(l){return String(b[0]).toUpperCase().indexOf(l)>=0;});
-    return (ia<0?99:ia)-(ib<0?99:ib);
-  });
-  var hedgeCosts = d.hedgeCosts || {};
-  sorted.forEach(function(row){
-    var raw=String(row[0]),dm=raw.match(/(\d{4}-\d{2}-\d{2})/),exp=dm?dm[1]:'';
-    var wi=KEYS.findIndex(function(l){return raw.toUpperCase().indexOf(l)>=0;});
-    var lbl=wi>=0?LBLS[wi]:raw;
-    var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
-    // Hide +3 WEEKS card if no positions and no banked amount
-    if(wi===3 && a1b===0 && a1p===0 && a2b===0 && a2p===0) return;
-    var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
-    var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
-    var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
-    // Hedge costs per account for this expiry
-    var hc1 = hedgeCosts['Account 1:' + exp] || 0;
-    var hc2 = hedgeCosts['Account 2:' + exp] || 0;
-    var totalHedge = hc1 + hc2;
-    var grandNet = grand - totalHedge;
-    var hedgeRow = totalHedge > 0
-      ? '<div class="wtot" style="border-top:none;padding-top:0;margin-top:-4px;">'+
-          '<div class="anums">'+
-            '<div class="aitem"><div style="font-size:12px;font-weight:500;color:var(--text3)">Protection cost</div></div>'+
-            '<div class="aitem"></div>'+
-            '<div class="aitem"><div class="neg" style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums">\u2212'+fmt(totalHedge)+'</div></div>'+
-          '</div>'+
-        '</div>'
-      : '';
-    var card=document.createElement('div');card.className='wcard';
-    card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class="wexp">'+exp+'</span></div>'+
-      '<div class="asect"><div class="alabel">Account 1</div><div class="anums">'+
-      '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">'+fmt(a1b)+'</div></div>'+
-      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+'</div>'+(a1pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a1pc+')</div>':'')+'</div>'+
-      '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a1b+a1p)+'">'+fmt(a1b+a1p)+'</div></div></div>'+
-      '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div><div class="ppct" style="color:'+pc(p1)+'">'+p1+'%</div></div>'+
-      '<div class="ptgt">of '+fmt(g1)+' target</div></div>'+
-      '<div class="asect"><div class="alabel">Account 2</div><div class="anums">'+
-      '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">'+fmt(a2b)+'</div></div>'+
-      '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+'</div>'+(a2pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a2pc+')</div>':'')+'</div>'+
-      '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">'+fmt(a2b+a2p)+'</div></div></div>'+
-      '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
-      '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+
-      '<div class="wtot"><div class="anums"><div class="aitem"><div style="font-size:16px;font-weight:600;color:var(--text2)">Grand Total</div></div><div class="aitem"></div><div class="aitem"><div class="'+cc(grandNet)+'" style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums">'+fmtS(grandNet)+'</div></div></div></div>'+
-      hedgeRow;
-    dc.appendChild(card);
-  });
-  var dcp=ge('dcp');dcp.innerHTML='';
-  var dr=(d.dashRows||[]).filter(function(r){return r[0]&&String(r[0])!=='GRAND TOTAL';});
-  if(dr.length){
-    var panel=document.createElement('div');panel.className='cap';
-    var inner='<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
-    dr.forEach(function(row){
-      var acct=String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
-      var cRem=parseInt(row[14])||0;
-      var pRem=parseInt(row[13])||0;
-      inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>';
-    });
-    inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
-  }
+var dw=ge(‘dw’);dw.innerHTML=’’;
+var w=d.warnings||{};
+function warnMsg(raw,isHoliday){
+if(!raw)return null;
+var dm=String(raw).match(/(\d{4}-\d{2}-\d{2})/);
+var dateStr=dm?dm[1]:’’;
+if(dateStr){
+var evtDate=new Date(dateStr+‘T12:00:00’);
+var now=new Date();
+var daysAway=(evtDate-now)/86400000;
+if(daysAway<-1||daysAway>21)return null;
+if(isHoliday)return ‘\uD83D\uDCC5 Market holiday on ‘+dateStr+’ \u2014 expiry shifts to Thursday’;
+return ‘\u26A0\uFE0F Earnings on ‘+dateStr;
 }
-var posSort={col:'exp',dir:1};
-function posSortBy(col){ if(posSort.col===col){posSort.dir*=-1;}else{posSort.col=col;posSort.dir=col==='net'?-1:1;} renderPositions(DATA||MOCK); }
+var cleaned=String(raw).replace(/\b[A-Z]{1,5}\b[:\s]*/g,’’).trim();
+if(isHoliday)return ‘\uD83D\uDCC5 ‘+cleaned+’ \u2014 expiry shifts to Thursday’;
+return ‘\u26A0\uFE0F Earnings on ‘+cleaned;
+}
+var holidayMsg=warnMsg(w.holiday,true);
+var earningsMsg=warnMsg(w.earnings,false);
+[{msg:holidayMsg,urg:false},{msg:earningsMsg,urg:w.earningsUrgent}].forEach(function(x){
+if(!x.msg)return;
+var el=document.createElement(‘div’);el.className=‘warn’+(x.urg?’ urg’:’’);
+el.innerHTML=’<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>’+x.msg;
+dw.appendChild(el);
+});
+if(w.ccReminder){
+var el=document.createElement(‘div’);el.className=‘warn urg’;
+el.innerHTML=’<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>’+
+‘📅 ‘+w.ccReminder;
+dw.appendChild(el);
+}
+// ── Tally result pill — green on pass, red on mismatch, dismissable ─────────
+var tr=d.tallyResult;
+var tallyW=d.tallyWarnings||{};
+var tallyMismatches=Object.keys(tallyW).filter(function(k){ return k.indexOf(‘checked:’) < 0 && k.indexOf(’:tally’) > 0; });
+// Show tally result pill (pass OR mismatch) — keyed to expiry so it reappears after new tally
+var tallyDismissKey = ‘tallyDismiss:’ + (tr ? tr.expiry : ‘’);
+if(tr && !localStorage.getItem(tallyDismissKey)){
+var isPass = tr.pass;
+var diffParts = Object.keys(tr.results||{}).map(function(lbl){
+var r=tr.results[lbl]; return lbl.replace(‘Account ‘,‘A’)+’: $’+(r.diff||0).toFixed(2);
+}).join(’ · ‘);
+var tp=document.createElement(‘div’);
+tp.style.cssText=‘margin:14px 16px 0;padding:11px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;’+
+(isPass ? ‘background:rgba(52,168,83,.18);border:1px solid rgba(52,168,83,.4);color:#1e7e34;’
+: ‘background:rgba(229,83,83,.08);border:1px solid rgba(229,83,83,.2);color:var(–red);’);
+tp.innerHTML=
+‘<div>’+
+‘<div style="font-size:12px;font-weight:700;">’+(isPass?‘✓ Tally Passed’:‘⚠ Tally Mismatch’)+’ · ‘+(tr.expiry||’’)+’</div>’+
+‘<div style="font-size:11px;opacity:0.85;margin-top:2px;">’+diffParts+’ · ‘+(tr.date||’’)+’</div>’+
+‘</div>’+
+‘<div style="font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;" id="tally-close">✕</div>’;
+tp.querySelector(’#tally-close’).onclick=function(e){
+e.stopPropagation();
+tp.parentNode.removeChild(tp);
+localStorage.setItem(tallyDismissKey,‘1’);
+};
+dw.appendChild(tp);
+}
+if(d.staleData){
+var el=document.createElement(‘div’);el.className=‘warn urg’;
+el.innerHTML=’<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>’+
+‘⚠️ Positions data unavailable — showing last known data. Schwab API returned empty positions.’;
+dw.appendChild(el);
+}
+var dc=ge(‘dc’);dc.innerHTML=’’;
+var rows=d.archRows||[];
+var gv=Object.values(d.goals||{});
+var g1=parseFloat(gv[0])||4000,g2=parseFloat(gv[1])||3000;
+var KEYS=[‘THIS WEEK’,‘NEXT WEEK’,‘WEEK AFTER’,’+3 WEEKS’],LBLS=[‘This Week’,‘Next Week’,‘Week After’,’+3 Weeks’];
+function parsePCstr(s){
+var m=String(s||’’).match(/(\d+)P\s*/\s*(\d+)C/i);
+return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
+}
+function fmtPC(s){var o=parsePCstr(s);return o.c+‘C/’+o.p+‘P’;}
+var openPos={};
+(d.dashRows||[]).forEach(function(row){
+var acct=String(row[0]||’’);
+if(!acct||acct===‘GRAND TOTAL’)return;
+var key=acct.replace(/^A(\d+)$/,‘Account $1’);
+openPos[key]=[fmtPC(row[3]),fmtPC(row[5]),fmtPC(row[7]),fmtPC(row[9])];
+});
+var sorted=rows.slice().sort(function(a,b){
+var ia=KEYS.findIndex(function(l){return String(a[0]).toUpperCase().indexOf(l)>=0;});
+var ib=KEYS.findIndex(function(l){return String(b[0]).toUpperCase().indexOf(l)>=0;});
+return (ia<0?99:ia)-(ib<0?99:ib);
+});
+var hedgeCosts = d.hedgeCosts || {};
+sorted.forEach(function(row){
+var raw=String(row[0]),dm=raw.match(/(\d{4}-\d{2}-\d{2})/),exp=dm?dm[1]:’’;
+var wi=KEYS.findIndex(function(l){return raw.toUpperCase().indexOf(l)>=0;});
+var lbl=wi>=0?LBLS[wi]:raw;
+var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
+// Hide +3 WEEKS card if no positions and no banked amount
+if(wi===3 && a1b===0 && a1p===0 && a2b===0 && a2p===0) return;
+var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
+var a1pc=(wi>=0&&openPos[‘Account 1’])?openPos[‘Account 1’][wi]:’’;
+var a2pc=(wi>=0&&openPos[‘Account 2’])?openPos[‘Account 2’][wi]:’’;
+// Hedge costs per account for this expiry
+var hc1 = hedgeCosts[‘Account 1:’ + exp] || 0;
+var hc2 = hedgeCosts[‘Account 2:’ + exp] || 0;
+var totalHedge = hc1 + hc2;
+var grandNet = grand - totalHedge;
+var hedgeRow = totalHedge > 0
+? ‘<div class="wtot" style="border-top:none;padding-top:0;margin-top:-4px;">’+
+‘<div class="anums">’+
+‘<div class="aitem"><div style="font-size:12px;font-weight:500;color:var(--text3)">Protection cost</div></div>’+
+‘<div class="aitem"></div>’+
+‘<div class="aitem"><div class="neg" style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums">\u2212’+fmt(totalHedge)+’</div></div>’+
+‘</div>’+
+‘</div>’
+: ‘’;
+var card=document.createElement(‘div’);card.className=‘wcard’;
+card.innerHTML=’<div class="whdr"><span class="wlabel">’+lbl+’</span><span class="wexp">’+exp+’</span></div>’+
+‘<div class="asect"><div class="alabel">Account 1</div><div class="anums">’+
+‘<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">’+fmt(a1b)+’</div></div>’+
+‘<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">’+fmt(a1p)+’</div>’+(a1pc?’<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">(’+a1pc+’)</div>’:’’)+’</div>’+
+‘<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a1b+a1p)+'">’+fmt(a1b+a1p)+’</div></div></div>’+
+‘<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div><div class="ppct" style="color:'+pc(p1)+'">’+p1+’%</div></div>’+
+‘<div class="ptgt">of ‘+fmt(g1)+’ target</div></div>’+
+‘<div class="asect"><div class="alabel">Account 2</div><div class="anums">’+
+‘<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">’+fmt(a2b)+’</div></div>’+
+‘<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">’+fmt(a2p)+’</div>’+(a2pc?’<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">(’+a2pc+’)</div>’:’’)+’</div>’+
+‘<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">’+fmt(a2b+a2p)+’</div></div></div>’+
+‘<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">’+p2+’%</div></div>’+
+‘<div class="ptgt">of ‘+fmt(g2)+’ target</div></div>’+
+‘<div class="wtot"><div class="anums"><div class="aitem"><div style="font-size:16px;font-weight:600;color:var(--text2)">Grand Total</div></div><div class="aitem"></div><div class="aitem"><div class="'+cc(grandNet)+'" style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums">’+fmtS(grandNet)+’</div></div></div></div>’+
+hedgeRow;
+dc.appendChild(card);
+});
+var dcp=ge(‘dcp’);dcp.innerHTML=’’;
+var dr=(d.dashRows||[]).filter(function(r){return r[0]&&String(r[0])!==‘GRAND TOTAL’;});
+if(dr.length){
+var panel=document.createElement(‘div’);panel.className=‘cap’;
+var inner=’<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">’;
+dr.forEach(function(row){
+var acct=String(row[0]).replace(/account\s*/i,‘A’).replace(/\s+/g,’’);
+var cRem=parseInt(row[14])||0;
+var pRem=parseInt(row[13])||0;
+inner+=’<div class="cap-row"><div class="cap-acct">’+acct+’</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">’+cRem+’</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">’+pRem+’</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>’;
+});
+inner+=’</div>’;panel.innerHTML=inner;dcp.appendChild(panel);
+}
+}
+var posSort={col:‘exp’,dir:1};
+function posSortBy(col){ if(posSort.col===col){posSort.dir*=-1;}else{posSort.col=col;posSort.dir=col===‘net’?-1:1;} renderPositions(DATA||MOCK); }
 function renderPositions(d){
-  var rows=d.invRows||[];
-  var arw=function(col){var a=posSort.col===col?(posSort.dir===1?'\u2191':'\u2193'):'\u2195';var color=posSort.col===col?'color:var(--blue);':'color:var(--text3);';return '<span style="'+color+'font-size:11px;margin-left:3px;">'+a+'</span>';};
-  ge('pth').innerHTML='<tr><th>Acct</th><th onclick="posSortBy(\'type\')" style="cursor:pointer">Type'+arw('type')+'</th><th>Strike</th><th onclick="posSortBy(\'exp\')" style="cursor:pointer">Expiry'+arw('exp')+'</th><th>Qty</th><th onclick="posSortBy(\'net\')" style="cursor:pointer">Net'+arw('net')+'</th></tr>';
-  var tb=ge('ptb');tb.innerHTML='';
-  if(!rows.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No open positions</td></tr>';return;}
-  rows=rows.slice().sort(function(a,b){
-    var acctA=String(a[1]||''),acctB=String(b[1]||'');
-    if(acctA!==acctB)return acctA<acctB?-1:1;
-    var isPutA=String(a[2]||'').toUpperCase().indexOf('PUT')>=0;
-    var isPutB=String(b[2]||'').toUpperCase().indexOf('PUT')>=0;
-    var expA=String(a[0]||''),expB=String(b[0]||'');
-    var netA=parseFloat(String(a[8]||'0').replace(/[^0-9.-]/g,''))||0;
-    var netB=parseFloat(String(b[8]||'0').replace(/[^0-9.-]/g,''))||0;
-    if(posSort.col==='type'){if(isPutA!==isPutB)return(isPutA?1:-1)*posSort.dir;if(expA!==expB)return expA<expB?-1:1;return isPutA?parseFloat(b[3])-parseFloat(a[3]):parseFloat(a[3])-parseFloat(b[3]);}
-    else if(posSort.col==='net'){if(netA!==netB)return(netB-netA)*posSort.dir;if(expA!==expB)return expA<expB?-1:1;return 0;}
-    else{if(expA!==expB)return(expA<expB?-1:1)*posSort.dir;if(isPutA!==isPutB)return isPutA?1:-1;return isPutA?parseFloat(b[3])-parseFloat(a[3]):parseFloat(a[3])-parseFloat(b[3]);}
-  });
-  rows.forEach(function(row){
-    var exp=String(row[0]||''),acct=String(row[1]||''),type=String(row[2]||'');
-    var strike=money(row[3]),qty=row[4]||'',net=money(row[8]);
-    var isPut=type.toUpperCase().indexOf('PUT')>=0;
-    var tr=document.createElement('tr');
-    tr.innerHTML='<td><span class="atag '+(acct.indexOf('1')>=0?'pa1':'pa2')+'">'+acct+'</span></td>'+
-      '<td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td>'+
-      '<td>'+(strike?'$'+Math.round(strike):'\u2014')+'</td><td>'+exp+'</td><td>'+qty+'</td><td class="'+cc(net)+'">'+fmt(net)+'</td>';
-    tb.appendChild(tr);
-  });
+var rows=d.invRows||[];
+var arw=function(col){var a=posSort.col===col?(posSort.dir===1?’\u2191’:’\u2193’):’\u2195’;var color=posSort.col===col?‘color:var(–blue);’:‘color:var(–text3);’;return ‘<span style="'+color+'font-size:11px;margin-left:3px;">’+a+’</span>’;};
+ge(‘pth’).innerHTML=’<tr><th>Acct</th><th onclick="posSortBy(\'type\')" style="cursor:pointer">Type’+arw(‘type’)+’</th><th>Strike</th><th onclick="posSortBy(\'exp\')" style="cursor:pointer">Expiry’+arw(‘exp’)+’</th><th>Qty</th><th onclick="posSortBy(\'net\')" style="cursor:pointer">Net’+arw(‘net’)+’</th></tr>’;
+var tb=ge(‘ptb’);tb.innerHTML=’’;
+if(!rows.length){tb.innerHTML=’<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No open positions</td></tr>’;return;}
+rows=rows.slice().sort(function(a,b){
+var acctA=String(a[1]||’’),acctB=String(b[1]||’’);
+if(acctA!==acctB)return acctA<acctB?-1:1;
+var isPutA=String(a[2]||’’).toUpperCase().indexOf(‘PUT’)>=0;
+var isPutB=String(b[2]||’’).toUpperCase().indexOf(‘PUT’)>=0;
+var expA=String(a[0]||’’),expB=String(b[0]||’’);
+var netA=parseFloat(String(a[8]||‘0’).replace(/[^0-9.-]/g,’’))||0;
+var netB=parseFloat(String(b[8]||‘0’).replace(/[^0-9.-]/g,’’))||0;
+if(posSort.col===‘type’){if(isPutA!==isPutB)return(isPutA?1:-1)*posSort.dir;if(expA!==expB)return expA<expB?-1:1;return isPutA?parseFloat(b[3])-parseFloat(a[3]):parseFloat(a[3])-parseFloat(b[3]);}
+else if(posSort.col===‘net’){if(netA!==netB)return(netB-netA)*posSort.dir;if(expA!==expB)return expA<expB?-1:1;return 0;}
+else{if(expA!==expB)return(expA<expB?-1:1)*posSort.dir;if(isPutA!==isPutB)return isPutA?1:-1;return isPutA?parseFloat(b[3])-parseFloat(a[3]):parseFloat(a[3])-parseFloat(b[3]);}
+});
+rows.forEach(function(row){
+var exp=String(row[0]||’’),acct=String(row[1]||’’),type=String(row[2]||’’);
+var strike=money(row[3]),qty=row[4]||’’,net=money(row[8]);
+var isPut=type.toUpperCase().indexOf(‘PUT’)>=0;
+var tr=document.createElement(‘tr’);
+tr.innerHTML=’<td><span class="atag '+(acct.indexOf('1')>=0?'pa1':'pa2')+'">’+acct+’</span></td>’+
+‘<td><span class="pill '+(isPut?'po':'pb')+'">’+(isPut?‘Put’:‘Call’)+’</span></td>’+
+‘<td>’+(strike?’$’+Math.round(strike):’\u2014’)+’</td><td>’+exp+’</td><td>’+qty+’</td><td class="'+cc(net)+'">’+fmt(net)+’</td>’;
+tb.appendChild(tr);
+});
 }
 function renderHist(){
-  var d=DATA||MOCK;var el=ge('hc');el.innerHTML='';
-  if(histMode==='weeks'){
-    var rows=d.allClosed||[];
-    var t=document.createElement('table');
-    t.innerHTML='<thead><tr><th style="text-align:left">Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
-    var tb=document.createElement('tbody');
-    if(!rows.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';}
-    else{rows.slice().reverse().forEach(function(row){var lbl=String(row[0]||'\u2014').replace(/\s*\(.*\)/,'').trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tb.appendChild(tr);});}
-    t.appendChild(tb);el.appendChild(t);
-  } else {
-    var monthly={};
-    function normMon(k){var us=k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(us)return us[3]+'-'+us[1].padStart(2,'0')+'-'+us[2].padStart(2,'0');var usShort=k.match(/^(\d{1,2})\/(\d{4})$/);if(usShort)return usShort[2]+'-'+usShort[1].padStart(2,'0');return k;}
-    var mBase=d.monthly||{};
-    Object.keys(mBase).forEach(function(k){var nk=normMon(k).substring(0,7);if(!monthly[nk])monthly[nk]={a1:0,a2:0,total:0};monthly[nk].a1+=mBase[k].a1||0;monthly[nk].a2+=mBase[k].a2||0;monthly[nk].total+=mBase[k].total||0;});
-    var archRows=d.archRows||[];
-    var activeMonths=new Set();
-    archRows.forEach(function(row){var raw=String(row[0]||'');var dm=raw.match(/(\d{4}-\d{2})/);if(!dm)return;var mo=dm[1];var a1b=money(row[1]||0),a2b=money(row[3]||0);if(!monthly[mo])monthly[mo]={a1:0,a2:0,total:0};monthly[mo].a1+=a1b;monthly[mo].a2+=a2b;monthly[mo].total+=a1b+a2b;activeMonths.add(mo);});
-    var months=Object.keys(monthly).sort(function(a,b){return b.localeCompare(a);});
-    if(!months.length){el.innerHTML='<div class="empty">No monthly data</div>';return;}
-    var t=document.createElement('table');
-    t.innerHTML='<thead><tr><th style="text-align:left">Month</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
-    var tb=document.createElement('tbody');
-    var now=new Date(),cm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1);
-    months.forEach(function(mo){
-      var e=monthly[mo];var hdrtxt;
-      try{hdrtxt=new Date(mo+'-02').toLocaleDateString('en-US',{month:'long',year:'numeric'});}catch(x){hdrtxt=mo;}
-      var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm)||activeMonths.has(mo);
-      var dot=isCur?'&nbsp;<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;vertical-align:middle;position:relative;top:-1px;-webkit-animation:blink 1.4s ease-in-out infinite;animation:blink 1.4s ease-in-out infinite"></span>':'';
-      var tr=document.createElement('tr');
-      tr.innerHTML='<td style="text-align:left;font-weight:600">'+hdrtxt+dot+'</td><td class="'+cc(a1)+'">'+fmtS(a1)+'</td><td class="'+cc(a2)+'">'+fmtS(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';
-      tb.appendChild(tr);
-    });
-    t.appendChild(tb);el.appendChild(t);
-  }
+var d=DATA||MOCK;var el=ge(‘hc’);el.innerHTML=’’;
+if(histMode===‘weeks’){
+var rows=d.allClosed||[];
+var t=document.createElement(‘table’);
+t.innerHTML=’<thead><tr><th style="text-align:left">Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>’;
+var tb=document.createElement(‘tbody’);
+if(!rows.length){tb.innerHTML=’<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>’;}
+else{rows.slice().reverse().forEach(function(row){var lbl=String(row[0]||’\u2014’).replace(/\s*(.*)/,’’).trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement(‘tr’);tr.innerHTML=’<td style="text-align:left">’+lbl+’</td><td class="'+cc(a1)+'">’+fmt(a1)+’</td><td class="'+cc(a2)+'">’+fmt(a2)+’</td><td class="'+cc(tot)+'">’+fmtS(tot)+’</td>’;tb.appendChild(tr);});}
+t.appendChild(tb);el.appendChild(t);
+} else {
+var monthly={};
+function normMon(k){var us=k.match(/^(\d{1,2})/(\d{1,2})/(\d{4})$/);if(us)return us[3]+’-’+us[1].padStart(2,‘0’)+’-’+us[2].padStart(2,‘0’);var usShort=k.match(/^(\d{1,2})/(\d{4})$/);if(usShort)return usShort[2]+’-’+usShort[1].padStart(2,‘0’);return k;}
+var mBase=d.monthly||{};
+Object.keys(mBase).forEach(function(k){var nk=normMon(k).substring(0,7);if(!monthly[nk])monthly[nk]={a1:0,a2:0,total:0};monthly[nk].a1+=mBase[k].a1||0;monthly[nk].a2+=mBase[k].a2||0;monthly[nk].total+=mBase[k].total||0;});
+var archRows=d.archRows||[];
+var activeMonths=new Set();
+archRows.forEach(function(row){var raw=String(row[0]||’’);var dm=raw.match(/(\d{4}-\d{2})/);if(!dm)return;var mo=dm[1];var a1b=money(row[1]||0),a2b=money(row[3]||0);if(!monthly[mo])monthly[mo]={a1:0,a2:0,total:0};monthly[mo].a1+=a1b;monthly[mo].a2+=a2b;monthly[mo].total+=a1b+a2b;activeMonths.add(mo);});
+var months=Object.keys(monthly).sort(function(a,b){return b.localeCompare(a);});
+if(!months.length){el.innerHTML=’<div class="empty">No monthly data</div>’;return;}
+var t=document.createElement(‘table’);
+t.innerHTML=’<thead><tr><th style="text-align:left">Month</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>’;
+var tb=document.createElement(‘tbody’);
+var now=new Date(),cm=now.getFullYear()+’-’+(now.getMonth()<9?‘0’:’’)+(now.getMonth()+1);
+months.forEach(function(mo){
+var e=monthly[mo];var hdrtxt;
+try{hdrtxt=new Date(mo+’-02’).toLocaleDateString(‘en-US’,{month:‘long’,year:‘numeric’});}catch(x){hdrtxt=mo;}
+var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm)||activeMonths.has(mo);
+var dot=isCur?’ <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;vertical-align:middle;position:relative;top:-1px;-webkit-animation:blink 1.4s ease-in-out infinite;animation:blink 1.4s ease-in-out infinite"></span>’:’’;
+var tr=document.createElement(‘tr’);
+tr.innerHTML=’<td style="text-align:left;font-weight:600">’+hdrtxt+dot+’</td><td class="'+cc(a1)+'">’+fmtS(a1)+’</td><td class="'+cc(a2)+'">’+fmtS(a2)+’</td><td class="'+cc(tot)+'">’+fmtS(tot)+’</td>’;
+tb.appendChild(tr);
+});
+t.appendChild(tb);el.appendChild(t);
+}
 }
 function renderSettings(d){
-  var pill=ge('tpill'),state=d.tokenState||'unknown';
-  var expMs=d.tokenExpiry||0;
-  var daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null;
-  var daysStr=daysLeft!==null?(daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'';
-  var map={fresh:{lbl:'Active',cls:'pg'},expiring:{lbl:'Expiring',cls:'py'},expired:{lbl:'Expired',cls:'pr'}};
-  var info=map[state]||{lbl:state,cls:'pb'};
-  if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
-  var td=ge('tdays');if(td)td.textContent=daysStr;
+var pill=ge(‘tpill’),state=d.tokenState||‘unknown’;
+var expMs=d.tokenExpiry||0;
+var daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null;
+var daysStr=daysLeft!==null?(daysLeft+’ day’+(daysLeft===1?’’:‘s’)+’ left’):’’;
+var map={fresh:{lbl:‘Active’,cls:‘pg’},expiring:{lbl:‘Expiring’,cls:‘py’},expired:{lbl:‘Expired’,cls:‘pr’}};
+var info=map[state]||{lbl:state,cls:‘pb’};
+if(pill){pill.className=’pill ’+info.cls;pill.textContent=info.lbl;}
+var td=ge(‘tdays’);if(td)td.textContent=daysStr;
 
-  // ── Nickel Closer (Auto-close) toggle section ──────────────────────────────
-  var nc = ge('nc-section');
-  nc.innerHTML = '';
-  var archRows = d.archRows || [];
-  var ncDisabled = d.nickelCloserDisabled || [];
-  // Extract wk1 and wk2 expiry dates from archRows
-  var weeks = [];
-  ['THIS WEEK','NEXT WEEK'].forEach(function(label, i){
-    for(var r=0; r<archRows.length; r++){
-      var raw = String(archRows[r][0] || '');
-      if(raw.toUpperCase().indexOf(label) >= 0){
-        var m = raw.match(/(\d{4}-\d{2}-\d{2})/);
-        if(m) weeks.push({ expiry: m[1], label: i===0 ? 'This Week' : 'Next Week' });
-        break;
-      }
-    }
-  });
-  if(weeks.length > 0){
-    var ncCard = document.createElement('div');
-    ncCard.className = 'scard';
-    weeks.forEach(function(wk, idx){
-      var isEnabled = ncDisabled.indexOf(wk.expiry) < 0;
-      var row = document.createElement('div');
-      row.className = 'srow';
-      row.innerHTML =
-        '<div>' +
-          '<div class="slbl">Auto-close &middot; ' + wk.label + '</div>' +
-          '<div class="ssub">' + wk.expiry + '</div>' +
-        '</div>' +
-        '<div class="tog' + (isEnabled ? ' on' : '') + '" ' +
-          'onclick="toggleNickelCloser(\'' + wk.expiry + '\')" ' +
-          'style="' + (isEnabled ? '' : 'opacity:0.6;') + '">' +
-          '<div class="tog-track" style="' + (!isEnabled ? 'background:var(--bg4);border-color:var(--border);' : '') + '"></div>' +
-          '<div class="tog-thumb"></div>' +
-        '</div>';
-      ncCard.appendChild(row);
-    });
-    nc.appendChild(ncCard);
-  }
+// ── Nickel Closer (Auto-close) toggle section ──────────────────────────────
+var nc = ge(‘nc-section’);
+nc.innerHTML = ‘’;
+var archRows = d.archRows || [];
+var ncDisabled = d.nickelCloserDisabled || [];
+// Extract wk1 and wk2 expiry dates from archRows
+var weeks = [];
+[‘THIS WEEK’,‘NEXT WEEK’].forEach(function(label, i){
+for(var r=0; r<archRows.length; r++){
+var raw = String(archRows[r][0] || ‘’);
+if(raw.toUpperCase().indexOf(label) >= 0){
+var m = raw.match(/(\d{4}-\d{2}-\d{2})/);
+if(m) weeks.push({ expiry: m[1], label: i===0 ? ‘This Week’ : ‘Next Week’ });
+break;
+}
+}
+});
+if(weeks.length > 0){
+var ncCard = document.createElement(‘div’);
+ncCard.className = ‘scard’;
+weeks.forEach(function(wk, idx){
+var isEnabled = ncDisabled.indexOf(wk.expiry) < 0;
+var row = document.createElement(‘div’);
+row.className = ‘srow’;
+row.innerHTML =
+‘<div>’ +
+‘<div class="slbl">Auto-close · ’ + wk.label + ‘</div>’ +
+‘<div class="ssub">’ + wk.expiry + ‘</div>’ +
+‘</div>’ +
+‘<div class=“tog’ + (isEnabled ? ’ on’ : ‘’) + ’” ’ +
+‘onclick=“toggleNickelCloser('’ + wk.expiry + ’')” ’ +
+‘style=”’ + (isEnabled ? ‘’ : ‘opacity:0.6;’) + ‘”>’ +
+‘<div class="tog-track" style="' + (!isEnabled ? 'background:var(--bg4);border-color:var(--border);' : '') + '"></div>’ +
+‘<div class="tog-thumb"></div>’ +
+‘</div>’;
+ncCard.appendChild(row);
+});
+nc.appendChild(ncCard);
+}
 
-  // ── Tally warning section ─────────────────────────────────────────────────
-  var tallySection = ge('tally-section');
-  tallySection.innerHTML = '';
-  var tallyW = d.tallyWarnings || {};
-  var tallyKeys = Object.keys(tallyW).filter(function(k){ return k.indexOf('checked:') < 0; });
-  if(tallyKeys.length > 0){
-    var tcard = document.createElement('div');
-    tcard.className = 'scard';
-    // Header row
-    var thdr = document.createElement('div');
-    thdr.className = 'srow';
-    thdr.innerHTML =
-      '<div>' +
-        '<div class="slbl" style="color:var(--gold)">&#x26A0;&#xFE0F; Tally Mismatch</div>' +
-        '<div class="ssub">Wednesday tally detected a diff &gt; $10</div>' +
-      '</div>' +
-      '<button class="abtn" onclick="doClearTally(this)">Clear</button>';
-    tcard.appendChild(thdr);
-    // One row per warning
-    tallyKeys.forEach(function(k){
-      var w = tallyW[k];
-      var parts = k.split(':');
-      var acct = parts[0] || '', expiry = parts[1] || '';
-      var row = document.createElement('div');
-      row.className = 'srow';
-      row.style.borderTop = '1px solid var(--border2)';
-      row.innerHTML =
-        '<div>' +
-          '<div class="slbl" style="font-size:12px">' + acct + ' · ' + expiry + '</div>' +
-          '<div class="ssub">Archive $' + (w.archived||0).toFixed(0) + ' · Transactions $' + (w.rawNet||0).toFixed(0) + ' · Diff $' + (w.diff||0).toFixed(0) + '</div>' +
-        '</div>';
-      tcard.appendChild(row);
-    });
-    tallySection.appendChild(tcard);
-  }
-
-
+// ── Tally warning section ─────────────────────────────────────────────────
+var tallySection = ge(‘tally-section’);
+tallySection.innerHTML = ‘’;
+var tallyW = d.tallyWarnings || {};
+var tallyKeys = Object.keys(tallyW).filter(function(k){ return k.indexOf(‘checked:’) < 0; });
+if(tallyKeys.length > 0){
+var tcard = document.createElement(‘div’);
+tcard.className = ‘scard’;
+// Header row
+var thdr = document.createElement(‘div’);
+thdr.className = ‘srow’;
+thdr.innerHTML =
+‘<div>’ +
+‘<div class="slbl" style="color:var(--gold)">⚠️ Tally Mismatch</div>’ +
+‘<div class="ssub">Wednesday tally detected a diff > $10</div>’ +
+‘</div>’ +
+‘<button class="abtn" onclick="doClearTally(this)">Clear</button>’;
+tcard.appendChild(thdr);
+// One row per warning
+tallyKeys.forEach(function(k){
+var w = tallyW[k];
+var parts = k.split(’:’);
+var acct = parts[0] || ‘’, expiry = parts[1] || ‘’;
+var row = document.createElement(‘div’);
+row.className = ‘srow’;
+row.style.borderTop = ‘1px solid var(–border2)’;
+row.innerHTML =
+‘<div>’ +
+‘<div class="slbl" style="font-size:12px">’ + acct + ’ · ’ + expiry + ‘</div>’ +
+‘<div class="ssub">Archive $’ + (w.archived||0).toFixed(0) + ’ · Transactions $’ + (w.rawNet||0).toFixed(0) + ’ · Diff $’ + (w.diff||0).toFixed(0) + ‘</div>’ +
+‘</div>’;
+tcard.appendChild(row);
+});
+tallySection.appendChild(tcard);
+}
 
 }
 var MOCK={
-  updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
-  warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
-  nickelCloserDisabled:[],
-  dashRows:[['A1','OPEN','$1,240','2P/3C','$800','1P/2C','$300','0P/1C','$0','0P/0C',3,6,0,4,8],['A2','OPEN','$980','2P/2C','$500','1P/1C','$0','0P/0C','$0','0P/0C',3,3,0,3,5]],
-  archRows:[['2026-03-13 (THIS WEEK)','$840','$400','$620','$360','$2,220','$2,220',2,3,2,2,'ACTIVE'],['2026-03-20 (NEXT WEEK)','$1,057','$3,184','$515','$2,596','$7,352','$7,352',1,2,1,1,'ACTIVE'],['2026-03-27 (WEEK AFTER)','$0','$300','$0','$0','$300','$300',0,1,0,0,'ACTIVE']],
-  allClosed:[['2026-03-06','$1,800','$0','$1,200','$0','$3,000','$3,000',2,3,2,2,'CLOSED'],['2026-02-27','$2,100','$0','$1,400','$0','$3,500','$3,500',2,3,2,2,'CLOSED']],
-  invRows:[['2026-03-13','A1','CALL',420,2,4.20,840,6,834,'OPEN'],['2026-03-13','A1','PUT',360,2,3.80,760,6,754,'OPEN'],['2026-03-13','A2','CALL',440,2,3.60,720,6,714,'OPEN'],['2026-03-13','A2','PUT',340,2,3.10,620,6,614,'OPEN'],['2026-03-20','A1','CALL',450,1,4.00,400,3,397,'OPEN'],['2026-03-20','A2','PUT',330,1,2.50,250,3,247,'OPEN']],
-  monthly:{'2026-03':{a1:2640,a2:1860,total:4500},'2026-02':{a1:4300,a2:3100,total:7400},'2026-01':{a1:3800,a2:2700,total:6500}}
+updated:‘6:20 PM’,tokenState:‘fresh’,tokenExpiry:Date.now()+(6*86400000),goals:{‘A1’:4000,‘A2’:3000},
+warnings:{earnings:‘MSTR earnings May 20 \u26a0\ufe0f’,earningsUrgent:true,holiday:‘Market holiday May 26’},
+nickelCloserDisabled:[],
+dashRows:[[‘A1’,‘OPEN’,’$1,240’,‘2P/3C’,’$800’,‘1P/2C’,’$300’,‘0P/1C’,’$0’,‘0P/0C’,3,6,0,4,8],[‘A2’,‘OPEN’,’$980’,‘2P/2C’,’$500’,‘1P/1C’,’$0’,‘0P/0C’,’$0’,‘0P/0C’,3,3,0,3,5]],
+archRows:[[‘2026-03-13 (THIS WEEK)’,’$840’,’$400’,’$620’,’$360’,’$2,220’,’$2,220’,2,3,2,2,‘ACTIVE’],[‘2026-03-20 (NEXT WEEK)’,’$1,057’,’$3,184’,’$515’,’$2,596’,’$7,352’,’$7,352’,1,2,1,1,‘ACTIVE’],[‘2026-03-27 (WEEK AFTER)’,’$0’,’$300’,’$0’,’$0’,’$300’,’$300’,0,1,0,0,‘ACTIVE’]],
+allClosed:[[‘2026-03-06’,’$1,800’,’$0’,’$1,200’,’$0’,’$3,000’,’$3,000’,2,3,2,2,‘CLOSED’],[‘2026-02-27’,’$2,100’,’$0’,’$1,400’,’$0’,’$3,500’,’$3,500’,2,3,2,2,‘CLOSED’]],
+invRows:[[‘2026-03-13’,‘A1’,‘CALL’,420,2,4.20,840,6,834,‘OPEN’],[‘2026-03-13’,‘A1’,‘PUT’,360,2,3.80,760,6,754,‘OPEN’],[‘2026-03-13’,‘A2’,‘CALL’,440,2,3.60,720,6,714,‘OPEN’],[‘2026-03-13’,‘A2’,‘PUT’,340,2,3.10,620,6,614,‘OPEN’],[‘2026-03-20’,‘A1’,‘CALL’,450,1,4.00,400,3,397,‘OPEN’],[‘2026-03-20’,‘A2’,‘PUT’,330,1,2.50,250,3,247,‘OPEN’]],
+monthly:{‘2026-03’:{a1:2640,a2:1860,total:4500},‘2026-02’:{a1:4300,a2:3100,total:7400},‘2026-01’:{a1:3800,a2:2700,total:6500}}
 };
-['d','p','h','s'].forEach(function(k){ var el=ge('t-'+k);el.onclick=function(){switchTab(k);};el.ontouchend=function(e){e.preventDefault();switchTab(k);}; });
-ge('rbtn').onclick=doRefresh;
-ge('bw').onclick=function(){switchHist('weeks');};
-ge('bm').onclick=function(){switchHist('monthly');};
-ge('auth-btn').onclick=doAuth;
-var oauthCode = new URLSearchParams(window.location.search).get('code');
+[‘d’,‘p’,‘h’,‘s’].forEach(function(k){ var el=ge(‘t-’+k);el.onclick=function(){switchTab(k);};el.ontouchend=function(e){e.preventDefault();switchTab(k);}; });
+ge(‘rbtn’).onclick=doRefresh;
+ge(‘bw’).onclick=function(){switchHist(‘weeks’);};
+ge(‘bm’).onclick=function(){switchHist(‘monthly’);};
+ge(‘auth-btn’).onclick=doAuth;
+var oauthCode = new URLSearchParams(window.location.search).get(‘code’);
 if(oauthCode){
-  window.history.replaceState({}, document.title, window.location.pathname);
-  switchTab('s');
-  toast('Completing authentication\u2026', 5000);
-  fetch(BACKEND+'?action=exchangeCode&code='+encodeURIComponent(oauthCode))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.success){
-        toast('\u2713 Connected to Schwab!');
-        fetch(DATA_JSON + '?_=' + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
-      } else {
-        toast('Auth failed: '+(d.error||'unknown'));
-        renderAll(MOCK);
-      }
-    })
-    .catch(function(e){toast('Auth error: '+errMsg(e));renderAll(MOCK);});
+window.history.replaceState({}, document.title, window.location.pathname);
+switchTab(‘s’);
+toast(‘Completing authentication\u2026’, 5000);
+fetch(BACKEND+’?action=exchangeCode&code=’+encodeURIComponent(oauthCode))
+.then(function(r){return r.json();})
+.then(function(d){
+if(d.success){
+toast(’\u2713 Connected to Schwab!’);
+fetch(DATA_JSON + ‘?_=’ + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
 } else {
-  // Render cached data immediately — never show blank if we have prior data
-  var _cached = null;
-  try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
-  if(_cached){ renderAll(_cached); }
-  // Background CDN fetch — fast ~200ms, _savedMs guard prevents stale overwrite
-  fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-      var cdnMs = d._savedMs || 0;
-      var curMs = (_cached && _cached._savedMs) || 0;
-      if(cdnMs > curMs){
-        renderAll(d);
-        _lastFetch=Date.now();
-        saveCache(d);
-        if(_cached) flashLogo();
-      }
-    })
-    .catch(function(e){console.error(e);});
+toast(’Auth failed: ’+(d.error||‘unknown’));
+renderAll(MOCK);
+}
+})
+.catch(function(e){toast(’Auth error: ‘+errMsg(e));renderAll(MOCK);});
+} else {
+// Render cached data immediately — never show blank if we have prior data
+var _cached = null;
+try{ var _cs=localStorage.getItem(‘riki_data’);if(_cs)_cached=JSON.parse(_cs); }catch(e){}
+if(_cached){ renderAll(_cached); }
+// Background CDN fetch — fast ~200ms, *savedMs guard prevents stale overwrite
+fetch(DATA_JSON + ’?*=’ + Date.now())
+.then(function(r){return r.json();})
+.then(function(d){
+if(d.tokenExpired){ showTokenExpired(); return; }
+var cdnMs = d._savedMs || 0;
+var curMs = (_cached && _cached._savedMs) || 0;
+if(cdnMs > curMs){
+renderAll(d);
+_lastFetch=Date.now();
+saveCache(d);
+if(_cached) flashLogo();
+}
+})
+.catch(function(e){console.error(e);});
 }
 var _lastFetch = Date.now();
 
 // Poll GAS every 5 minutes — avoids GitHub CDN caching issues
 setInterval(function(){
-  if(document.visibilityState !== 'visible') return;
-  // Use GAS directly — no CDN cache delays for live updates
-  fetch(BACKEND + '?action=data')
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-      var gasMs = d._savedMs || Date.now();
-      var curMs = (DATA && DATA._savedMs) || 0;
-      if(gasMs <= curMs) return;
-      renderAll(d);
-      _lastFetch = Date.now();
-      saveCache(d);
-      flashLogo();
-    })
-    .catch(function(){});
+if(document.visibilityState !== ‘visible’) return;
+// Use GAS directly — no CDN cache delays for live updates
+fetch(BACKEND + ‘?action=data’)
+.then(function(r){ return r.json(); })
+.then(function(d){
+if(d.tokenExpired){ showTokenExpired(); return; }
+var gasMs = d._savedMs || Date.now();
+var curMs = (DATA && DATA._savedMs) || 0;
+if(gasMs <= curMs) return;
+renderAll(d);
+_lastFetch = Date.now();
+saveCache(d);
+flashLogo();
+})
+.catch(function(){});
 }, 5 * 60 * 1000);
 
-document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState !== 'visible') return;
-  // Skip if fetched less than 60s ago — prevents duplicate calls on app open
-  if(Date.now() - _lastFetch < 60000) return;
-  // CDN fetch — fast ~200ms, _savedMs guard prevents stale overwrite
-  fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-      var cdnMs = d._savedMs || 0;
-      var curMs = (DATA && DATA._savedMs) || 0;
-      if(cdnMs <= curMs) return;
-      renderAll(d);
-      _lastFetch=Date.now();
-      saveCache(d);
-      flashLogo();
-    })
-    .catch(function(){});
+document.addEventListener(‘visibilitychange’, function(){
+if(document.visibilityState !== ‘visible’) return;
+// Skip if fetched less than 60s ago — prevents duplicate calls on app open
+if(Date.now() - _lastFetch < 60000) return;
+// CDN fetch — fast ~200ms, *savedMs guard prevents stale overwrite
+fetch(DATA_JSON + ’?*=’ + Date.now())
+.then(function(r){return r.json();})
+.then(function(d){
+if(d.tokenExpired){ showTokenExpired(); return; }
+var cdnMs = d._savedMs || 0;
+var curMs = (DATA && DATA._savedMs) || 0;
+if(cdnMs <= curMs) return;
+renderAll(d);
+_lastFetch=Date.now();
+saveCache(d);
+flashLogo();
+})
+.catch(function(){});
 });
 </script>
+
 </body>
 </html>

@@ -521,18 +521,34 @@ function renderDash(d){
     '📅 '+w.ccReminder;
     dw.appendChild(el);
   }
+  // ── Tally result pill — green on pass, red on mismatch, dismissable ─────────
+  var tr=d.tallyResult;
   var tallyW=d.tallyWarnings||{};
-  Object.keys(tallyW).forEach(function(k){
-    var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
-    var w=tallyW[k];
-    var diff=(w.diff||0).toFixed(0);
-    var raw=(w.rawNet||0).toFixed(0);
-    var arch=(w.archived||0).toFixed(0);
-    var el=document.createElement('div');el.className='warn urg';
-    el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-      '🔴 TALLY: '+acct+' \u00b7 '+expiry+' \u2014 Archive $'+arch+' vs Orders $'+raw+' (diff $'+diff+'). Verify fills.';
-    dw.appendChild(el);
-  });
+  var tallyMismatches=Object.keys(tallyW).filter(function(k){ return k.indexOf('checked:') < 0 && k.indexOf(':tally') > 0; });
+  // Show tally result pill (pass OR mismatch) — keyed to expiry so it reappears after new tally
+  var tallyDismissKey = 'tallyDismiss:' + (tr ? tr.expiry : '');
+  if(tr && !localStorage.getItem(tallyDismissKey)){
+    var isPass = tr.pass;
+    var diffParts = Object.keys(tr.results||{}).map(function(lbl){
+      var r=tr.results[lbl]; return lbl.replace('Account ','A')+': $'+(r.diff||0).toFixed(2);
+    }).join(' · ');
+    var tp=document.createElement('div');
+    tp.style.cssText='margin:14px 16px 0;padding:11px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;'+
+      (isPass ? 'background:rgba(39,78,19,.08);border:1px solid rgba(39,78,19,.2);color:#274e13;'
+               : 'background:rgba(229,83,83,.08);border:1px solid rgba(229,83,83,.2);color:var(--red);');
+    tp.innerHTML=
+      '<div>'+
+        '<div style="font-size:12px;font-weight:700;">'+(isPass?'✓ Tally Passed':'⚠ Tally Mismatch')+' · '+(tr.expiry||'')+'</div>'+
+        '<div style="font-size:11px;opacity:0.85;margin-top:2px;">'+diffParts+' · '+(tr.date||'')+'</div>'+
+      '</div>'+
+      '<div style="font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;" id="tally-close">✕</div>';
+    tp.querySelector('#tally-close').onclick=function(e){
+      e.stopPropagation();
+      tp.parentNode.removeChild(tp);
+      localStorage.setItem(tallyDismissKey,'1');
+    };
+    dw.appendChild(tp);
+  }
   if(d.staleData){
     var el=document.createElement('div');el.className='warn urg';
     el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
@@ -771,31 +787,7 @@ function renderSettings(d){
     tallySection.appendChild(tcard);
   }
 
-  // ── Tally result pill (green on pass, dismissable) ────────────────────────
-  var tr = d.tallyResult;
-  var TALLY_DISMISSED_KEY = 'tallyDismissed:' + (tr ? tr.expiry : '');
-  if(tr && !localStorage.getItem(TALLY_DISMISSED_KEY)){
-    var tpillDiv = document.createElement('div');
-    tpillDiv.style.cssText = 'padding:6px 12px 2px;';
-    var diffParts = Object.keys(tr.results||{}).map(function(lbl){
-      var r = tr.results[lbl];
-      return lbl.replace('Account ','A') + ': $' + (r.diff||0).toFixed(2);
-    }).join(' · ');
-    var bg   = tr.pass ? '#d9ead3' : '#f4cccc';
-    var col  = tr.pass ? '#274e13' : '#990000';
-    var icon = tr.pass ? '✓' : '⚠';
-    var tpillInner = document.createElement('div');
-    tpillInner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:' + bg + ';border-radius:10px;padding:8px 12px;cursor:pointer;';
-    tpillInner.innerHTML =
-      '<div>' +
-        '<div style="font-size:12px;font-weight:700;color:' + col + '">' + icon + ' Tally ' + (tr.pass ? 'Passed' : 'Mismatch') + ' · ' + (tr.date||'') + ' · ' + (tr.expiry||'') + '</div>' +
-        '<div style="font-size:11px;color:' + col + ';opacity:0.85;margin-top:2px;">' + diffParts + '</div>' +
-      '</div>' +
-      '<div style="font-size:16px;color:' + col + ';opacity:0.6;margin-left:10px;">&#x2715;</div>';
-    tpillInner.onclick = function(){ tpillDiv.parentNode.removeChild(tpillDiv); localStorage.setItem(TALLY_DISMISSED_KEY, '1'); };
-    tpillDiv.appendChild(tpillInner);
-    tallySection.appendChild(tpillDiv);
-  }
+
 
 }
 var MOCK={

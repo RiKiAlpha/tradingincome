@@ -784,16 +784,16 @@ function renderSettings(d){
     var bg   = tr.pass ? '#d9ead3' : '#f4cccc';
     var col  = tr.pass ? '#274e13' : '#990000';
     var icon = tr.pass ? '✓' : '⚠';
-    tpillDiv.innerHTML =
-      '<div style="display:flex;align-items:center;justify-content:space-between;' +
-        'background:' + bg + ';border-radius:10px;padding:8px 12px;cursor:pointer;"' +
-        ' onclick="this.parentNode.parentNode.removeChild(this.parentNode);localStorage.setItem('' + TALLY_DISMISSED_KEY + '','1');">' +
-        '<div>' +
-          '<div style="font-size:12px;font-weight:700;color:' + col + '">' + icon + ' Tally ' + (tr.pass ? 'Passed' : 'Mismatch') + ' · ' + (tr.date||'') + ' · ' + (tr.expiry||'') + '</div>' +
-          '<div style="font-size:11px;color:' + col + ';opacity:0.85;margin-top:2px;">' + diffParts + '</div>' +
-        '</div>' +
-        '<div style="font-size:16px;color:' + col + ';opacity:0.6;margin-left:10px;">&#x2715;</div>' +
-      '</div>';
+    var tpillInner = document.createElement('div');
+    tpillInner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:' + bg + ';border-radius:10px;padding:8px 12px;cursor:pointer;';
+    tpillInner.innerHTML =
+      '<div>' +
+        '<div style="font-size:12px;font-weight:700;color:' + col + '">' + icon + ' Tally ' + (tr.pass ? 'Passed' : 'Mismatch') + ' · ' + (tr.date||'') + ' · ' + (tr.expiry||'') + '</div>' +
+        '<div style="font-size:11px;color:' + col + ';opacity:0.85;margin-top:2px;">' + diffParts + '</div>' +
+      '</div>' +
+      '<div style="font-size:16px;color:' + col + ';opacity:0.6;margin-left:10px;">&#x2715;</div>';
+    tpillInner.onclick = function(){ tpillDiv.parentNode.removeChild(tpillDiv); localStorage.setItem(TALLY_DISMISSED_KEY, '1'); };
+    tpillDiv.appendChild(tpillInner);
     tallySection.appendChild(tpillDiv);
   }
 

@@ -468,7 +468,7 @@ btn.disabled=false; btn.textContent=‘Clear’;
 .catch(function(e){toast(’Error: ’+errMsg(e));btn.disabled=false;btn.textContent=‘Clear’;});
 }
 
-function renderAll(d){ try{ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }catch(e){ document.body.innerHTML=’<pre style="color:red;padding:20px;font-size:14px;">’+e.message+’\n’+e.stack+’</pre>’; } }
+function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
 function renderHeader(d){
 var el=ge(‘utime’);
 if(el){ var raw=String(d.updated||’\u2014’);el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,’’).replace(/^Updated:\s*/i,’’).trim(); }
@@ -522,51 +522,52 @@ el.innerHTML=’<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stro
 ‘📅 ‘+w.ccReminder;
 dw.appendChild(el);
 }
-// ── Tally result pill — green on pass, red on mismatch, dismissable ─────────
-var tr=d.tallyResult;
 var tallyW=d.tallyWarnings||{};
-var tallyMismatches=Object.keys(tallyW).filter(function(k){ return k.indexOf(‘checked:’) < 0 && k.indexOf(’:tally’) > 0; });
-// Show tally result pill (pass OR mismatch) — keyed to expiry so it reappears after new tally
-var tallyDismissKey = ‘tallyDismiss:’ + (tr ? tr.expiry : ‘’);
-if(tr && !localStorage.getItem(tallyDismissKey)){
-var isPass = tr.pass;
-var diffParts = Object.keys(tr.results||{}).map(function(lbl){
-var r=tr.results[lbl]; return lbl.replace(‘Account ‘,‘A’)+’: $’+(r.diff||0).toFixed(2);
-}).join(’ · ‘);
+Object.keys(tallyW).filter(function(k){ return k.indexOf(‘checked:’) < 0 && k.indexOf(’:tally’) > 0; }).forEach(function(k){
+var parts=k.split(’:’),acct=parts[0]||’’,expiry=parts[1]||’’;
+var w=tallyW[k];
+var diff=(w.diff||0).toFixed(0);
+var raw=(w.rawNet||0).toFixed(0);
+var arch=(w.archived||0).toFixed(0);
+var el=document.createElement(‘div’);el.className=‘warn urg’;
+el.innerHTML=’<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>’+
+‘🔴 TALLY: ‘+acct+’ \u00b7 ‘+expiry+’ \u2014 Archive $’+arch+’ vs Orders $’+raw+’ (diff $’+diff+’). Verify fills.’;
+dw.appendChild(el);
+});
+// Tally result pill — green pass or red mismatch, dismissable
+var tr=d.tallyResult;
+if(tr){
+var tdKey=‘tallyDismiss:’+tr.expiry;
+if(!localStorage.getItem(tdKey)){
+var isPass=tr.pass;
+var dparts=Object.keys(tr.results||{}).map(function(l){
+var r=tr.results[l]; return l.replace(‘Account ‘,‘A’)+’: $’+(r.diff||0).toFixed(2);
+}).join(’ | ‘);
 var tp=document.createElement(‘div’);
-var tpBg  = isPass ? ‘rgba(52,168,83,.18)’ : ‘rgba(229,83,83,.08)’;
-var tpBdr = isPass ? ‘rgba(52,168,83,.4)’  : ‘rgba(229,83,83,.2)’;
-var tpCol = isPass ? ‘#1e7e34’              : ‘var(–red)’;
-var tpIcon= isPass ? ‘✓ Tally Passed’  : ‘⚠ Tally Mismatch’;
 tp.style.margin=‘14px 16px 0’;
 tp.style.padding=‘11px 14px’;
 tp.style.borderRadius=‘10px’;
 tp.style.display=‘flex’;
 tp.style.alignItems=‘center’;
 tp.style.justifyContent=‘space-between’;
-tp.style.background=tpBg;
-tp.style.border=‘1px solid ‘+tpBdr;
-tp.style.color=tpCol;
-var tpLeft=document.createElement(‘div’);
-var tpTitle=document.createElement(‘div’);
-tpTitle.style.cssText=‘font-size:12px;font-weight:700;’;
-tpTitle.textContent=tpIcon+’ · ‘+(tr.expiry||’’);
-var tpSub=document.createElement(‘div’);
-tpSub.style.cssText=‘font-size:11px;opacity:0.85;margin-top:2px;’;
-tpSub.textContent=diffParts+’ · ‘+(tr.date||’’);
-tpLeft.appendChild(tpTitle);
-tpLeft.appendChild(tpSub);
-var tpClose=document.createElement(‘div’);
-tpClose.style.cssText=‘font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;’;
-tpClose.textContent=‘✕’;
-tpClose.onclick=function(e){
-e.stopPropagation();
-tp.parentNode.removeChild(tp);
-localStorage.setItem(tallyDismissKey,‘1’);
-};
-tp.appendChild(tpLeft);
-tp.appendChild(tpClose);
+tp.style.background=isPass?‘rgba(52,168,83,.18)’:‘rgba(229,83,83,.08)’;
+tp.style.border=‘1px solid ‘+(isPass?‘rgba(52,168,83,.4)’:‘rgba(229,83,83,.2)’);
+tp.style.color=isPass?’#1e7e34’:‘var(–red)’;
+var tl=document.createElement(‘div’);
+var tt=document.createElement(‘div’);
+tt.style.cssText=‘font-size:12px;font-weight:700;’;
+tt.textContent=(isPass?‘Tally Passed’:‘Tally Mismatch’)+’ - ‘+(tr.expiry||’’);
+var ts2=document.createElement(‘div’);
+ts2.style.cssText=‘font-size:11px;opacity:0.85;margin-top:2px;’;
+ts2.textContent=dparts+’ - ‘+(tr.date||’’);
+tl.appendChild(tt); tl.appendChild(ts2);
+var tc=document.createElement(‘div’);
+tc.style.cssText=‘font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;’;
+tc.textContent=‘x’;
+tc.onclick=function(e){ e.stopPropagation(); tp.parentNode.removeChild(tp); localStorage.setItem(tdKey,‘1’); };
+tp.appendChild(tl); tp.appendChild(tc);
 dw.appendChild(tp);
+}
 }
 if(d.staleData){
 var el=document.createElement(‘div’);el.className=‘warn urg’;

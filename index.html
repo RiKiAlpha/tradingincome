@@ -468,7 +468,7 @@ btn.disabled=false; btn.textContent=‘Clear’;
 .catch(function(e){toast(’Error: ’+errMsg(e));btn.disabled=false;btn.textContent=‘Clear’;});
 }
 
-function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
+function renderAll(d){ try{ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }catch(e){ document.body.innerHTML=’<pre style="color:red;padding:20px;font-size:14px;">’+e.message+’\n’+e.stack+’</pre>’; } }
 function renderHeader(d){
 var el=ge(‘utime’);
 if(el){ var raw=String(d.updated||’\u2014’);el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,’’).replace(/^Updated:\s*/i,’’).trim(); }

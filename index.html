@@ -534,20 +534,38 @@ var diffParts = Object.keys(tr.results||{}).map(function(lbl){
 var r=tr.results[lbl]; return lbl.replace(‘Account ‘,‘A’)+’: $’+(r.diff||0).toFixed(2);
 }).join(’ · ‘);
 var tp=document.createElement(‘div’);
-tp.style.cssText=‘margin:14px 16px 0;padding:11px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;’+
-(isPass ? ‘background:rgba(52,168,83,.18);border:1px solid rgba(52,168,83,.4);color:#1e7e34;’
-: ‘background:rgba(229,83,83,.08);border:1px solid rgba(229,83,83,.2);color:var(–red);’);
-tp.innerHTML=
-‘<div>’+
-‘<div style="font-size:12px;font-weight:700;">’+(isPass?‘✓ Tally Passed’:‘⚠ Tally Mismatch’)+’ · ‘+(tr.expiry||’’)+’</div>’+
-‘<div style="font-size:11px;opacity:0.85;margin-top:2px;">’+diffParts+’ · ‘+(tr.date||’’)+’</div>’+
-‘</div>’+
-‘<div style="font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;" id="tally-close">✕</div>’;
-tp.querySelector(’#tally-close’).onclick=function(e){
+var tpBg  = isPass ? ‘rgba(52,168,83,.18)’ : ‘rgba(229,83,83,.08)’;
+var tpBdr = isPass ? ‘rgba(52,168,83,.4)’  : ‘rgba(229,83,83,.2)’;
+var tpCol = isPass ? ‘#1e7e34’              : ‘var(–red)’;
+var tpIcon= isPass ? ‘✓ Tally Passed’  : ‘⚠ Tally Mismatch’;
+tp.style.margin=‘14px 16px 0’;
+tp.style.padding=‘11px 14px’;
+tp.style.borderRadius=‘10px’;
+tp.style.display=‘flex’;
+tp.style.alignItems=‘center’;
+tp.style.justifyContent=‘space-between’;
+tp.style.background=tpBg;
+tp.style.border=‘1px solid ‘+tpBdr;
+tp.style.color=tpCol;
+var tpLeft=document.createElement(‘div’);
+var tpTitle=document.createElement(‘div’);
+tpTitle.style.cssText=‘font-size:12px;font-weight:700;’;
+tpTitle.textContent=tpIcon+’ · ‘+(tr.expiry||’’);
+var tpSub=document.createElement(‘div’);
+tpSub.style.cssText=‘font-size:11px;opacity:0.85;margin-top:2px;’;
+tpSub.textContent=diffParts+’ · ‘+(tr.date||’’);
+tpLeft.appendChild(tpTitle);
+tpLeft.appendChild(tpSub);
+var tpClose=document.createElement(‘div’);
+tpClose.style.cssText=‘font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;’;
+tpClose.textContent=‘✕’;
+tpClose.onclick=function(e){
 e.stopPropagation();
 tp.parentNode.removeChild(tp);
 localStorage.setItem(tallyDismissKey,‘1’);
 };
+tp.appendChild(tpLeft);
+tp.appendChild(tpClose);
 dw.appendChild(tp);
 }
 if(d.staleData){

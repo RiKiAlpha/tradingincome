@@ -499,7 +499,7 @@ function renderDash(d){
       var evtDate=new Date(dateStr+'T12:00:00');
       var now=new Date();
       var daysAway=(evtDate-now)/86400000;
-      if(daysAway<-1||daysAway>21)return null;
+      if(daysAway<-1||daysAway>28)return null;
       if(isHoliday)return '\uD83D\uDCC5 Market holiday on '+dateStr+' \u2014 expiry shifts to Thursday';
       return '\u26A0\uFE0F Earnings on '+dateStr;
     }
@@ -533,7 +533,6 @@ function renderDash(d){
       '🔴 TALLY: '+acct+' \u00b7 '+expiry+' \u2014 Archive $'+arch+' vs Orders $'+raw+' (diff $'+diff+'). Verify fills.';
     dw.appendChild(el);
   });
-  // Tally result pill — green pass or red mismatch, dismissable
   var tr=d.tallyResult;
   if(tr){
     var tdKey='tallyDismiss:'+tr.expiry;
@@ -551,7 +550,7 @@ function renderDash(d){
       tp.style.justifyContent='space-between';
       tp.style.background=isPass?'rgba(52,168,83,.18)':'rgba(229,83,83,.08)';
       tp.style.border='1px solid '+(isPass?'rgba(52,168,83,.4)':'rgba(229,83,83,.2)');
-      tp.style.color=isPass?'#1e7e34':'var(--red)';
+      tp.style.color=isPass?'#1e7e34':'#e55353';
       var tl=document.createElement('div');
       var tt=document.createElement('div');
       tt.style.cssText='font-size:12px;font-weight:700;';
@@ -559,12 +558,18 @@ function renderDash(d){
       var ts2=document.createElement('div');
       ts2.style.cssText='font-size:11px;opacity:0.85;margin-top:2px;';
       ts2.textContent=dparts+' - '+(tr.date||'');
-      tl.appendChild(tt); tl.appendChild(ts2);
+      tl.appendChild(tt);
+      tl.appendChild(ts2);
       var tc=document.createElement('div');
       tc.style.cssText='font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;';
       tc.textContent='x';
-      tc.onclick=function(e){ e.stopPropagation(); tp.parentNode.removeChild(tp); localStorage.setItem(tdKey,'1'); };
-      tp.appendChild(tl); tp.appendChild(tc);
+      tc.onclick=function(e){
+        e.stopPropagation();
+        tp.parentNode.removeChild(tp);
+        localStorage.setItem(tdKey,'1');
+      };
+      tp.appendChild(tl);
+      tp.appendChild(tc);
       dw.appendChild(tp);
     }
   }
@@ -862,17 +867,16 @@ if(oauthCode){
 }
 var _lastFetch = Date.now();
 
-// Poll GAS every 5 minutes — avoids GitHub CDN caching issues
+// Poll CDN every 5 minutes — fast ~200ms, data.json updated by githubWriteTrigger
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
-  // Use GAS directly — no CDN cache delays for live updates
-  fetch(BACKEND + '?action=data')
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var gasMs = d._savedMs || Date.now();
+      var cdnMs = d._savedMs || 0;
       var curMs = (DATA && DATA._savedMs) || 0;
-      if(gasMs <= curMs) return;
+      if(cdnMs <= curMs) return;
       renderAll(d);
       _lastFetch = Date.now();
       saveCache(d);

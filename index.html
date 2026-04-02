@@ -491,6 +491,7 @@ function renderHeader(d){
 function renderDash(d){
   console.log('renderDash tallyResult:', d && d.tallyResult);
   var dw=ge('dw');dw.innerHTML='';
+  console.log('dw cleared, stack:', new Error().stack.split('\n')[2]);
   var w=d.warnings||{};
   function warnMsg(raw,isHoliday){
     if(!raw)return null;

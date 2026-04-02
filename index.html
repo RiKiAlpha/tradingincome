@@ -489,9 +489,7 @@ function renderHeader(d){
   }
 }
 function renderDash(d){
-  console.log('renderDash tallyResult:', d && d.tallyResult);
   var dw=ge('dw');dw.innerHTML='';
-  console.log('dw cleared, stack:', new Error().stack.split('\n')[2]);
   var w=d.warnings||{};
   function warnMsg(raw,isHoliday){
     if(!raw)return null;
@@ -536,7 +534,6 @@ function renderDash(d){
     dw.appendChild(el);
   });
   var tr=d.tallyResult;
-  console.log('tally pill check: tr=',!!tr,'tdKey=',tr?'tallyDismiss:'+tr.expiry:'none','dismissed=',tr?localStorage.getItem('tallyDismiss:'+tr.expiry):null);
   if(tr){
     var tdKey='tallyDismiss:'+tr.expiry;
     if(!localStorage.getItem(tdKey)){

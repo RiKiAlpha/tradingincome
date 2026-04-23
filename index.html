@@ -269,10 +269,11 @@ body.overlaying #tabs-wrap{display:none !important;}
     </div>
   </div>
   <div id="nc-section"></div>
+  <div id="cancel-section"></div>
   <div id="tally-section"></div>
   <div class="scroll-spacer"></div>
   <div class="scroll-spacer"></div>
-  <div class="sver">RiKi Trading &middot; v2.5</div>
+  <div class="sver">RiKi Trading &middot; v2.6</div>
 </div>
   </div>
   <div id="tabs-wrap">
@@ -356,18 +357,15 @@ function hideOverlay(){
 }
 function saveCache(d){
   try{
-    // Stamp _savedMs so CDN data can never overwrite newer manual/GAS data
     if(!d._savedMs) d._savedMs = Date.now();
     localStorage.setItem('riki_data', JSON.stringify(d));
     localStorage.setItem('riki_last_fresh', String(Date.now()));
   }catch(e){}
 }
 function showTokenExpired(){
-  // Clear all pane content so no stale data shows through
-  ['dw','dc','dcp','ptb','hc','nc-section','tally-section'].forEach(function(id){
+  ['dw','dc','dcp','ptb','hc','nc-section','cancel-section','tally-section'].forEach(function(id){
     var el=ge(id); if(el) el.innerHTML='';
   });
-  // Hide tabs, show error card
   var wrap=ge('tabs-wrap'); if(wrap) wrap.style.display='none';
   var content=ge('content');
   content.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;gap:20px;">'+
@@ -380,8 +378,6 @@ function showTokenExpired(){
     '<div style="font-size:11px;color:var(--text3);text-align:center;">No data is shown to protect<br>against stale position information.</div>'+
   '</div>';
 }
-
-// Check if data.json timestamp is stale during market hours
 function isDataStale(d){
   if(!d || !d.updated) return false;
   var now = new Date();
@@ -389,31 +385,23 @@ function isDataStale(d){
   var day = et.getDay();
   var t   = et.getHours()*60 + et.getMinutes();
   var isMarket = day>=1 && day<=5 && t>=570 && t<=960;
-  if(!isMarket) return false; // outside market hours — staleness expected
-  // Parse updated timestamp and check if > 2 hours old
+  if(!isMarket) return false;
   try {
-    var updStr = String(d.updated||'');
-    // Try to extract time from strings like "Mar 18 · 9:35 AM ET"
     var cached = localStorage.getItem('riki_last_fresh');
     if(!cached) return false;
-    var lastFreshMs = parseInt(cached);
-    return Date.now() - lastFreshMs > 2 * 60 * 60 * 1000; // 2 hours
+    return Date.now() - parseInt(cached) > 2 * 60 * 60 * 1000;
   } catch(e){ return false; }
 }
-
-// Flash the RiKi logo briefly — called when silent background refresh detects new data
 function flashLogo(){
   var wm = ge('wm');
   wm.classList.remove('flash');
-  void wm.offsetWidth; // reflow to restart animation
+  void wm.offsetWidth;
   wm.classList.add('flash');
   setTimeout(function(){ wm.classList.remove('flash'); }, 600);
 }
-
 function doRefresh(){
   haptic();
   showOverlay();
-  // Full Schwab refresh — overlay stays until complete
   fetch(BACKEND + '?action=refresh')
     .then(function(r){ return r.json(); })
     .then(function(fresh){
@@ -425,13 +413,10 @@ function doRefresh(){
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
 }
-
 function doAuth(){
   haptic();toast('Authenticating\u2026');
   fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
 }
-
-// Toggle nickel closer enabled/disabled for a specific expiry week
 function toggleNickelCloser(expiry){
   haptic();
   fetch(BACKEND + '?action=toggleNickelCloser&expiry=' + encodeURIComponent(expiry))
@@ -447,6 +432,62 @@ function toggleNickelCloser(expiry){
       }
     })
     .catch(function(e){ toast('Error: '+errMsg(e)); });
+}
+
+// ── Cancel All Orders ─────────────────────────────────────────────────────────
+function doCancelAll(){
+  haptic();
+  var sec = ge('cancel-section');
+  // Show confirmation UI inline
+  sec.innerHTML =
+    '<div class="scard" style="border-color:rgba(229,83,83,.3);">'+
+      '<div class="srow" style="flex-direction:column;align-items:flex-start;gap:10px;">'+
+        '<div>'+
+          '<div class="slbl" style="color:var(--red)">Are you sure?</div>'+
+          '<div class="ssub" style="margin-top:4px;">This will cancel ALL pending orders on both accounts — including ones placed manually on Schwab.</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:10px;align-items:center;">'+
+          '<button class="abtn red" id="cancel-confirm-btn" onclick="doCancelAllConfirm()">Cancel All Orders</button>'+
+          '<span style="font-size:13px;color:var(--text2);cursor:pointer;" onclick="renderCancelSection()">Never mind</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+}
+
+function doCancelAllConfirm(){
+  haptic();
+  var btn = ge('cancel-confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Cancelling\u2026';
+  fetch(BACKEND + '?action=cancelAllOrders')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.success){
+        if(d.cancelled === 0){
+          toast('\u2713 No open orders found');
+        } else {
+          toast('\u2713 Cancelled '+d.cancelled+' order'+(d.cancelled===1?'':'s')+(d.failed>0?' ('+d.failed+' failed)':''));
+        }
+      } else {
+        toast('Error: '+(d.error||'unknown'));
+      }
+      renderCancelSection();
+    })
+    .catch(function(e){ toast('Error: '+errMsg(e)); renderCancelSection(); });
+}
+
+function renderCancelSection(){
+  var sec = ge('cancel-section');
+  sec.innerHTML =
+    '<div class="scard">'+
+      '<div class="srow">'+
+        '<div>'+
+          '<div class="slbl">Cancel All Orders</div>'+
+          '<div class="ssub">Cancels all pending orders on both accounts</div>'+
+        '</div>'+
+        '<button class="abtn red" onclick="doCancelAll()">Cancel All</button>'+
+      '</div>'+
+    '</div>';
 }
 
 function doClearTally(btn){
@@ -473,7 +514,6 @@ function renderHeader(d){
   if(el){ var raw=String(d.updated||'\u2014');el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,'').replace(/^Updated:\s*/i,'').trim(); }
   var dot=ge('sdot');
   if(dot){ dot.className='sdot';if(d.tokenState==='expiring')dot.classList.add('exp');else if(d.tokenState==='expired')dot.classList.add('dead'); }
-  // Staleness warning banner — only during market hours if data.json is > 2hrs old
   var staleWarn=ge('stale-warn');
   if(!staleWarn){
     staleWarn=document.createElement('div');
@@ -607,12 +647,10 @@ function renderDash(d){
     var wi=KEYS.findIndex(function(l){return raw.toUpperCase().indexOf(l)>=0;});
     var lbl=wi>=0?LBLS[wi]:raw;
     var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
-    // Hide +3 WEEKS card if no positions and no banked amount
     if(wi===3 && a1b===0 && a1p===0 && a2b===0 && a2p===0) return;
     var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
     var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
     var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
-    // Hedge costs per account for this expiry
     var hc1 = hedgeCosts['Account 1:' + exp] || 0;
     var hc2 = hedgeCosts['Account 2:' + exp] || 0;
     var totalHedge = hc1 + hc2;
@@ -735,12 +773,11 @@ function renderSettings(d){
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
   var td=ge('tdays');if(td)td.textContent=daysStr;
 
-  // ── Nickel Closer (Auto-close) toggle section ──────────────────────────────
+  // ── Nickel Closer toggles ─────────────────────────────────────────────────
   var nc = ge('nc-section');
   nc.innerHTML = '';
   var archRows = d.archRows || [];
   var ncDisabled = d.nickelCloserDisabled || [];
-  // Extract wk1 and wk2 expiry dates from archRows
   var weeks = [];
   ['THIS WEEK','NEXT WEEK'].forEach(function(label, i){
     for(var r=0; r<archRows.length; r++){
@@ -755,7 +792,7 @@ function renderSettings(d){
   if(weeks.length > 0){
     var ncCard = document.createElement('div');
     ncCard.className = 'scard';
-    weeks.forEach(function(wk, idx){
+    weeks.forEach(function(wk){
       var isEnabled = ncDisabled.indexOf(wk.expiry) < 0;
       var row = document.createElement('div');
       row.className = 'srow';
@@ -775,7 +812,10 @@ function renderSettings(d){
     nc.appendChild(ncCard);
   }
 
-  // ── Tally warning section ─────────────────────────────────────────────────
+  // ── Cancel All Orders ─────────────────────────────────────────────────────
+  renderCancelSection();
+
+  // ── Tally warnings ────────────────────────────────────────────────────────
   var tallySection = ge('tally-section');
   tallySection.innerHTML = '';
   var tallyW = d.tallyWarnings || {};
@@ -783,7 +823,6 @@ function renderSettings(d){
   if(tallyKeys.length > 0){
     var tcard = document.createElement('div');
     tcard.className = 'scard';
-    // Header row
     var thdr = document.createElement('div');
     thdr.className = 'srow';
     thdr.innerHTML =
@@ -793,7 +832,6 @@ function renderSettings(d){
       '</div>' +
       '<button class="abtn" onclick="doClearTally(this)">Clear</button>';
     tcard.appendChild(thdr);
-    // One row per warning
     tallyKeys.forEach(function(k){
       var w = tallyW[k];
       var parts = k.split(':');
@@ -810,7 +848,6 @@ function renderSettings(d){
     });
     tallySection.appendChild(tcard);
   }
-
 }
 var MOCK={
   updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
@@ -845,11 +882,9 @@ if(oauthCode){
     })
     .catch(function(e){toast('Auth error: '+errMsg(e));renderAll(MOCK);});
 } else {
-  // Render cached data immediately — never show blank if we have prior data
   var _cached = null;
   try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
   if(_cached){ renderAll(_cached); }
-  // Background CDN fetch — fast ~200ms, _savedMs guard prevents stale overwrite
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
@@ -867,7 +902,6 @@ if(oauthCode){
 }
 var _lastFetch = Date.now();
 
-// Poll CDN every 5 minutes — fast ~200ms, data.json updated by githubWriteTrigger
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
   fetch(DATA_JSON + '?_=' + Date.now())
@@ -887,9 +921,7 @@ setInterval(function(){
 
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-  // Skip if fetched less than 60s ago — prevents duplicate calls on app open
   if(Date.now() - _lastFetch < 60000) return;
-  // CDN fetch — fast ~200ms, _savedMs guard prevents stale overwrite
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){

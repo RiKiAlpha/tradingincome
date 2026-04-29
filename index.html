@@ -401,25 +401,30 @@ function onGoogleSignIn(response){
 function checkLock(){
   if(localStorage.getItem('faceLock')!=='1') return false;
   if(!localStorage.getItem('webauthn_cred_id')) return false;
-  var gap = Date.now() - parseInt(localStorage.getItem('riki_last_active')||'0',10);
-  if(gap > 8*60*60*1000){
-    ge('faceid-screen').classList.add('on');
-    doFaceID();
-    return true;
-  }
-  localStorage.setItem('riki_last_active', String(Date.now()));
-  return false;
+
+  ge('faceid-screen').classList.add('on');
+
+  ['dw','dc','dcp','ptb','hc','nc-section','cancel-section','tally-section'].forEach(function(id){
+    var el=ge(id); if(el) el.innerHTML='';
+  });
+  ge('utime').textContent='';
+  if(ge('sdot')) ge('sdot').className='sdot';
+  DATA = null;
+
+  return true;
 }
 
 function doFaceID(){
   var credId = localStorage.getItem('webauthn_cred_id');
   if(!credId){ ge('faceid-screen').classList.remove('on'); return; }
+
   function b64toBuf(b){
     var bin=atob(b.replace(/-/g,'+').replace(/_/g,'/'));
     var buf=new Uint8Array(bin.length);
     for(var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
     return buf.buffer;
   }
+
   navigator.credentials.get({
     publicKey:{
       challenge:new Uint8Array(32),
@@ -432,6 +437,7 @@ function doFaceID(){
     ge('faceid-retry').style.display='none';
     ge('faceid-sub').textContent='Use Face ID to unlock';
     localStorage.setItem('riki_last_active', String(Date.now()));
+    startLoadingData();
   }).catch(function(){
     ge('faceid-retry').style.display='inline-flex';
     ge('faceid-sub').textContent='Face ID failed — try again';
@@ -491,8 +497,14 @@ function toggleFaceLock(el){
 }
 
 function lockNow(){
-  localStorage.setItem('riki_last_active','0');
-  toast('Locked — Face ID required on next open');
+  ['dw','dc','dcp','ptb','hc','nc-section','cancel-section','tally-section'].forEach(function(id){
+    var el=ge(id); if(el) el.innerHTML='';
+  });
+  ge('utime').textContent='';
+  if(ge('sdot')) ge('sdot').className='sdot';
+  DATA = null;
+  ge('faceid-screen').classList.add('on');
+  toast('Locked');
 }
 
 function switchTab(key){
@@ -803,19 +815,19 @@ function renderDash(d){
     dc.appendChild(card);
   });
 
-  var dcp=ge('dcp'); dcp.innerHTML='';
-  var dr=(d.dashRows||[]).filter(function(r){return r[0]&&String(r[0])!=='GRAND TOTAL';});
-  if(dr.length){
-    var panel=document.createElement('div'); panel.className='cap';
-    var inner='<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
-    dr.forEach(function(row){
-      var acct=String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
-      var cRem=parseInt(row[14],10)||0;
-      var pRem=parseInt(row[13],10)||0;
-      inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>';
-    });
-    inner+='</div>'; panel.innerHTML=inner; dcp.appendChild(panel);
-  }
+var dcp=ge('dcp');dcp.innerHTML='';
+var dr=(d.dashRows||[]).filter(function(r){return r[0]&&String(r[0])!=='GRAND TOTAL';});
+if(dr.length){
+  var panel=document.createElement('div');panel.className='cap';
+  var inner='<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
+  dr.forEach(function(row){
+    var acct=String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
+    var cRem=parseInt(row[14])||0;
+    var pRem=parseInt(row[13])||0;
+    inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>';
+  });
+  inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
+}
 }
 
 var posSort={col:'exp',dir:1};
@@ -1090,10 +1102,12 @@ function initApp(){
       .then(function(d){ toast(d.success?'\u2713 Connected to Schwab!':'Auth failed: '+(d.error||'unknown')); })
       .catch(function(e){toast('Auth error: '+errMsg(e));});
   }
-  if(!isAuthed()){ showAuthScreen(); return; }
-  if(checkLock()) return;
-  startLoadingData();
+if(!isAuthed()){ showAuthScreen(); return; }
+if(checkLock()){
+  doFaceID();
+  return;
 }
+startLoadingData();
 
 initApp();
 </script>

@@ -426,6 +426,7 @@ function hideOverlay(){
 }
 function saveCache(d){
   try{
+    if(!d._savedMs) d._savedMs = Date.now();
     localStorage.setItem('riki_data', JSON.stringify(d));
     localStorage.setItem('riki_last_fresh', String(Date.now()));
   }catch(e){}
@@ -477,7 +478,6 @@ function doRefresh(){
       if(fresh.tokenExpired){ showTokenExpired(); return; }
       renderAll(fresh);
       saveCache(fresh);
-      _lastFetch = Date.now();
       flashLogo();
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
@@ -958,12 +958,7 @@ ge('bw').onclick=function(){switchHist('weeks');};
 ge('bm').onclick=function(){switchHist('monthly');};
 ge('auth-btn').onclick=doAuth;
 
-function randomChallenge(){
-  var arr = new Uint8Array(32);
-  crypto.getRandomValues(arr);
-  return arr;
-}
-
+// ── Auth + Face ID helpers ────────────────────────────────────────────────────
 function isAuthed(){ return !!localStorage.getItem('riki_google_email'); }
 function showAuthScreen(){ ge('auth-screen').classList.add('on'); }
 
@@ -972,34 +967,17 @@ function onGoogleSignIn(response){
     var payload = JSON.parse(atob(response.credential.split('.')[1]));
     if(payload.email !== ALLOWED_EMAIL){ ge('auth-err').style.display='block'; return; }
     localStorage.setItem('riki_google_email', payload.email);
-    ge('auth-err').style.display='none';
     ge('auth-screen').classList.remove('on');
-    if(localStorage.getItem('faceLock')==='1' && localStorage.getItem('webauthn_cred_id')){
-      ge('faceid-retry').style.display='none';
-      ge('faceid-sub').textContent='Use Face ID to unlock';
-      ge('faceid-screen').classList.add('on');
-      doFaceID();
-      return;
-    }
     startLoadingData();
-  } catch(e){
-    ge('auth-err').style.display='block';
-  }
+  } catch(e){ ge('auth-err').style.display='block'; }
 }
 
 function checkLock(){
-  if(localStorage.getItem('faceLock')!=='1') return false;
-  if(!localStorage.getItem('webauthn_cred_id')) return false;
-  var gap = Date.now() - parseInt(localStorage.getItem('riki_last_active')||'0', 10);
-  if(gap > 8*60*60*1000){
-    ge('faceid-retry').style.display='none';
-    ge('faceid-sub').textContent='Use Face ID to unlock';
-    ge('faceid-screen').classList.add('on');
-    doFaceID();
-    return true;
-  }
-  localStorage.setItem('riki_last_active', String(Date.now()));
-  return false;
+  if(localStorage.getItem('faceLock')!=='1') return;
+  if(!localStorage.getItem('webauthn_cred_id')) return;
+  var gap = Date.now() - parseInt(localStorage.getItem('riki_last_active')||'0');
+  if(gap > 8*60*60*1000){ ge('faceid-screen').classList.add('on'); doFaceID(); }
+  else { localStorage.setItem('riki_last_active', String(Date.now())); }
 }
 
 function doFaceID(){
@@ -1007,17 +985,12 @@ function doFaceID(){
   if(!credId){ ge('faceid-screen').classList.remove('on'); return; }
   function b64toBuf(b){ var bin=atob(b.replace(/-/g,'+').replace(/_/g,'/')),buf=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i); return buf.buffer; }
   navigator.credentials.get({ publicKey:{
-    challenge: randomChallenge(),
+    challenge: new Uint8Array(32),
     allowCredentials:[{type:'public-key', id:b64toBuf(credId)}],
     timeout:60000, userVerification:'required'
   }}).then(function(){
     ge('faceid-screen').classList.remove('on');
-    ge('faceid-retry').style.display='none';
-    ge('faceid-sub').textContent='Use Face ID to unlock';
     localStorage.setItem('riki_last_active', String(Date.now()));
-    if(!DATA){
-      startLoadingData();
-    }
   }).catch(function(){
     ge('faceid-retry').style.display='inline-flex';
     ge('faceid-sub').textContent='Face ID failed — try again';
@@ -1036,7 +1009,7 @@ function toggleFaceLock(el){
   if(on){
     function bufToB64(buf){ return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,''); }
     navigator.credentials.create({ publicKey:{
-      challenge: randomChallenge(),
+      challenge: new Uint8Array(32),
       rp:{ name:'RiKi Trading' },
       user:{ id:new Uint8Array(16), name:ALLOWED_EMAIL, displayName:'RiKi' },
       pubKeyCredParams:[{type:'public-key',alg:-7}],
@@ -1070,26 +1043,15 @@ function startLoadingData(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var curMs = Number((_cached && _cached._savedMs) || 0);
-      var cdnMs = Number(d._savedMs || 0);
-      if(!_cached || cdnMs > curMs){
-        renderAll(d);
-        saveCache(d);
-        _lastFetch = Date.now();
-      }
-    }).catch(function(){});
 
-  fetch(BACKEND + '?action=data&_=' + Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-      var curMs = Number((DATA && DATA._savedMs) || ((_cached && _cached._savedMs) || 0));
+      var curMs = Number((_cached && _cached._savedMs) || 0);
       var newMs = Number(d._savedMs || 0);
-      if(!_cached || newMs > curMs){
+
+      if(!_cached || newMs >= curMs){
         renderAll(d);
         saveCache(d);
         _lastFetch = Date.now();
-        flashLogo();
+        if(_cached && newMs > curMs) flashLogo();
       }
     }).catch(function(){});
 }
@@ -1098,14 +1060,14 @@ function initApp(){
   var oauthCode=new URLSearchParams(window.location.search).get('code');
   if(oauthCode){
     window.history.replaceState({},document.title,window.location.pathname);
-    switchTab('s'); toast('Completing authentication…',5000);
+    switchTab('s'); toast('Completing authentication\u2026',5000);
     fetch(BACKEND+'?action=exchangeCode&code='+encodeURIComponent(oauthCode))
       .then(function(r){return r.json();})
-      .then(function(d){ toast(d.success?'✓ Connected to Schwab!':'Auth failed: '+(d.error||'unknown')); })
+      .then(function(d){ toast(d.success?'\u2713 Connected to Schwab!':'Auth failed: '+(d.error||'unknown')); })
       .catch(function(e){toast('Auth error: '+errMsg(e));});
   }
   if(!isAuthed()){ showAuthScreen(); return; }
-  if(checkLock()) return;
+  checkLock();
   startLoadingData();
 }
 
@@ -1115,7 +1077,7 @@ var _lastFetch = Date.now();
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
   if(!isAuthed()) return;
-  fetch(BACKEND + '?action=data&_=' + Date.now())
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
@@ -1130,9 +1092,9 @@ setInterval(function(){
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
   if(!isAuthed()){ showAuthScreen(); return; }
-  if(checkLock()) return;
+  checkLock();
   if(Date.now() - _lastFetch < 60000) return;
-  fetch(BACKEND + '?action=data&_=' + Date.now())
+  fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }

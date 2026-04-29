@@ -196,6 +196,25 @@ body.overlaying #tabs-wrap{display:none !important;}
 <link rel="apple-touch-icon" sizes="180x180" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
 <link rel="apple-touch-icon" sizes="152x152" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
 <link rel="apple-touch-icon" sizes="120x120" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+#auth-screen{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;
+  background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:28px;}
+#auth-screen.on{display:flex;}
+#auth-logo{opacity:0.9;}
+#auth-title{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.02em;}
+#auth-sub{font-size:13px;color:var(--text2);text-align:center;line-height:1.6;}
+#auth-err{font-size:12px;color:var(--red);display:none;text-align:center;}
+#faceid-screen{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99998;
+  background:rgba(10,10,15,0.92);flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+#faceid-screen.on{display:flex;}
+#faceid-icon{width:64px;height:64px;border-radius:50%;background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--border);}
+#faceid-title{font-size:18px;font-weight:700;color:var(--text);}
+#faceid-sub{font-size:13px;color:var(--text2);text-align:center;line-height:1.6;max-width:260px;}
+#faceid-retry{display:none;}
+#faceid-fallback{font-size:12px;color:var(--text3);cursor:pointer;text-decoration:underline;margin-top:8px;}
+</style>
 </head>
 <body>
 <div id="app">
@@ -298,6 +317,54 @@ body.overlaying #tabs-wrap{display:none !important;}
   <div id="tabs-safe"></div>
   </div>
 </div>
+<!-- ── Google OAuth screen ─────────────────────────────────────────────── -->
+<div id="auth-screen">
+  <svg id="auth-logo" class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="100" height="100" overflow="hidden">
+    <defs><clipPath id="lc2"><circle cx="40" cy="40" r="35"/></clipPath></defs>
+    <circle cx="40" cy="40" r="32" fill="#0a0a0f"/>
+    <circle cx="36" cy="40" r="34" fill="none" stroke="#00d4a6" stroke-width="2.7"/>
+    <circle cx="44" cy="40" r="34" fill="none" stroke="#00d4a6" stroke-width="2.7"/>
+    <g clip-path="url(#lc2)">
+      <g transform="rotate(60 40 40) translate(0 -7)">
+        <path d="M18,50 Q40,14 62,50" fill="none" stroke="#00d4a6" stroke-width="6.3" stroke-linecap="round"/>
+        <path d="M28,63 Q40,42 52,63" fill="none" stroke="#00d4a6" stroke-width="3.68" stroke-linecap="round"/>
+      </g>
+    </g>
+  </svg>
+  <div id="auth-title">RiKi Trading</div>
+  <div id="auth-sub">Sign in to access your dashboard</div>
+  <div id="g_id_onload"
+    data-client_id="632213689535-vlhn0mn0bkg4dntjul9fi1kb31i3kcos.apps.googleusercontent.com"
+    data-callback="onGoogleSignIn"
+    data-auto_select="true"
+    data-use_fedcm_for_prompt="true">
+  </div>
+  <div class="g_id_signin"
+    data-type="standard"
+    data-shape="pill"
+    data-theme="outline"
+    data-text="sign_in_with"
+    data-size="large"
+    data-logo_alignment="left">
+  </div>
+  <div id="auth-err">This Google account is not authorized.</div>
+</div>
+
+<!-- ── Face ID lock screen ────────────────────────────────────────────────── -->
+<div id="faceid-screen">
+  <div id="faceid-icon">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00b894" stroke-width="1.5" stroke-linecap="round">
+      <path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/>
+      <path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/>
+      <circle cx="12" cy="10" r="2"/><path d="M8 16s1-2 4-2 4 2 4 2"/>
+    </svg>
+  </div>
+  <div id="faceid-title">RiKi is Locked</div>
+  <div id="faceid-sub">Use Face ID to unlock</div>
+  <button class="abtn" id="faceid-retry" onclick="doFaceID()" style="margin-top:8px;">Try Again</button>
+  <div id="faceid-fallback" onclick="doGoogleFallback()">Use Google sign-in instead</div>
+</div>
+
 <div id="toast"></div>
 <div id="loverlay">
   <svg viewBox="0 0 80 80" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
@@ -308,8 +375,10 @@ body.overlaying #tabs-wrap{display:none !important;}
   </svg>
 </div>
 <script>
-var BACKEND   = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
-var DATA_JSON = 'https://rikialpha.github.io/tradingincome/data.json';
+var BACKEND     = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
+var DATA_JSON   = 'https://rikialpha.github.io/tradingincome/d8f3a.json';
+var CLIENT_ID   = '632213689535-vlhn0mn0bkg4dntjul9fi1kb31i3kcos.apps.googleusercontent.com';
+var ALLOWED_EMAIL = 'gprasaad88@gmail.com';
 function ge(id){ return document.getElementById(id); }
 function money(v){
   if(v == null || v === '') return 0;
@@ -812,6 +881,30 @@ function renderSettings(d){
     nc.appendChild(ncCard);
   }
 
+  // ── Face ID lock toggle ───────────────────────────────────────────────────
+  var faceCard = document.createElement('div');
+  faceCard.className = 'scard';
+  var faceLockOn = localStorage.getItem('faceLock') === '1';
+  var hasCred    = !!localStorage.getItem('webauthn_cred_id');
+  var faceRow    = document.createElement('div');
+  faceRow.className = 'srow';
+  faceRow.innerHTML =
+    '<div><div class="slbl">Require Face ID</div>' +
+    '<div class="ssub">' + (hasCred ? 'Lock after 8hr background gap' : 'Enroll Face ID first via sign-out & re-sign-in') + '</div></div>' +
+    '<div class="tog' + (faceLockOn && hasCred ? ' on' : '') + '" id="face-tog"' +
+    (hasCred ? ' onclick="toggleFaceLock(this)"' : ' style="opacity:0.3;"') + '>' +
+    '<div class="tog-track"></div><div class="tog-thumb"></div></div>';
+  faceCard.appendChild(faceRow);
+  if(faceLockOn && hasCred){
+    var lockRow = document.createElement('div');
+    lockRow.className = 'srow';
+    lockRow.innerHTML =
+      '<div><div class="slbl">Lock Now</div><div class="ssub">Require Face ID on next open</div></div>' +
+      '<button class="abtn red" onclick="lockNow()">Lock</button>';
+    faceCard.appendChild(lockRow);
+  }
+  ge('nc-section').after(faceCard);
+
   // ── Cancel All Orders ─────────────────────────────────────────────────────
   renderCancelSection();
 
@@ -864,46 +957,13 @@ ge('rbtn').onclick=doRefresh;
 ge('bw').onclick=function(){switchHist('weeks');};
 ge('bm').onclick=function(){switchHist('monthly');};
 ge('auth-btn').onclick=doAuth;
-var oauthCode = new URLSearchParams(window.location.search).get('code');
-if(oauthCode){
-  window.history.replaceState({}, document.title, window.location.pathname);
-  switchTab('s');
-  toast('Completing authentication\u2026', 5000);
-  fetch(BACKEND+'?action=exchangeCode&code='+encodeURIComponent(oauthCode))
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.success){
-        toast('\u2713 Connected to Schwab!');
-        fetch(DATA_JSON + '?_=' + Date.now()).then(function(r){return r.json();}).then(function(d2){renderAll(d2);saveCache(d2);}).catch(function(){renderAll(MOCK);});
-      } else {
-        toast('Auth failed: '+(d.error||'unknown'));
-        renderAll(MOCK);
-      }
-    })
-    .catch(function(e){toast('Auth error: '+errMsg(e));renderAll(MOCK);});
-} else {
-  var _cached = null;
-  try{ var _cs=localStorage.getItem('riki_data');if(_cs)_cached=JSON.parse(_cs); }catch(e){}
-  if(_cached){ renderAll(_cached); }
-  fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-      var cdnMs = d._savedMs || 0;
-      var curMs = (_cached && _cached._savedMs) || 0;
-      if(cdnMs > curMs){
-        renderAll(d);
-        _lastFetch=Date.now();
-        saveCache(d);
-        if(_cached) flashLogo();
-      }
-    })
-    .catch(function(e){console.error(e);});
-}
+
 var _lastFetch = Date.now();
 
+// ── 5-min CDN poll ────────────────────────────────────────────────────────────
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
+  if(!isAuthed()) return;
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d){
@@ -911,16 +971,15 @@ setInterval(function(){
       var cdnMs = d._savedMs || 0;
       var curMs = (DATA && DATA._savedMs) || 0;
       if(cdnMs <= curMs) return;
-      renderAll(d);
-      _lastFetch = Date.now();
-      saveCache(d);
-      flashLogo();
-    })
-    .catch(function(){});
+      renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
+    }).catch(function(){});
 }, 5 * 60 * 1000);
 
+// ── Visibility change — lock check + CDN refresh ──────────────────────────────
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
+  if(!isAuthed()){ showAuthScreen(); return; }
+  checkLock();
   if(Date.now() - _lastFetch < 60000) return;
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
@@ -929,13 +988,12 @@ document.addEventListener('visibilitychange', function(){
       var cdnMs = d._savedMs || 0;
       var curMs = (DATA && DATA._savedMs) || 0;
       if(cdnMs <= curMs) return;
-      renderAll(d);
-      _lastFetch=Date.now();
-      saveCache(d);
-      flashLogo();
-    })
-    .catch(function(){});
+      renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
+    }).catch(function(){});
 });
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+initApp();
 </script>
 </body>
 </html>

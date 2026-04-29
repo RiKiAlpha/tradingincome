@@ -105,15 +105,13 @@ html.pwa #tabs-wrap{padding-bottom:0px;}
 .ptgt{font-size:11px;color:var(--text3);margin-top:3px;}
 .wtot{border-top:1px solid var(--border);padding-top:16px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
 .cap{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 18px;}
-table{width:100%;border-collapse:collapse;}
-th{padding:6px 8px;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.03em;text-transform:uppercase;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3);}
-th:first-child{padding-left:18px;}th:last-child{padding-right:18px;}
-td{padding:7px 8px;font-size:13px;font-weight:500;color:var(--text);text-align:center;border-bottom:1px solid var(--border2);font-variant-numeric:tabular-nums;white-space:nowrap;}
-td:first-child{padding-left:18px;}td:last-child{padding-right:18px;}
-tbody tr:last-child td{border-bottom:none;}
-.atag{display:inline-block;font-size:13px;font-weight:700;padding:2px 6px;border-radius:4px;}
-.pa1{background:rgba(0,184,148,.15);color:#00b894;}
-.pa2{background:rgba(244,197,66,.15);color:#f4c542;}
+.cap-rows{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:0;position:relative;}
+.cap-row{display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch;}
+.cap-acct{font-size:17px;font-weight:700;color:var(--text2);width:56px;-webkit-flex-shrink:0;flex-shrink:0;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
+.cap-side{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:10px 0;}
+.cap-div{width:1px;background:var(--border);margin:0 20px;-webkit-flex-shrink:0;flex-shrink:0;-webkit-align-self:stretch;align-self:stretch;}
+.cap-n{font-size:21px;font-weight:800;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;line-height:1;}
+.cap-s{font-size:18px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;}
 #hc td:first-child{color:var(--text2);}
 #ps{padding-bottom:32px;}
 .scard{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
@@ -392,6 +390,12 @@ function onGoogleSignIn(response){
     localStorage.setItem('riki_google_email', payload.email);
     hideAuthScreen();
     localStorage.setItem('riki_last_active', String(Date.now()));
+
+    if(checkLock()){
+      doFaceID();
+      return;
+    }
+
     startLoadingData();
   } catch(e){
     ge('auth-err').style.display='block';
@@ -815,19 +819,19 @@ function renderDash(d){
     dc.appendChild(card);
   });
 
-var dcp=ge('dcp');dcp.innerHTML='';
-var dr=(d.dashRows||[]).filter(function(r){return r[0]&&String(r[0])!=='GRAND TOTAL';});
-if(dr.length){
-  var panel=document.createElement('div');panel.className='cap';
-  var inner='<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
-  dr.forEach(function(row){
-    var acct=String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
-    var cRem=parseInt(row[14])||0;
-    var pRem=parseInt(row[13])||0;
-    inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>';
-  });
-  inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
-}
+  var dcp=ge('dcp');dcp.innerHTML='';
+  var dr=(d.dashRows||[]).filter(function(r){return r[0]&&String(r[0])!=='GRAND TOTAL';});
+  if(dr.length){
+    var panel=document.createElement('div');panel.className='cap';
+    var inner='<div style="display:-webkit-flex;display:flex;margin-bottom:18px;"><div style="width:56px;-webkit-flex-shrink:0;flex-shrink:0;"></div><div style="-webkit-flex:1;flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;">Contracts Remaining to Sell</div></div><div class="cap-rows">';
+    dr.forEach(function(row){
+      var acct=String(row[0]).replace(/account\s*/i,'A').replace(/\s+/g,'');
+      var cRem=parseInt(row[14])||0;
+      var pRem=parseInt(row[13])||0;
+      inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap-side"><div class="cap-n" style="color:#0077b6">'+cRem+'</div><div class="cap-s" style="color:rgba(0,119,182,.5)">C</div></div><div class="cap-div"></div><div class="cap-side"><div class="cap-n" style="color:#e07a2f">'+pRem+'</div><div class="cap-s" style="color:rgba(224,122,47,.5)">P</div></div></div>';
+    });
+    inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
+  }
 }
 
 var posSort={col:'exp',dir:1};
@@ -1058,6 +1062,7 @@ function startLoadingData(){
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
   if(!isAuthed()) return;
+  if(localStorage.getItem('faceLock')==='1' && ge('faceid-screen').classList.contains('on')) return;
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(d){
@@ -1074,11 +1079,11 @@ setInterval(function(){
 
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-if(!isAuthed()){ showAuthScreen(); return; }
-if(checkLock()){
-  doFaceID();
-  return;
-}
+  if(!isAuthed()){ showAuthScreen(); return; }
+  if(checkLock()){
+    doFaceID();
+    return;
+  }
   if(Date.now() - _lastFetch < 60000) return;
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})
@@ -1105,12 +1110,14 @@ function initApp(){
       .then(function(d){ toast(d.success?'\u2713 Connected to Schwab!':'Auth failed: '+(d.error||'unknown')); })
       .catch(function(e){toast('Auth error: '+errMsg(e));});
   }
-if(!isAuthed()){ showAuthScreen(); return; }
-if(checkLock()){
-  doFaceID();
-  return;
+
+  if(!isAuthed()){ showAuthScreen(); return; }
+  if(checkLock()){
+    doFaceID();
+    return;
+  }
+  startLoadingData();
 }
-startLoadingData();
 
 initApp();
 </script>

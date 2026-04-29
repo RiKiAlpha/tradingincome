@@ -1074,8 +1074,11 @@ setInterval(function(){
 
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-  if(!isAuthed()){ showAuthScreen(); return; }
-  if(checkLock()) return;
+if(!isAuthed()){ showAuthScreen(); return; }
+if(checkLock()){
+  doFaceID();
+  return;
+}
   if(Date.now() - _lastFetch < 60000) return;
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){return r.json();})

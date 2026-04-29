@@ -999,6 +999,7 @@ function onGoogleSignIn(response){
     var payload = JSON.parse(atob(response.credential.split('.')[1]));
     if(payload.email !== ALLOWED_EMAIL){ ge('auth-err').style.display='block'; return; }
     localStorage.setItem('riki_google_email', payload.email);
+    localStorage.setItem('riki_last_active', String(Date.now()));
     ge('auth-screen').classList.remove('on');
     startLoadingData();
   } catch(e){ ge('auth-err').style.display='block'; }

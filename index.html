@@ -426,7 +426,6 @@ function hideOverlay(){
 }
 function saveCache(d){
   try{
-    if(!d._savedMs) d._savedMs = Date.now();
     localStorage.setItem('riki_data', JSON.stringify(d));
     localStorage.setItem('riki_last_fresh', String(Date.now()));
   }catch(e){}
@@ -478,6 +477,7 @@ function doRefresh(){
       if(fresh.tokenExpired){ showTokenExpired(); return; }
       renderAll(fresh);
       saveCache(fresh);
+      _lastFetch = Date.now();
       flashLogo();
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
@@ -958,6 +958,157 @@ ge('bw').onclick=function(){switchHist('weeks');};
 ge('bm').onclick=function(){switchHist('monthly');};
 ge('auth-btn').onclick=doAuth;
 
+function randomChallenge(){
+  var arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return arr;
+}
+
+function isAuthed(){ return !!localStorage.getItem('riki_google_email'); }
+function showAuthScreen(){ ge('auth-screen').classList.add('on'); }
+
+function onGoogleSignIn(response){
+  try {
+    var payload = JSON.parse(atob(response.credential.split('.')[1]));
+    if(payload.email !== ALLOWED_EMAIL){ ge('auth-err').style.display='block'; return; }
+    localStorage.setItem('riki_google_email', payload.email);
+    ge('auth-err').style.display='none';
+    ge('auth-screen').classList.remove('on');
+    if(localStorage.getItem('faceLock')==='1' && localStorage.getItem('webauthn_cred_id')){
+      ge('faceid-retry').style.display='none';
+      ge('faceid-sub').textContent='Use Face ID to unlock';
+      ge('faceid-screen').classList.add('on');
+      doFaceID();
+      return;
+    }
+    startLoadingData();
+  } catch(e){
+    ge('auth-err').style.display='block';
+  }
+}
+
+function checkLock(){
+  if(localStorage.getItem('faceLock')!=='1') return false;
+  if(!localStorage.getItem('webauthn_cred_id')) return false;
+  var gap = Date.now() - parseInt(localStorage.getItem('riki_last_active')||'0', 10);
+  if(gap > 8*60*60*1000){
+    ge('faceid-retry').style.display='none';
+    ge('faceid-sub').textContent='Use Face ID to unlock';
+    ge('faceid-screen').classList.add('on');
+    doFaceID();
+    return true;
+  }
+  localStorage.setItem('riki_last_active', String(Date.now()));
+  return false;
+}
+
+function doFaceID(){
+  var credId = localStorage.getItem('webauthn_cred_id');
+  if(!credId){ ge('faceid-screen').classList.remove('on'); return; }
+  function b64toBuf(b){ var bin=atob(b.replace(/-/g,'+').replace(/_/g,'/')),buf=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i); return buf.buffer; }
+  navigator.credentials.get({ publicKey:{
+    challenge: randomChallenge(),
+    allowCredentials:[{type:'public-key', id:b64toBuf(credId)}],
+    timeout:60000, userVerification:'required'
+  }}).then(function(){
+    ge('faceid-screen').classList.remove('on');
+    ge('faceid-retry').style.display='none';
+    ge('faceid-sub').textContent='Use Face ID to unlock';
+    localStorage.setItem('riki_last_active', String(Date.now()));
+    if(!DATA){
+      startLoadingData();
+    }
+  }).catch(function(){
+    ge('faceid-retry').style.display='inline-flex';
+    ge('faceid-sub').textContent='Face ID failed — try again';
+  });
+}
+
+function doGoogleFallback(){
+  ge('faceid-screen').classList.remove('on');
+  localStorage.removeItem('riki_google_email');
+  showAuthScreen();
+}
+
+function toggleFaceLock(el){
+  var on = el.classList.toggle('on');
+  localStorage.setItem('faceLock', on?'1':'0');
+  if(on){
+    function bufToB64(buf){ return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,''); }
+    navigator.credentials.create({ publicKey:{
+      challenge: randomChallenge(),
+      rp:{ name:'RiKi Trading' },
+      user:{ id:new Uint8Array(16), name:ALLOWED_EMAIL, displayName:'RiKi' },
+      pubKeyCredParams:[{type:'public-key',alg:-7}],
+      authenticatorSelection:{ userVerification:'required' },
+      timeout:60000
+    }}).then(function(cred){
+      localStorage.setItem('webauthn_cred_id', bufToB64(cred.rawId));
+      renderSettings(DATA); toast('Face ID enrolled');
+    }).catch(function(){
+      el.classList.remove('on'); localStorage.setItem('faceLock','0');
+      toast('Face ID enrollment failed');
+    });
+  } else {
+    localStorage.removeItem('webauthn_cred_id');
+    renderSettings(DATA);
+  }
+}
+
+function lockNow(){
+  localStorage.setItem('riki_last_active','0');
+  toast('Locked — Face ID required on next open');
+}
+
+function startLoadingData(){
+  var _cached=null;
+  try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
+
+  if(_cached){ renderAll(_cached); }
+
+  fetch(DATA_JSON + '?_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.tokenExpired){ showTokenExpired(); return; }
+      var curMs = Number((_cached && _cached._savedMs) || 0);
+      var cdnMs = Number(d._savedMs || 0);
+      if(!_cached || cdnMs > curMs){
+        renderAll(d);
+        saveCache(d);
+        _lastFetch = Date.now();
+      }
+    }).catch(function(){});
+
+  fetch(BACKEND + '?action=data&_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.tokenExpired){ showTokenExpired(); return; }
+      var curMs = Number((DATA && DATA._savedMs) || ((_cached && _cached._savedMs) || 0));
+      var newMs = Number(d._savedMs || 0);
+      if(!_cached || newMs > curMs){
+        renderAll(d);
+        saveCache(d);
+        _lastFetch = Date.now();
+        flashLogo();
+      }
+    }).catch(function(){});
+}
+
+function initApp(){
+  var oauthCode=new URLSearchParams(window.location.search).get('code');
+  if(oauthCode){
+    window.history.replaceState({},document.title,window.location.pathname);
+    switchTab('s'); toast('Completing authentication…',5000);
+    fetch(BACKEND+'?action=exchangeCode&code='+encodeURIComponent(oauthCode))
+      .then(function(r){return r.json();})
+      .then(function(d){ toast(d.success?'✓ Connected to Schwab!':'Auth failed: '+(d.error||'unknown')); })
+      .catch(function(e){toast('Auth error: '+errMsg(e));});
+  }
+  if(!isAuthed()){ showAuthScreen(); return; }
+  if(checkLock()) return;
+  startLoadingData();
+}
+
 var _lastFetch = Date.now();
 
 // ── 5-min CDN poll ────────────────────────────────────────────────────────────
@@ -968,9 +1119,9 @@ setInterval(function(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var cdnMs = d._savedMs || 0;
-      var curMs = (DATA && DATA._savedMs) || 0;
-      if(cdnMs <= curMs) return;
+      var newMs = Number(d._savedMs || 0);
+      var curMs = Number((DATA && DATA._savedMs) || 0);
+      if(newMs <= curMs) return;
       renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
     }).catch(function(){});
 }, 5 * 60 * 1000);
@@ -979,15 +1130,15 @@ setInterval(function(){
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
   if(!isAuthed()){ showAuthScreen(); return; }
-  checkLock();
+  if(checkLock()) return;
   if(Date.now() - _lastFetch < 60000) return;
   fetch(BACKEND + '?action=data&_=' + Date.now())
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.tokenExpired){ showTokenExpired(); return; }
-      var cdnMs = d._savedMs || 0;
-      var curMs = (DATA && DATA._savedMs) || 0;
-      if(cdnMs <= curMs) return;
+      var newMs = Number(d._savedMs || 0);
+      var curMs = Number((DATA && DATA._savedMs) || 0);
+      if(newMs <= curMs) return;
       renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
     }).catch(function(){});
 });

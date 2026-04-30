@@ -547,6 +547,7 @@ function doCancelAllConfirm(){
   fetch(BACKEND + '?action=cancelAllOrders')
     .then(function(r){ return r.json(); })
     .then(function(d){
+      alert('RESPONSE: ' + JSON.stringify(d));
       if(d.success){
         if(d.cancelled === 0){
           toast('\u2713 No open orders found');
@@ -558,7 +559,10 @@ function doCancelAllConfirm(){
       }
       renderCancelSection();
     })
-    .catch(function(e){ toast('Error: '+errMsg(e)); renderCancelSection(); });
+    .catch(function(e){ 
+      alert('RAW ERROR: ' + e.message + ' | ' + e.toString());
+      toast('Error: '+errMsg(e)); renderCancelSection(); 
+    });
 }
 
 function renderCancelSection(){

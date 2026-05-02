@@ -526,7 +526,7 @@ function renderChain(){
 }
 function sRow(s,idx,cls,live){
   var def=fmtP(Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2))));
-  var dis=live?'':'disabled';
+var dis='';
   return '<tr>'+
     '<td style="font-weight:700;color:var(--'+( cls==='c'?'call':'put' )+')">$'+s.strike.toFixed(0)+'</td>'+
     '<td style="color:var(--text2)">'+fmtPct(s.pctAway)+'</td>'+

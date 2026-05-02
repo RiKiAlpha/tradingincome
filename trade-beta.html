@@ -508,7 +508,7 @@ function renderHeader(d){
   pill.className=d.marketOpen?'live':'closed';
   if(d.spotPrice){ge('spot-price').textContent='$'+d.spotPrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});ge('spot-price').style.color='';}
   var ts=new Date(d.fetchedAt||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
-  ge('updated-lbl').textContent='Updated '+ts+(d.marketOpen?'',' · Read-only');
+  ge('updated-lbl').textContent='Updated '+ts+(d.marketOpen?'':' · Read-only');
 }
 
 /* ── Chain render ── */

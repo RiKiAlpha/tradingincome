@@ -266,6 +266,16 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
   <div class="price-row"><div id="spot-price" style="font-family:var(--mono);font-size:32px;font-weight:700;letter-spacing:-.03em;color:var(--text2)">—</div></div>
   <div id="updated-lbl">Loading…</div>
+  <div id="bp-hdr" style="display:flex;gap:8px;margin-bottom:10px;">
+    <div style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">A1 Buying Power</div>
+      <div id="hdr-bp1" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)">—</div>
+    </div>
+    <div style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 10px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;margin-bottom:3px;">A2 Buying Power</div>
+      <div id="hdr-bp2" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text)">—</div>
+    </div>
+  </div>
   <div class="exp-tabs">
     <div class="exp-tab" data-i="0" onclick="setExpiry(0)"><div class="etl">This Wk</div><div class="etd" id="ed0">—</div></div>
     <div class="exp-tab" data-i="1" onclick="setExpiry(1)"><div class="etl">Next Wk</div><div class="etd" id="ed1">—</div></div>
@@ -355,18 +365,20 @@ input[type=number]{-moz-appearance:textfield;}
     <button class="stgbtn" id="stgbtn" onclick="doStage()">Stage Order</button>
   </div>
 
-  <!-- Confirm — CONFIRM button at top, away from where STAGE was -->
+  <!-- Confirm — CONFIRM at bottom, thumb zone -->
   <div id="sc" class="sp">
-    <button class="cfbtn" id="cfbtn" onclick="doFire()">
-      <span>CONFIRM &amp; SEND</span><span class="cdbadge" id="cdb">⏱ 10s</span>
-    </button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;">Confirm Order</div>
+      <div class="cdbadge" id="cdb">⏱ 10s</div>
+    </div>
     <div class="cdbar"><div class="cdfill" id="cdf" style="width:100%"></div></div>
     <div class="sumbox" id="sumbox"></div>
     <div class="bprow">
-      <div class="bpcol"><div class="bpacct">Account 1 BP</div><div class="bpval" id="cf-bp1">—</div></div>
-      <div class="bpcol"><div class="bpacct">Account 2 BP</div><div class="bpval" id="cf-bp2">—</div></div>
+      <div class="bpcol"><div class="bpacct">A1 Buying Power</div><div class="bpval" id="cf-bp1">—</div></div>
+      <div class="bpcol"><div class="bpacct">A2 Buying Power</div><div class="bpval" id="cf-bp2">—</div></div>
     </div>
     <button class="bkbtn" onclick="doBack()">← Edit Order</button>
+    <button class="cfbtn" id="cfbtn" onclick="doFire()">CONFIRM &amp; SEND</button>
   </div>
 
   <!-- Firing -->
@@ -525,17 +537,310 @@ function renderChain(){
   tbody.innerHTML=html;
 }
 function sRow(s,idx,cls,live){
-  var def=fmtP(Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2))));
-var dis='';
+  var defPrice=Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2)));
+  var dis=live?'':'disabled';
+  var stk=s.strike%1===0?s.strike.toFixed(0):s.strike.toFixed(2);
+  var bidSz=s.bidSize>0?'<span style="font-size:9px;color:var(--text3);margin-left:2px">'+s.bidSize+'</span>':'';
+  var askSz=s.askSize>0?'<span style="font-size:9px;color:var(--text3);margin-left:2px">'+s.askSize+'</span>':'';
   return '<tr>'+
-    '<td style="font-weight:700;color:var(--'+( cls==='c'?'call':'put' )+')">$'+s.strike.toFixed(0)+'</td>'+
+    '<td style="font-weight:700;color:var(--'+(cls==='c'?'call':'put')+')">
+
+/* ── Sheet ── */
+function setState(st){
+  S.sheetState=st;
+  ['ss','sc','sf','sr'].forEach(function(id,i){
+    var states=['stage','confirm','firing','results'];
+    var el=ge(id);
+    if(el)el.className='sp'+(states[i]===st?' on':'');
+  });
+}
+
+function openOrder(idx){
+  haptic();var s=window._S&&window._S[idx];if(!s)return;
+  S.strike=s;S.qty=1;S.price=Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2)));
+  setState('stage');populateStage();
+  ge('sh').classList.add('open');ge('bd').classList.add('on');
+  clearTimeout(S.pollTimer);
+}
+function closeSheet(){
+  haptic();clearCd();
+  ge('sh').classList.remove('open');ge('bd').classList.remove('on');
+  S.sheetState=null;doFetch(true);
+}
+
+function populateStage(){
+  var s=S.strike,isC=s.type==='CALL',cls=isC?'c':'p';
+  ge('st-sym').textContent=s.symbol;
+  ge('st-stk').textContent='$'+s.strike.toFixed(0);
+  ge('st-stk').className='ocstk '+cls;
+  ge('st-pct').textContent=fmtPct(s.pctAway)+' from spot';
+  ge('st-type').textContent=s.type;ge('st-type').className='tpill '+cls;
+  ge('st-exp').textContent=s.expiry;
+  ge('st-mid').textContent='Mid '+fmtP(s.mid);
+  ge('qi').value=S.qty;ge('pi').value=S.price.toFixed(2);
+  ge('stgbtn').className='stgbtn '+cls;
+  updateQtyUI();updatePriceUI();updateBP();
+}
+
+function batchSizes(q){ var b=[];for(var r=q;r>0;r-=5)b.push(Math.min(r,5));return b; }
+
+function updateQtyUI(){
+  var q=S.qty;
+  document.querySelectorAll('.qbtn').forEach(function(b){b.className='qbtn'+(parseInt(b.dataset.q)===q?' on':'');});
+  ge('qi').value=q;
+  var bt=batchSizes(q),bl=ge('blbl');
+  if(bt.length>1){bl.textContent=bt.length+' orders per account ('+bt.join(' + ')+' contracts)';bl.style.display='block';}
+  else bl.style.display='none';
+  updateExposure();
+}
+function updatePriceUI(){
+  var s=S.strike;
+  ge('pi').value=S.price.toFixed(2);
+  ge('phint').textContent='Mid: '+fmtP(s.mid)+' · Bid: '+fmtP(s.bid)+' · Ask: '+fmtP(s.ask);
+  ge('pwarn').style.display=S.price<s.mid*0.5?'block':'none';
+  updateExposure();
+}
+function updateExposure(){
+  var t=S.price*S.qty*100*2;
+  ge('st-exp-val').textContent=fmtM(t);
+  ge('st-exp-sub').textContent=fmtP(S.price)+' × '+S.qty+' × 100 × 2 accts';
+}
+function updateBP(){
+  var lbls=Object.keys(S.bpMap),a1=0,a2=0;
+  lbls.forEach(function(l,i){if(i===0)a1=S.bpMap[l];else a2=S.bpMap[l];});
+  ge('bp1').textContent=fmtM(a1);ge('bp2').textContent=fmtM(a2);
+  ge('cf-bp1').textContent=fmtM(a1);ge('cf-bp2').textContent=fmtM(a2);
+  var h1=ge('hdr-bp1'),h2=ge('hdr-bp2');
+  if(h1)h1.textContent=fmtM(a1);if(h2)h2.textContent=fmtM(a2);
+}
+function adjQty(d){setQty(Math.max(1,S.qty+d));}
+function setQty(q){haptic();S.qty=Math.max(1,parseInt(q)||1);updateQtyUI();}
+function onQtyInput(v){S.qty=Math.max(1,parseInt(v)||1);updateQtyUI();}
+function onPriceInput(v){S.price=Math.max(0.02,parseFloat(parseFloat(v||0).toFixed(2)));updatePriceUI();}
+
+/* ── Stage → Confirm ── */
+function doStage(){
+  haptic();
+  S.price=Math.max(0.02,parseFloat(parseFloat(ge('pi').value||0).toFixed(2)));
+  S.qty=Math.max(1,parseInt(ge('qi').value)||1);
+  var s=S.strike,isC=s.type==='CALL',bt=batchSizes(S.qty);
+  var total=S.price*S.qty*100*2;
+  var bstr=bt.length>1?bt.length+' orders per account ('+bt.join('+')+')':'1 order per account';
+  var rows=[['Symbol',s.symbol],['Type',s.type+' $'+s.strike.toFixed(0)],['Expiry',s.expiry],
+    ['Qty',S.qty+' per account · '+(S.qty*2)+' total'],['Price',fmtP(S.price)],
+    ['Batching',bstr],['Exposure',fmtM(total)]];
+  ge('sumbox').innerHTML=rows.map(function(r){return '<div class="sr"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';}).join('');
+  ge('cfbtn').className='cfbtn '+(isC?'c':'p');
+  setState('confirm');startCd();
+}
+
+/* ── Countdown ── */
+function startCd(){
+  S.cdSecs=10;updateCdUI();
+  S.cdTimer=setInterval(function(){
+    S.cdSecs--;updateCdUI();
+    if(S.cdSecs<=0){clearCd();doBack();}
+  },1000);
+}
+function updateCdUI(){
+  ge('cdb').textContent='⏱ '+S.cdSecs+'s';
+  ge('cdf').style.width=(S.cdSecs/10*100)+'%';
+  ge('cdf').style.background=S.cdSecs<=3?'var(--red)':'var(--gold)';
+}
+function clearCd(){ clearInterval(S.cdTimer);S.cdTimer=null; }
+function doBack(){ haptic();clearCd();setState('stage'); }
+
+/* ── Fire ── */
+function doFire(){
+  haptic();clearCd();setState('firing');
+  var s=S.strike;
+  var url=BACKEND+'?action=placeOrder&symbol='+encodeURIComponent(s.symbol)+'&price='+S.price.toFixed(2)+'&qty='+S.qty;
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    if(d.error){showErr(d.error);return;}showResults(d);
+  }).catch(function(e){showErr(e.message||'Network error');});
+}
+
+/* ── Results ── */
+function showResults(d){
+  var s=S.strike;
+  ge('rt').textContent='Trade Submitted';ge('rt').style.color='';
+  ge('rsub').textContent=s.type+' $'+s.strike.toFixed(0)+' @ '+fmtP(d.price);
+  var results=d.results||{};
+  ge('rcards').innerHTML=Object.keys(results).map(function(lbl){
+    var r=results[lbl];
+    var fi=parseInt(r.filled||0),ca=parseInt(r.cancelled||0),re=parseInt(r.rejected||0);
+    var st;
+    if(re>0&&fi===0) st='<div class="rrej">✕ REJECTED</div><div class="rdt">'+re+' contracts</div>';
+    else if(ca>0&&fi===0) st='<div class="rpar">⊘ CANCELLED</div><div class="rdt">'+ca+' not filled</div>';
+    else if(ca>0||re>0) st='<div class="rpar">⚡ '+fi+' FILLED</div><div class="rdt">'+ca+' cancelled · '+re+' rejected</div>';
+    else st='<div class="rfil">✓ '+fi+' FILLED</div>';
+    return '<div class="rcard"><div><div class="rcl">'+lbl.replace('Account ','A')+'</div><div class="rcd">'+lbl+'</div></div><div class="rcs">'+st+'</div></div>';
+  }).join('');
+  setState('results');
+}
+function showErr(msg){
+  ge('rt').textContent='Order Failed';ge('rt').style.color='var(--red)';
+  ge('rsub').textContent=msg;ge('rcards').innerHTML='';setState('results');toast('Error: '+msg,4000);
+}
+
+/* ── Init ── */
+ge('r-min').value=S.rangeMin;ge('r-max').value=S.rangeMax;
+setFilter(S.filter);updateExpTabs();doFetch(true);
+</script>
+</body>
+</html>
++stk+'</td>'+
     '<td style="color:var(--text2)">'+fmtPct(s.pctAway)+'</td>'+
     '<td style="color:var(--text3)">'+s.delta.toFixed(2)+'</td>'+
-    '<td>'+fmtP(s.bid)+'</td>'+
-    '<td style="font-weight:700">'+fmtP(s.mid)+'</td>'+
-    '<td>'+fmtP(s.ask)+'</td>'+
+    '<td>'+fmtP(s.bid)+bidSz+'</td>'+
+    '<td style="color:#e8eeff;font-weight:800;font-size:13px">'+fmtP(s.mid)+'</td>'+
+    '<td>'+fmtP(s.ask)+askSz+'</td>'+
     '<td style="color:var(--text3)">'+fmtOI(s.oi)+'</td>'+
-    '<td><button class="sto '+cls+'" '+dis+' onclick="openOrder('+idx+')">STO '+def+'</button></td>'+
+    '<td><button class="sto '+cls+'" '+dis+' onclick="openOrder('+idx+')">STO 
+
+/* ── Sheet ── */
+function setState(st){
+  S.sheetState=st;
+  ['ss','sc','sf','sr'].forEach(function(id,i){
+    var states=['stage','confirm','firing','results'];
+    var el=ge(id);
+    if(el)el.className='sp'+(states[i]===st?' on':'');
+  });
+}
+
+function openOrder(idx){
+  haptic();var s=window._S&&window._S[idx];if(!s)return;
+  S.strike=s;S.qty=1;S.price=Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2)));
+  setState('stage');populateStage();
+  ge('sh').classList.add('open');ge('bd').classList.add('on');
+  clearTimeout(S.pollTimer);
+}
+function closeSheet(){
+  haptic();clearCd();
+  ge('sh').classList.remove('open');ge('bd').classList.remove('on');
+  S.sheetState=null;doFetch(true);
+}
+
+function populateStage(){
+  var s=S.strike,isC=s.type==='CALL',cls=isC?'c':'p';
+  ge('st-sym').textContent=s.symbol;
+  ge('st-stk').textContent='$'+s.strike.toFixed(0);
+  ge('st-stk').className='ocstk '+cls;
+  ge('st-pct').textContent=fmtPct(s.pctAway)+' from spot';
+  ge('st-type').textContent=s.type;ge('st-type').className='tpill '+cls;
+  ge('st-exp').textContent=s.expiry;
+  ge('st-mid').textContent='Mid '+fmtP(s.mid);
+  ge('qi').value=S.qty;ge('pi').value=S.price.toFixed(2);
+  ge('stgbtn').className='stgbtn '+cls;
+  updateQtyUI();updatePriceUI();updateBP();
+}
+
+function batchSizes(q){ var b=[];for(var r=q;r>0;r-=5)b.push(Math.min(r,5));return b; }
+
+function updateQtyUI(){
+  var q=S.qty;
+  document.querySelectorAll('.qbtn').forEach(function(b){b.className='qbtn'+(parseInt(b.dataset.q)===q?' on':'');});
+  ge('qi').value=q;
+  var bt=batchSizes(q),bl=ge('blbl');
+  if(bt.length>1){bl.textContent=bt.length+' orders per account ('+bt.join(' + ')+' contracts)';bl.style.display='block';}
+  else bl.style.display='none';
+  updateExposure();
+}
+function updatePriceUI(){
+  var s=S.strike;
+  ge('pi').value=S.price.toFixed(2);
+  ge('phint').textContent='Mid: '+fmtP(s.mid)+' · Bid: '+fmtP(s.bid)+' · Ask: '+fmtP(s.ask);
+  ge('pwarn').style.display=S.price<s.mid*0.5?'block':'none';
+  updateExposure();
+}
+function updateExposure(){
+  var t=S.price*S.qty*100*2;
+  ge('st-exp-val').textContent=fmtM(t);
+  ge('st-exp-sub').textContent=fmtP(S.price)+' × '+S.qty+' × 100 × 2 accts';
+}
+function updateBP(){
+  var lbls=Object.keys(S.bpMap),a1=0,a2=0;
+  lbls.forEach(function(l,i){if(i===0)a1=S.bpMap[l];else a2=S.bpMap[l];});
+  ge('bp1').textContent=fmtM(a1);ge('bp2').textContent=fmtM(a2);
+  ge('cf-bp1').textContent=fmtM(a1);ge('cf-bp2').textContent=fmtM(a2);
+}
+function adjQty(d){setQty(Math.max(1,S.qty+d));}
+function setQty(q){haptic();S.qty=Math.max(1,parseInt(q)||1);updateQtyUI();}
+function onQtyInput(v){S.qty=Math.max(1,parseInt(v)||1);updateQtyUI();}
+function onPriceInput(v){S.price=Math.max(0.02,parseFloat(parseFloat(v||0).toFixed(2)));updatePriceUI();}
+
+/* ── Stage → Confirm ── */
+function doStage(){
+  haptic();
+  S.price=Math.max(0.02,parseFloat(parseFloat(ge('pi').value||0).toFixed(2)));
+  S.qty=Math.max(1,parseInt(ge('qi').value)||1);
+  var s=S.strike,isC=s.type==='CALL',bt=batchSizes(S.qty);
+  var total=S.price*S.qty*100*2;
+  var bstr=bt.length>1?bt.length+' orders per account ('+bt.join('+')+')':'1 order per account';
+  var rows=[['Symbol',s.symbol],['Type',s.type+' $'+s.strike.toFixed(0)],['Expiry',s.expiry],
+    ['Qty',S.qty+' per account · '+(S.qty*2)+' total'],['Price',fmtP(S.price)],
+    ['Batching',bstr],['Exposure',fmtM(total)]];
+  ge('sumbox').innerHTML=rows.map(function(r){return '<div class="sr"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';}).join('');
+  ge('cfbtn').className='cfbtn '+(isC?'c':'p');
+  setState('confirm');startCd();
+}
+
+/* ── Countdown ── */
+function startCd(){
+  S.cdSecs=10;updateCdUI();
+  S.cdTimer=setInterval(function(){
+    S.cdSecs--;updateCdUI();
+    if(S.cdSecs<=0){clearCd();doBack();}
+  },1000);
+}
+function updateCdUI(){
+  ge('cdb').textContent='⏱ '+S.cdSecs+'s';
+  ge('cdf').style.width=(S.cdSecs/10*100)+'%';
+  ge('cdf').style.background=S.cdSecs<=3?'var(--red)':'var(--gold)';
+}
+function clearCd(){ clearInterval(S.cdTimer);S.cdTimer=null; }
+function doBack(){ haptic();clearCd();setState('stage'); }
+
+/* ── Fire ── */
+function doFire(){
+  haptic();clearCd();setState('firing');
+  var s=S.strike;
+  var url=BACKEND+'?action=placeOrder&symbol='+encodeURIComponent(s.symbol)+'&price='+S.price.toFixed(2)+'&qty='+S.qty;
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    if(d.error){showErr(d.error);return;}showResults(d);
+  }).catch(function(e){showErr(e.message||'Network error');});
+}
+
+/* ── Results ── */
+function showResults(d){
+  var s=S.strike;
+  ge('rt').textContent='Trade Submitted';ge('rt').style.color='';
+  ge('rsub').textContent=s.type+' $'+s.strike.toFixed(0)+' @ '+fmtP(d.price);
+  var results=d.results||{};
+  ge('rcards').innerHTML=Object.keys(results).map(function(lbl){
+    var r=results[lbl];
+    var fi=parseInt(r.filled||0),ca=parseInt(r.cancelled||0),re=parseInt(r.rejected||0);
+    var st;
+    if(re>0&&fi===0) st='<div class="rrej">✕ REJECTED</div><div class="rdt">'+re+' contracts</div>';
+    else if(ca>0&&fi===0) st='<div class="rpar">⊘ CANCELLED</div><div class="rdt">'+ca+' not filled</div>';
+    else if(ca>0||re>0) st='<div class="rpar">⚡ '+fi+' FILLED</div><div class="rdt">'+ca+' cancelled · '+re+' rejected</div>';
+    else st='<div class="rfil">✓ '+fi+' FILLED</div>';
+    return '<div class="rcard"><div><div class="rcl">'+lbl.replace('Account ','A')+'</div><div class="rcd">'+lbl+'</div></div><div class="rcs">'+st+'</div></div>';
+  }).join('');
+  setState('results');
+}
+function showErr(msg){
+  ge('rt').textContent='Order Failed';ge('rt').style.color='var(--red)';
+  ge('rsub').textContent=msg;ge('rcards').innerHTML='';setState('results');toast('Error: '+msg,4000);
+}
+
+/* ── Init ── */
+ge('r-min').value=S.rangeMin;ge('r-max').value=S.rangeMax;
+setFilter(S.filter);updateExpTabs();doFetch(true);
+</script>
+</body>
+</html>
++defPrice.toFixed(2)+'</button></td>'+
   '</tr>';
 }
 

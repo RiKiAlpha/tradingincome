@@ -837,24 +837,47 @@ function updateBP(){
 // ── Stage to confirm ──────────────────────────────────────────────────────────
 function doStage(){
   haptic();
-  S.price=Math.max(0.02,parseFloat(parseFloat(ge('pi').value||0).toFixed(2)));
-  S.qtyA1=Math.max(0,parseInt(ge('aq1').value)||0);
-  S.qtyA2=Math.max(0,parseInt(ge('aq2').value)||0);
-  if(S.qtyA1===0&&S.qtyA2===0){ toast('Both accounts at 0 qty');return; }
-  var s=S.strike;
-  var cpx=creditPerContract(S.price);
-  var total=(cpx*S.qtyA1)+(cpx*S.qtyA2);
-  function bstr(q){ var b=[];for(var r=q;r>0;r-=5)b.push(Math.min(r,5));return b.length>1?b.join('+')+' ('+b.length+' orders)':'1 order'; }
-  var rows=[
-    ['Symbol',s.symbol],
-    ['Type',s.type+' 
-  ge('sumbox').innerHTML=rows.map(function(r){
-    return '<div class="sr"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';
-  }).join('');
-  ge('cfbtn').className='cfbtn '+(s.type==='CALL'?'c':'p');
-  setState('confirm');startCd();
-}
 
+  S.price = Math.max(0.02, parseFloat(parseFloat(ge('pi').value || 0).toFixed(2)));
+  S.qtyA1 = Math.max(0, parseInt(ge('aq1').value) || 0);
+  S.qtyA2 = Math.max(0, parseInt(ge('aq2').value) || 0);
+
+  if(S.qtyA1 === 0 && S.qtyA2 === 0){
+    toast('Both accounts at 0 qty');
+    return;
+  }
+
+  var s = S.strike;
+  var cpx = creditPerContract(S.price);
+  var total = (cpx * S.qtyA1) + (cpx * S.qtyA2);
+
+  function bstr(q){
+    if(q <= 0) return 'Skipped';
+    var b = [];
+    for(var r = q; r > 0; r -= 5){
+      b.push(Math.min(r, 5));
+    }
+    return b.length > 1 ? b.join('+') + ' (' + b.length + ' orders)' : '1 order';
+  }
+
+  var rows = [
+    ['Symbol', s.symbol],
+    ['Type', s.type + ' $' + fmtStrike(s.strike)],
+    ['Expiry', s.expiry],
+    ['A1 Qty', S.qtyA1 === 0 ? 'Skipped' : S.qtyA1 + ' · ' + bstr(S.qtyA1)],
+    ['A2 Qty', S.qtyA2 === 0 ? 'Skipped' : S.qtyA2 + ' · ' + bstr(S.qtyA2)],
+    ['Limit Price', fmtP(S.price) + ' (' + fmtP(cpx) + '/ct net)'],
+    ['Total Credit', fmtM(total)]
+  ];
+
+  ge('sumbox').innerHTML = rows.map(function(r){
+    return '<div class="sr"><span class="sk">' + r[0] + '</span><span class="sv">' + r[1] + '</span></div>';
+  }).join('');
+
+  ge('cfbtn').className = 'cfbtn ' + (s.type === 'CALL' ? 'c' : 'p');
+  setState('confirm');
+  startCd();
+}
 // ── Countdown ────────────────────────────────────────────────────────────────
 function startCd(){
   S.cdSecs=10;updateCdUI();

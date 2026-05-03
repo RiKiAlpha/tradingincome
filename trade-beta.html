@@ -89,21 +89,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 #tw{flex:1;overflow:hidden;}
 #cs{height:100%;overflow-x:auto;overflow-y:scroll;-webkit-overflow-scrolling:touch;}
 #ct{width:100%;border-collapse:collapse;min-width:360px;}
-#ct th{position:sticky;top:0;z-index:5;padding:7px 8px;font-size:9px;font-weight:700;
-  letter-spacing:.07em;color:var(--text3);text-align:right;background:var(--bg2);
+#ct th{position:sticky;top:0;z-index:5;padding:5px 5px;font-size:9px;font-weight:700;
+  letter-spacing:.06em;color:var(--text3);text-align:right;background:var(--bg2);
   border-bottom:1px solid var(--border);text-transform:uppercase;white-space:nowrap;}
-#ct th:first-child{text-align:left;padding-left:16px;}
-#ct th:last-child{text-align:center;padding-right:12px;}
-#ct td{padding:7px 8px;font-family:var(--mono);font-size:12px;font-weight:500;
+#ct th:first-child{text-align:left;padding-left:10px;}
+#ct th:last-child{text-align:right;padding-right:8px;}
+#ct td{padding:5px 5px;font-family:var(--mono);font-size:11px;font-weight:500;
   text-align:right;border-bottom:1px solid var(--border2);white-space:nowrap;color:var(--text);}
-#ct td:first-child{text-align:left;padding-left:16px;}
-#ct td:last-child{text-align:center;padding-right:12px;}
+#ct td:first-child{text-align:left;padding-left:10px;}
+#ct td:last-child{text-align:right;padding-right:8px;}
 #ct tbody tr:hover{background:rgba(255,255,255,0.02);}
-.shdr td{padding:5px 16px;font-size:9px;font-weight:800;letter-spacing:.1em;
+.shdr td{padding:4px 10px;font-size:9px;font-weight:800;letter-spacing:.1em;
   text-transform:uppercase;background:var(--bg2);border-bottom:1px solid var(--border);
   text-align:left !important;font-family:var(--sans);}
 .shdr.c td{color:rgba(0,212,166,.6);}.shdr.p td{color:rgba(240,140,48,.6);}
-.sto{padding:5px 9px;border-radius:6px;border:1px solid;font-size:11px;font-weight:700;
+.sto{padding:4px 7px;border-radius:6px;border:1px solid;font-size:10px;font-weight:700;
   font-family:var(--mono);cursor:pointer;touch-action:manipulation;background:transparent;
   transition:background .12s,box-shadow .12s;white-space:nowrap;}
 .sto.c{border-color:rgba(0,212,166,.3);color:var(--call);}
@@ -112,6 +112,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .sto.p:active{background:rgba(240,140,48,.12);box-shadow:0 0 14px rgba(240,140,48,.3);}
 .sto:disabled{opacity:.28;pointer-events:none;}
 .es{padding:56px 16px;text-align:center;color:var(--text3);font-size:13px;}
+.pxsz{display:block;font-size:9px;color:var(--text3);line-height:1;margin-top:1px;}
 
 /* ── Backdrop + Sheet ── */
 #bd{position:fixed;inset:0;z-index:90;background:rgba(6,10,16,.8);
@@ -311,7 +312,7 @@ input[type=number]{-moz-appearance:textfield;}
   <table id="ct">
     <thead><tr>
       <th style="text-align:left">Strike</th>
-      <th>%Away</th><th>&Delta;</th><th>Bid</th><th>Mid</th><th>Ask</th><th>OI</th><th></th>
+      <th>%Away</th><th>&Delta;</th><th>Bid</th><th>Mid</th><th>Ask</th><th>STO</th><th>OI</th>
     </tr></thead>
     <tbody id="cb"><tr><td colspan="8" class="es">Loading chain…</td></tr></tbody>
   </table>

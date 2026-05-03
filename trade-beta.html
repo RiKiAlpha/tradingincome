@@ -59,17 +59,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .ratio-lbl{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;}
 .ratio-preview{font-family:var(--mono);font-size:11px;color:var(--gold);font-weight:700;}
 .ratio-body{display:flex;align-items:center;gap:8px;}
-.acct-block{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;}
+.acct-block{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 8px;}
 .acct-block.disabled{opacity:.4;}
-.acct-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-.acct-name{font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--text2);text-transform:uppercase;}
-.acct-tog{width:28px;height:17px;border-radius:9px;background:var(--bg4);
+.acct-name{font-size:8px;font-weight:800;letter-spacing:.06em;color:var(--text3);
+  text-transform:uppercase;margin-bottom:4px;}
+.acct-tog{width:26px;height:16px;border-radius:8px;background:var(--bg4);
   border:1px solid var(--border);cursor:pointer;position:relative;flex-shrink:0;transition:background .2s;}
 .acct-tog.on{background:var(--call);border-color:var(--call);}
-.acct-tog-thumb{position:absolute;top:2px;left:2px;width:13px;height:13px;
+.acct-tog-thumb{position:absolute;top:2px;left:2px;width:12px;height:12px;
   border-radius:50%;background:#fff;transition:transform .2s;}
-.acct-tog.on .acct-tog-thumb{transform:translateX(11px);}
+.acct-tog.on .acct-tog-thumb{transform:translateX(10px);}
 .base-row{display:flex;align-items:center;gap:4px;}
+.tog-divider{width:1px;background:var(--border);height:18px;flex-shrink:0;margin:0 2px;}
 .bstep{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);
   background:var(--bg4);color:var(--text);font-size:14px;font-weight:300;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -286,30 +287,28 @@ input[type=number]{-moz-appearance:textfield;}
     </div>
     <div class="ratio-body">
       <div class="acct-block" id="a1-block">
-        <div class="acct-hdr">
-          <div class="acct-name">A1</div>
-          <div class="acct-tog on" id="a1-tog" onclick="toggleAcct(1)">
-            <div class="acct-tog-thumb"></div>
-          </div>
-        </div>
+        <div class="acct-name">A1</div>
         <div class="base-row">
           <div class="bstep" onclick="adjBase(1,-1)">-</div>
           <input class="binp" type="number" id="base1" value="4" min="0" max="99" oninput="onBaseInput(1,this.value)">
           <div class="bstep" onclick="adjBase(1,1)">+</div>
+          <div class="tog-divider"></div>
+          <div class="acct-tog on" id="a1-tog" onclick="toggleAcct(1)">
+            <div class="acct-tog-thumb"></div>
+          </div>
         </div>
       </div>
       <div class="ratio-sep">:</div>
       <div class="acct-block" id="a2-block">
-        <div class="acct-hdr">
-          <div class="acct-name">A2</div>
-          <div class="acct-tog on" id="a2-tog" onclick="toggleAcct(2)">
-            <div class="acct-tog-thumb"></div>
-          </div>
-        </div>
+        <div class="acct-name">A2</div>
         <div class="base-row">
           <div class="bstep" onclick="adjBase(2,-1)">-</div>
           <input class="binp" type="number" id="base2" value="3" min="0" max="99" oninput="onBaseInput(2,this.value)">
           <div class="bstep" onclick="adjBase(2,1)">+</div>
+          <div class="tog-divider"></div>
+          <div class="acct-tog on" id="a2-tog" onclick="toggleAcct(2)">
+            <div class="acct-tog-thumb"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -671,7 +670,7 @@ function renderChain(){
 
 function sRow(s,idx,cls,live){
   var defPrice=Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2)));
-  var dis='';
+  var dis=live?'':'disabled';
   var stk=fmtStrike(s.strike);
   var bidCell=fmtP(s.bid)+(s.bidSize>0?'<span class="pxsz">'+s.bidSize+'</span>':'');
   var askCell=fmtP(s.ask)+(s.askSize>0?'<span class="pxsz">'+s.askSize+'</span>':'');

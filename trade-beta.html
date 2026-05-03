@@ -21,8 +21,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden;}
 #app{display:flex;flex-direction:column;height:100%;
   padding-top:env(safe-area-inset-top,0);}
-
-/* ── Header ── */
 #hdr{flex-shrink:0;padding:10px 14px 0;}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .ticker-badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;
@@ -49,16 +47,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 #spot-price{font-family:var(--mono);font-size:28px;font-weight:700;
   letter-spacing:-.03em;color:var(--text2);margin-bottom:1px;}
 #updated-lbl{font-size:9px;color:var(--text3);margin-bottom:6px;}
-
-/* ── BP row ── */
 .bp-hdr{display:flex;gap:6px;margin-bottom:8px;}
 .bp-hdr-col{flex:1;background:var(--bg3);border:1px solid var(--border);
   border-radius:7px;padding:6px 8px;}
 .bp-hdr-lbl{font-size:8px;font-weight:700;letter-spacing:.06em;color:var(--text3);
   text-transform:uppercase;margin-bottom:2px;}
 .bp-hdr-val{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);}
-
-/* ── Ratio widget ── */
 .ratio-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;
   padding:10px 12px;margin-bottom:8px;}
 .ratio-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -84,18 +78,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .binp{flex:1;height:24px;background:transparent;border:none;color:var(--text);
   font-family:var(--mono);font-size:14px;font-weight:700;text-align:center;outline:none;}
 .ratio-sep{font-family:var(--mono);font-size:18px;color:var(--text3);flex-shrink:0;}
-.mult-row{display:flex;gap:4px;margin-bottom:0;}
 .mbtn{flex:1;height:26px;border-radius:6px;border:1px solid var(--border);
   background:var(--bg3);color:var(--text2);font-family:var(--mono);font-size:11px;
-  font-weight:700;cursor:pointer;touch-action:manipulation;text-align:center;
-  line-height:26px;}
+  font-weight:700;cursor:pointer;touch-action:manipulation;text-align:center;line-height:26px;}
 .mbtn.on{border-color:rgba(61,156,255,.5);background:rgba(61,156,255,.12);color:var(--blue);}
 .minp{width:44px;height:26px;border-radius:6px;border:1px solid var(--border);
   background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:11px;
   font-weight:700;text-align:center;outline:none;}
 .minp:focus{border-color:rgba(61,156,255,.4);}
-
-/* ── Expiry tabs ── */
 .exp-tabs{display:flex;gap:5px;margin-bottom:8px;}
 .exp-tab{flex:1;padding:6px 4px;border-radius:7px;border:1px solid var(--border);
   background:var(--bg3);text-align:center;cursor:pointer;touch-action:manipulation;}
@@ -103,8 +93,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .etd{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);margin-top:1px;}
 .exp-tab.on{border-color:rgba(0,212,166,.35);background:rgba(0,212,166,.07);}
 .exp-tab.on .etl{color:var(--call);}.exp-tab.on .etd{color:var(--text);}
-
-/* ── Controls ── */
 #ctrl{flex-shrink:0;padding:0 14px 8px;}
 .ctrl-row{display:flex;align-items:center;gap:6px;}
 .seg{display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px;}
@@ -124,8 +112,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   cursor:pointer;white-space:nowrap;touch-action:manipulation;}
 .xbtn.on{border-color:rgba(244,197,66,.3);color:var(--gold);}
 .hdiv{height:1px;background:var(--border);}
-
-/* ── Table ── */
 #tw{flex:1;overflow:hidden;}
 #cs{height:100%;overflow-x:auto;overflow-y:scroll;-webkit-overflow-scrolling:touch;}
 #ct{width:100%;border-collapse:collapse;min-width:340px;}
@@ -153,8 +139,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .sto.p:active{background:rgba(240,140,48,.12);box-shadow:0 0 10px rgba(240,140,48,.3);}
 .sto:disabled{opacity:.28;pointer-events:none;}
 .es{padding:40px 16px;text-align:center;color:var(--text3);font-size:12px;}
-
-/* ── Sheet ── */
 #bd{position:fixed;inset:0;z-index:90;background:rgba(6,10,16,.8);
   opacity:0;pointer-events:none;transition:opacity .25s;}
 #bd.on{opacity:1;pointer-events:all;}
@@ -165,12 +149,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);
   padding-bottom:env(safe-area-inset-bottom,16px);
   max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 #sh.open{transform:translateY(0);}
-.handle{width:32px;height:4px;border-radius:2px;background:var(--border);
-  margin:10px auto 14px;}
+.handle{width:32px;height:4px;border-radius:2px;background:var(--border);margin:10px auto 14px;}
 .sp{padding:0 16px;display:none;}
 .sp.on{display:block;}
-
-/* ── Stage ── */
 .och{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
 .ocl{display:flex;flex-direction:column;gap:3px;}
 .ocsym{font-family:var(--mono);font-size:10px;color:var(--text3);}
@@ -200,76 +181,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .stgbtn.c{background:var(--call);color:#021810;}
 .stgbtn.p{background:var(--put);color:#1a0c02;}
 .stgbtn:active{opacity:.85;}
-
-/* ── Per-account qty (stage) ── */
-.acct-qty-row{
-  display:flex;
-  gap:8px;
-  margin-bottom:14px;
-  justify-content:center;
-  width:100%;
-}
-
-.aqcol{
-  flex:1;
-  min-width:0;
-  max-width:140px;
-  background:var(--bg3);
-  border:1px solid var(--border);
-  border-radius:8px;
-  padding:8px;
-}
-
-.aqrow{
-  display:flex;
-  align-items:center;
-  gap:3px;
-  width:100%;
-}
-
-.aqstep{
-  width:24px;
-  height:26px;
-  min-width:24px;
-  border-radius:6px;
-  border:1px solid var(--border);
-  background:var(--bg4);
-  color:var(--text);
-  font-size:15px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  touch-action:manipulation;
-  user-select:none;
-  flex-shrink:0;
-}
-
-.aqinp{
-  min-width:0;
-  width:100%;
-  height:26px;
-  background:transparent;
-  border:none;
-  color:var(--text);
-  font-family:var(--mono);
-  font-size:15px;
-  font-weight:700;
-  text-align:center;
-  outline:none;
-}
+.acct-qty-row{display:flex;gap:8px;margin-bottom:14px;justify-content:center;width:100%;}
+.aqcol{flex:1;min-width:0;max-width:140px;background:var(--bg3);
+  border:1px solid var(--border);border-radius:8px;padding:8px;}
 .aqcol.off{opacity:.4;}
 .aqlbl{font-size:8px;font-weight:800;letter-spacing:.06em;color:var(--text3);
   text-transform:uppercase;margin-bottom:6px;}
-.aqrow{display:flex;align-items:center;gap:3px;}
-.aqstep{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);
+.aqrow{display:flex;align-items:center;gap:3px;width:100%;}
+.aqstep{width:24px;height:26px;min-width:24px;border-radius:6px;border:1px solid var(--border);
   background:var(--bg4);color:var(--text);font-size:15px;display:flex;align-items:center;
   justify-content:center;cursor:pointer;touch-action:manipulation;user-select:none;flex-shrink:0;}
 .aqstep:active{opacity:.6;}
-.aqinp{flex:1;height:26px;background:transparent;border:none;color:var(--text);
+.aqinp{min-width:0;width:100%;height:26px;background:transparent;border:none;color:var(--text);
   font-family:var(--mono);font-size:15px;font-weight:700;text-align:center;outline:none;}
-
-/* ── Confirm ── */
 .cdbar{height:2px;background:var(--border);border-radius:1px;margin-bottom:12px;overflow:hidden;}
 .cdfill{height:100%;border-radius:1px;background:var(--gold);transition:width 1s linear;}
 .sumbox{background:var(--bg3);border:1px solid var(--border);border-radius:10px;
@@ -296,14 +220,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .cfbtn.c{border-color:var(--call);background:rgba(0,212,166,.1);color:var(--call);}
 .cfbtn.p{border-color:var(--put);background:rgba(240,140,48,.1);color:var(--put);}
 .cfbtn:active{opacity:.8;}
-
-/* ── Firing ── */
 .firewrap{padding:40px 0;text-align:center;}
 @keyframes spinr{to{transform:rotate(360deg);}}
 .fspin{animation:spinr .8s linear infinite;transform-box:fill-box;transform-origin:center;}
 .firelbl{font-size:13px;font-weight:600;color:var(--text2);}
-
-/* ── Results ── */
 .rshdr{text-align:center;margin-bottom:16px;}
 .rstitle{font-size:17px;font-weight:800;color:var(--text);margin-bottom:4px;}
 .rssub{font-family:var(--mono);font-size:11px;color:var(--text2);}
@@ -318,8 +238,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .donebtn{width:100%;height:46px;border-radius:10px;border:1px solid var(--border);
   background:var(--bg3);color:var(--text);font-size:13px;font-weight:700;
   cursor:pointer;font-family:var(--sans);margin-bottom:8px;touch-action:manipulation;}
-
-/* ── Toast ── */
 #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(12px);
   background:var(--bg4);border:1px solid var(--border);border-radius:18px;
   padding:8px 18px;font-size:11px;font-weight:600;color:var(--text);
@@ -333,8 +251,6 @@ input[type=number]{-moz-appearance:textfield;}
 </head>
 <body>
 <div id="app">
-
-<!-- Header -->
 <div id="hdr">
   <div class="hdr-top">
     <div style="display:flex;align-items:center;gap:8px;">
@@ -353,8 +269,6 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
   <div id="spot-price">—</div>
   <div id="updated-lbl">Loading…</div>
-
-  <!-- BP row -->
   <div class="bp-hdr">
     <div class="bp-hdr-col">
       <div class="bp-hdr-lbl">A1 Buying Power</div>
@@ -365,15 +279,12 @@ input[type=number]{-moz-appearance:textfield;}
       <div class="bp-hdr-val" id="hdr-bp2">—</div>
     </div>
   </div>
-
-  <!-- Ratio widget -->
   <div class="ratio-card">
     <div class="ratio-top">
       <div class="ratio-lbl">Order Ratio</div>
       <div class="ratio-preview" id="ratio-preview">A1: 4 &middot; A2: 3</div>
     </div>
     <div class="ratio-body">
-      <!-- A1 block -->
       <div class="acct-block" id="a1-block">
         <div class="acct-hdr">
           <div class="acct-name">A1</div>
@@ -388,7 +299,6 @@ input[type=number]{-moz-appearance:textfield;}
         </div>
       </div>
       <div class="ratio-sep">:</div>
-      <!-- A2 block -->
       <div class="acct-block" id="a2-block">
         <div class="acct-hdr">
           <div class="acct-name">A2</div>
@@ -403,11 +313,10 @@ input[type=number]{-moz-appearance:textfield;}
         </div>
       </div>
     </div>
-    <!-- Multiplier -->
     <div style="margin-top:8px;">
       <div class="flbl" style="margin-bottom:5px;">Multiplier</div>
       <div style="display:flex;gap:4px;">
-        <div class="mult-row" style="flex:1;display:flex;gap:4px;">
+        <div style="flex:1;display:flex;gap:4px;">
           <div class="mbtn on" data-m="1" onclick="setMult(1)">1x</div>
           <div class="mbtn" data-m="2" onclick="setMult(2)">2x</div>
           <div class="mbtn" data-m="3" onclick="setMult(3)">3x</div>
@@ -418,16 +327,12 @@ input[type=number]{-moz-appearance:textfield;}
       </div>
     </div>
   </div>
-
-  <!-- Expiry tabs -->
   <div class="exp-tabs">
     <div class="exp-tab" data-i="0" onclick="setExpiry(0)"><div class="etl">This Wk</div><div class="etd" id="ed0">—</div></div>
     <div class="exp-tab" data-i="1" onclick="setExpiry(1)"><div class="etl">Next Wk</div><div class="etd" id="ed1">—</div></div>
     <div class="exp-tab" data-i="2" onclick="setExpiry(2)"><div class="etl">Wk+2</div><div class="etd" id="ed2">—</div></div>
   </div>
 </div>
-
-<!-- Controls -->
 <div id="ctrl">
   <div class="ctrl-row">
     <div class="seg">
@@ -445,30 +350,18 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 </div>
 <div class="hdiv"></div>
-
-<!-- Chain table -->
 <div id="tw"><div id="cs">
   <table id="ct">
     <thead><tr>
       <th style="text-align:left">Strike</th>
-      <th>%Away</th>
-      <th>D</th>
-      <th>Bid</th>
-      <th>Mid</th>
-      <th>Ask</th>
-      <th>STO</th>
-      <th>OI</th>
+      <th>%Away</th><th>D</th><th>Bid</th><th>Mid</th><th>Ask</th><th>STO</th><th>OI</th>
     </tr></thead>
     <tbody id="cb"><tr><td colspan="8" class="es">Loading chain…</td></tr></tbody>
   </table>
 </div></div>
+</div>
 
-</div><!-- #app -->
-
-<!-- Backdrop -->
 <div id="bd" onclick="closeSheet()"></div>
-
-<!-- Bottom sheet -->
 <div id="sh">
   <div class="handle"></div>
 
@@ -486,7 +379,6 @@ input[type=number]{-moz-appearance:textfield;}
         <div class="mpill" id="st-mid">—</div>
       </div>
     </div>
-
     <div class="flbl">Qty per Account</div>
     <div class="acct-qty-row">
       <div class="aqcol" id="aq1-col">
@@ -506,7 +398,6 @@ input[type=number]{-moz-appearance:textfield;}
         </div>
       </div>
     </div>
-
     <div class="flbl">Limit Price</div>
     <div class="pfw">
       <div class="psym">$</div>
@@ -572,7 +463,6 @@ input[type=number]{-moz-appearance:textfield;}
 <script>
 var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
 
-// ── Persistent state ──────────────────────────────────────────────────────────
 var S = {
   expiryIdx:  parseInt(localStorage.getItem('tr_exp')    || '0'),
   filter:     localStorage.getItem('tr_filter')           || 'B',
@@ -616,7 +506,6 @@ function saveAll(){
   savePref('tr_en1',S.en1?'1':'0');savePref('tr_en2',S.en2?'1':'0');
 }
 
-// ── Computed qty ──────────────────────────────────────────────────────────────
 function calcQty(base, enabled){
   if(!enabled) return 0;
   return Math.max(1, Math.ceil(base * S.mult));
@@ -629,7 +518,6 @@ function updateRatioPreview(){
   ge('ratio-preview').textContent = parts.length ? parts.join(' \u00b7 ') : 'Both disabled';
 }
 
-// ── Ratio widget controls ─────────────────────────────────────────────────────
 function adjBase(acct, d){
   haptic();
   if(acct===1){ S.base1=Math.max(1,S.base1+d);ge('base1').value=S.base1; }
@@ -668,7 +556,6 @@ function toggleAcct(acct){
   saveAll();updateRatioPreview();
 }
 
-// ── Expiry ────────────────────────────────────────────────────────────────────
 function approxFriday(w){
   var d=new Date(),day=d.getDay(),diff=day===6?6:(5-day);
   d.setDate(d.getDate()+diff+(w*7));
@@ -690,7 +577,6 @@ function updateExpTabs(){
   }
 }
 
-// ── Filter / range ────────────────────────────────────────────────────────────
 function setFilter(f){
   haptic();S.filter=f;saveAll();
   ['b','c','p'].forEach(function(x){ var el=ge('sb-'+x);if(el)el.className='sbtn'; });
@@ -718,12 +604,10 @@ function toggleExpand(){
   doFetch(true);
 }
 
-// ── Ring ──────────────────────────────────────────────────────────────────────
 function ringDrain(){ var r=ge('ring');r.className='';r.getBoundingClientRect();r.className='drain'; }
 function ringPulse(){ var r=ge('ring');r.className='pulse';setTimeout(function(){if(!S.sheetState)ringDrain();else r.className='';},450); }
 function ringStale(){ ge('ring').className='stale'; }
 
-// ── Fetch ─────────────────────────────────────────────────────────────────────
 function scheduleNext(){ clearTimeout(S.pollTimer);if(!S.marketOpen)return;S.pollTimer=setTimeout(function(){doFetch(false);},5000); }
 function doFetch(force){
   if(S.fetching&&!force) return;
@@ -759,7 +643,10 @@ function renderHeader(d){
   ge('updated-lbl').textContent='Updated '+ts+(d.marketOpen?'':' · Read-only');
 }
 
-// ── Chain render ──────────────────────────────────────────────────────────────
+function creditPerContract(price){
+  return parseFloat(((price * 100) - 0.35 - 0.0159).toFixed(2));
+}
+
 function renderChain(){
   var d=S.data,tbody=ge('cb');
   if(!d||!d.spotPrice){tbody.innerHTML='<tr><td colspan="8" class="es">No chain data</td></tr>';return;}
@@ -784,12 +671,12 @@ function renderChain(){
 
 function sRow(s,idx,cls,live){
   var defPrice=Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2)));
-  var dis='';
+  var dis=live?'':'disabled';
   var stk=fmtStrike(s.strike);
   var bidCell=fmtP(s.bid)+(s.bidSize>0?'<span class="pxsz">'+s.bidSize+'</span>':'');
   var askCell=fmtP(s.ask)+(s.askSize>0?'<span class="pxsz">'+s.askSize+'</span>':'');
   var cpx=creditPerContract(defPrice);
-  var stoLabel=defPrice.toFixed(2)+'<span class="pxsz" style="color:var(--text3)">'+fmtP(cpx)+'/ct</span>';
+  var stoLabel=defPrice.toFixed(2)+'<span class="pxsz">'+fmtP(cpx)+'/ct</span>';
   return '<tr>'+
     '<td style="font-weight:700;color:var(--'+(cls==='c'?'call':'put')+')">$'+stk+'</td>'+
     '<td style="color:var(--text2)">'+fmtPct(s.pctAway)+'</td>'+
@@ -802,7 +689,6 @@ function sRow(s,idx,cls,live){
   '</tr>';
 }
 
-// ── Sheet ─────────────────────────────────────────────────────────────────────
 function setState(st){
   S.sheetState=st;
   var map={stage:'ss',confirm:'sc',firing:'sf',results:'sr'};
@@ -864,18 +750,13 @@ function updatePriceUI(){
   ge('pwarn').style.display=S.price<s.mid*0.5?'block':'none';
   updateExposure();
 }
-function creditPerContract(price){
-  return parseFloat(((price * 100) - 0.35 - 0.0159).toFixed(2));
-}
 function updateExposure(){
-  var cpx = creditPerContract(S.price);
-  var a1cr = cpx * S.qtyA1;
-  var a2cr = cpx * S.qtyA2;
-  var total = a1cr + a2cr;
-  ge('st-exp-val').textContent = fmtM(total);
-  ge('st-exp-sub').textContent =
-    'A1: '+fmtM(a1cr)+' · A2: '+fmtM(a2cr)+
-    ' · '+fmtP(cpx)+'/ct after fees';
+  var cpx=creditPerContract(S.price);
+  var a1cr=cpx*S.qtyA1;
+  var a2cr=cpx*S.qtyA2;
+  var total=a1cr+a2cr;
+  ge('st-exp-val').textContent=fmtM(total);
+  ge('st-exp-sub').textContent='A1: '+fmtM(a1cr)+' · A2: '+fmtM(a2cr)+' · '+fmtP(cpx)+'/ct after fees';
 }
 function updateBP(){
   var lbls=Object.keys(S.bpMap),a1=0,a2=0;
@@ -888,126 +769,23 @@ function updateBP(){
   if(ge('cf-bp2'))ge('cf-bp2').textContent=fmtM(a2);
 }
 
-// ── Stage to confirm ──────────────────────────────────────────────────────────
 function doStage(){
   haptic();
-
-  S.price = Math.max(0.02, parseFloat(parseFloat(ge('pi').value || 0).toFixed(2)));
-  S.qtyA1 = Math.max(0, parseInt(ge('aq1').value) || 0);
-  S.qtyA2 = Math.max(0, parseInt(ge('aq2').value) || 0);
-
-  if(S.qtyA1 === 0 && S.qtyA2 === 0){
-    toast('Both accounts at 0 qty');
-    return;
-  }
-
-  var s = S.strike;
-  var cpx = creditPerContract(S.price);
-  var total = (cpx * S.qtyA1) + (cpx * S.qtyA2);
-
+  S.price=Math.max(0.02,parseFloat(parseFloat(ge('pi').value||0).toFixed(2)));
+  S.qtyA1=Math.max(0,parseInt(ge('aq1').value)||0);
+  S.qtyA2=Math.max(0,parseInt(ge('aq2').value)||0);
+  if(S.qtyA1===0&&S.qtyA2===0){ toast('Both accounts at 0 qty');return; }
+  var s=S.strike;
+  var cpx=creditPerContract(S.price);
+  var total=(cpx*S.qtyA1)+(cpx*S.qtyA2);
   function bstr(q){
-    if(q <= 0) return 'Skipped';
-    var b = [];
-    for(var r = q; r > 0; r -= 5){
-      b.push(Math.min(r, 5));
-    }
-    return b.length > 1 ? b.join('+') + ' (' + b.length + ' orders)' : '1 order';
+    if(q<=0) return 'Skipped';
+    var b=[];for(var r=q;r>0;r-=5)b.push(Math.min(r,5));
+    return b.length>1?b.join('+')+' ('+b.length+' orders)':'1 order';
   }
-
-  var rows = [
-    ['Symbol', s.symbol],
-    ['Type', s.type + ' $' + fmtStrike(s.strike)],
-    ['Expiry', s.expiry],
-    ['A1 Qty', S.qtyA1 === 0 ? 'Skipped' : S.qtyA1 + ' · ' + bstr(S.qtyA1)],
-    ['A2 Qty', S.qtyA2 === 0 ? 'Skipped' : S.qtyA2 + ' · ' + bstr(S.qtyA2)],
-    ['Limit Price', fmtP(S.price) + ' (' + fmtP(cpx) + '/ct net)'],
-    ['Total Credit', fmtM(total)]
-  ];
-
-  ge('sumbox').innerHTML = rows.map(function(r){
-    return '<div class="sr"><span class="sk">' + r[0] + '</span><span class="sv">' + r[1] + '</span></div>';
-  }).join('');
-
-  ge('cfbtn').className = 'cfbtn ' + (s.type === 'CALL' ? 'c' : 'p');
-  setState('confirm');
-  startCd();
-}
-// ── Countdown ────────────────────────────────────────────────────────────────
-function startCd(){
-  S.cdSecs=10;updateCdUI();
-  S.cdTimer=setInterval(function(){
-    S.cdSecs--;updateCdUI();
-    if(S.cdSecs<=0){clearCd();doBack();}
-  },1000);
-}
-function updateCdUI(){
-  ge('cdb').textContent=S.cdSecs+'s';
-  ge('cdf').style.width=(S.cdSecs/10*100)+'%';
-  ge('cdf').style.background=S.cdSecs<=3?'var(--red)':'var(--gold)';
-}
-function clearCd(){ clearInterval(S.cdTimer);S.cdTimer=null; }
-function doBack(){ haptic();clearCd();setState('stage'); }
-
-// ── Fire ─────────────────────────────────────────────────────────────────────
-function doFire(){
-  haptic();clearCd();setState('firing');
-  var s=S.strike;
-  var url=BACKEND+'?action=placeOrder'+
-    '&symbol='+encodeURIComponent(s.symbol)+
-    '&price='+S.price.toFixed(2)+
-    '&qtyA1='+S.qtyA1+
-    '&qtyA2='+S.qtyA2;
-  fetch(url).then(function(r){return r.json();}).then(function(d){
-    if(d.error){showErr(d.error);return;}
-    showResults(d);
-  }).catch(function(e){ showErr(e.message||'Network error'); });
-}
-
-// ── Results ───────────────────────────────────────────────────────────────────
-function showResults(d){
-  var s=S.strike;
-  ge('rt').textContent='Trade Submitted';ge('rt').style.color='';
-  ge('rsub').textContent=s.type+' $'+fmtStrike(s.strike)+' @ '+fmtP(d.price);
-  var results=d.results||{};
-  ge('rcards').innerHTML=Object.keys(results).map(function(lbl){
-    var r=results[lbl];
-    var fi=parseInt(r.filled||0),ca=parseInt(r.cancelled||0),re=parseInt(r.rejected||0);
-    var st;
-    if(re>0&&fi===0) st='<div class="rrej">REJECTED</div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+re+' contracts</div>';
-    else if(ca>0&&fi===0) st='<div class="rpar">CANCELLED</div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+ca+' unfilled</div>';
-    else if(ca>0||re>0) st='<div class="rpar">'+fi+' FILLED</div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+ca+' cancelled · '+re+' rejected</div>';
-    else st='<div class="rfil">'+fi+' FILLED</div>';
-    return '<div class="rcard"><div class="rcl">'+lbl+'</div><div class="rcs">'+st+'</div></div>';
-  }).join('');
-  setState('results');
-}
-function showErr(msg){
-  ge('rt').textContent='Order Failed';ge('rt').style.color='var(--red)';
-  ge('rsub').textContent=msg;ge('rcards').innerHTML='';
-  setState('results');toast('Error: '+msg,4000);
-}
-
-// ── Init ─────────────────────────────────────────────────────────────────────
-ge('base1').value=S.base1;
-ge('base2').value=S.base2;
-ge('mult-inp').value=S.mult;
-ge('r-min').value=S.rangeMin;
-ge('r-max').value=S.rangeMax;
-ge('a1-tog').className='acct-tog'+(S.en1?' on':'');
-ge('a1-block').className='acct-block'+(S.en1?'':' disabled');
-ge('a2-tog').className='acct-tog'+(S.en2?' on':'');
-ge('a2-block').className='acct-block'+(S.en2?'':' disabled');
-document.querySelectorAll('.mbtn').forEach(function(b){
-  b.className='mbtn'+(parseInt(b.dataset.m)===S.mult?' on':'');
-});
-setFilter(S.filter);
-updateExpTabs();
-updateRatioPreview();
-doFetch(true);
-</script>
-</body>
-</html>
-+fmtStrike(s.strike)],
+  var rows=[
+    ['Symbol',s.symbol],
+    ['Type',s.type+' $'+fmtStrike(s.strike)],
     ['Expiry',s.expiry],
     ['A1 Qty',S.qtyA1===0?'Skipped':S.qtyA1+' · '+bstr(S.qtyA1)],
     ['A2 Qty',S.qtyA2===0?'Skipped':S.qtyA2+' · '+bstr(S.qtyA2)],
@@ -1021,7 +799,6 @@ doFetch(true);
   setState('confirm');startCd();
 }
 
-// ── Countdown ────────────────────────────────────────────────────────────────
 function startCd(){
   S.cdSecs=10;updateCdUI();
   S.cdTimer=setInterval(function(){
@@ -1037,7 +814,6 @@ function updateCdUI(){
 function clearCd(){ clearInterval(S.cdTimer);S.cdTimer=null; }
 function doBack(){ haptic();clearCd();setState('stage'); }
 
-// ── Fire ─────────────────────────────────────────────────────────────────────
 function doFire(){
   haptic();clearCd();setState('firing');
   var s=S.strike;
@@ -1052,7 +828,6 @@ function doFire(){
   }).catch(function(e){ showErr(e.message||'Network error'); });
 }
 
-// ── Results ───────────────────────────────────────────────────────────────────
 function showResults(d){
   var s=S.strike;
   ge('rt').textContent='Trade Submitted';ge('rt').style.color='';
@@ -1076,7 +851,6 @@ function showErr(msg){
   setState('results');toast('Error: '+msg,4000);
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
 ge('base1').value=S.base1;
 ge('base2').value=S.base2;
 ge('mult-inp').value=S.mult;

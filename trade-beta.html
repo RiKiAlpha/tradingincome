@@ -202,8 +202,62 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .stgbtn:active{opacity:.85;}
 
 /* ── Per-account qty (stage) ── */
-.acct-qty-row{display:flex;gap:8px;margin-bottom:14px;justify-content:center;}
-.aqcol{width:120px;flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;}
+.acct-qty-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+  justify-content:center;
+  width:100%;
+}
+
+.aqcol{
+  flex:1;
+  min-width:0;
+  max-width:140px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px;
+}
+
+.aqrow{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  width:100%;
+}
+
+.aqstep{
+  width:24px;
+  height:26px;
+  min-width:24px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:var(--bg4);
+  color:var(--text);
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  touch-action:manipulation;
+  user-select:none;
+  flex-shrink:0;
+}
+
+.aqinp{
+  min-width:0;
+  width:100%;
+  height:26px;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:15px;
+  font-weight:700;
+  text-align:center;
+  outline:none;
+}
 .aqcol.off{opacity:.4;}
 .aqlbl{font-size:8px;font-weight:800;letter-spacing:.06em;color:var(--text3);
   text-transform:uppercase;margin-bottom:6px;}

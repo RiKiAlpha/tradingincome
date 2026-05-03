@@ -730,7 +730,7 @@ function renderChain(){
 
 function sRow(s,idx,cls,live){
   var defPrice=Math.max(0.02,parseFloat((s.mid-0.02).toFixed(2)));
-  var dis='';
+  var dis=live?'':'disabled';
   var stk=fmtStrike(s.strike);
   var bidCell=fmtP(s.bid)+(s.bidSize>0?'<span class="pxsz">'+s.bidSize+'</span>':'');
   var askCell=fmtP(s.ask)+(s.askSize>0?'<span class="pxsz">'+s.askSize+'</span>':'');

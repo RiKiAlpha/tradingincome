@@ -202,18 +202,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);
 .stgbtn:active{opacity:.85;}
 
 /* ── Per-account qty (stage) ── */
-.acct-qty-row{display:flex;gap:8px;margin-bottom:14px;}
-.aqcol{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;}
+.acct-qty-row{display:flex;gap:8px;margin-bottom:14px;justify-content:center;}
+.aqcol{width:120px;flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;}
 .aqcol.off{opacity:.4;}
 .aqlbl{font-size:8px;font-weight:800;letter-spacing:.06em;color:var(--text3);
   text-transform:uppercase;margin-bottom:6px;}
-.aqrow{display:flex;align-items:center;gap:4px;}
-.aqstep{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
-  background:var(--bg4);color:var(--text);font-size:16px;display:flex;align-items:center;
+.aqrow{display:flex;align-items:center;gap:3px;}
+.aqstep{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);
+  background:var(--bg4);color:var(--text);font-size:15px;display:flex;align-items:center;
   justify-content:center;cursor:pointer;touch-action:manipulation;user-select:none;flex-shrink:0;}
 .aqstep:active{opacity:.6;}
-.aqinp{flex:1;height:28px;background:transparent;border:none;color:var(--text);
-  font-family:var(--mono);font-size:16px;font-weight:700;text-align:center;outline:none;}
+.aqinp{flex:1;height:26px;background:transparent;border:none;color:var(--text);
+  font-family:var(--mono);font-size:15px;font-weight:700;text-align:center;outline:none;}
 
 /* ── Confirm ── */
 .cdbar{height:2px;background:var(--border);border-radius:1px;margin-bottom:12px;overflow:hidden;}
@@ -463,8 +463,8 @@ input[type=number]{-moz-appearance:textfield;}
     <div class="sdiv"></div>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <div style="flex:1;">
-        <div class="flbl">Total Exposure</div>
-        <div style="font-family:var(--mono);font-size:16px;font-weight:700;" id="st-exp-val">—</div>
+        <div class="flbl">Total Credit Received</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--call);" id="st-exp-val">—</div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px;" id="st-exp-sub"></div>
       </div>
     </div>
@@ -734,6 +734,8 @@ function sRow(s,idx,cls,live){
   var stk=fmtStrike(s.strike);
   var bidCell=fmtP(s.bid)+(s.bidSize>0?'<span class="pxsz">'+s.bidSize+'</span>':'');
   var askCell=fmtP(s.ask)+(s.askSize>0?'<span class="pxsz">'+s.askSize+'</span>':'');
+  var cpx=creditPerContract(defPrice);
+  var stoLabel=defPrice.toFixed(2)+'<span class="pxsz" style="color:var(--text3)">'+fmtP(cpx)+'/ct</span>';
   return '<tr>'+
     '<td style="font-weight:700;color:var(--'+(cls==='c'?'call':'put')+')">$'+stk+'</td>'+
     '<td style="color:var(--text2)">'+fmtPct(s.pctAway)+'</td>'+
@@ -741,7 +743,7 @@ function sRow(s,idx,cls,live){
     '<td>'+bidCell+'</td>'+
     '<td style="color:var(--gold);font-weight:800">'+fmtP(s.mid)+'</td>'+
     '<td>'+askCell+'</td>'+
-    '<td><button class="sto '+cls+'" '+dis+' onclick="openOrder('+idx+')">'+defPrice.toFixed(2)+'</button></td>'+
+    '<td><button class="sto '+cls+'" '+dis+' onclick="openOrder('+idx+')">'+stoLabel+'</button></td>'+
     '<td style="color:var(--text3);font-size:10px">'+fmtOI(s.oi)+'</td>'+
   '</tr>';
 }
@@ -808,10 +810,18 @@ function updatePriceUI(){
   ge('pwarn').style.display=S.price<s.mid*0.5?'block':'none';
   updateExposure();
 }
+function creditPerContract(price){
+  return parseFloat(((price * 100) - 0.35 - 0.0159).toFixed(2));
+}
 function updateExposure(){
-  var total=(S.price*S.qtyA1*100)+(S.price*S.qtyA2*100);
-  ge('st-exp-val').textContent=fmtM(total);
-  ge('st-exp-sub').textContent='A1: '+S.qtyA1+' · A2: '+S.qtyA2+' · '+fmtP(S.price)+' x 100';
+  var cpx = creditPerContract(S.price);
+  var a1cr = cpx * S.qtyA1;
+  var a2cr = cpx * S.qtyA2;
+  var total = a1cr + a2cr;
+  ge('st-exp-val').textContent = fmtM(total);
+  ge('st-exp-sub').textContent =
+    'A1: '+fmtM(a1cr)+' · A2: '+fmtM(a2cr)+
+    ' · '+fmtP(cpx)+'/ct after fees';
 }
 function updateBP(){
   var lbls=Object.keys(S.bpMap),a1=0,a2=0;
@@ -832,16 +842,100 @@ function doStage(){
   S.qtyA2=Math.max(0,parseInt(ge('aq2').value)||0);
   if(S.qtyA1===0&&S.qtyA2===0){ toast('Both accounts at 0 qty');return; }
   var s=S.strike;
-  var total=(S.price*S.qtyA1*100)+(S.price*S.qtyA2*100);
+  var cpx=creditPerContract(S.price);
+  var total=(cpx*S.qtyA1)+(cpx*S.qtyA2);
   function bstr(q){ var b=[];for(var r=q;r>0;r-=5)b.push(Math.min(r,5));return b.length>1?b.join('+')+' ('+b.length+' orders)':'1 order'; }
   var rows=[
     ['Symbol',s.symbol],
-    ['Type',s.type+' $'+fmtStrike(s.strike)],
+    ['Type',s.type+' 
+  ge('sumbox').innerHTML=rows.map(function(r){
+    return '<div class="sr"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';
+  }).join('');
+  ge('cfbtn').className='cfbtn '+(s.type==='CALL'?'c':'p');
+  setState('confirm');startCd();
+}
+
+// ── Countdown ────────────────────────────────────────────────────────────────
+function startCd(){
+  S.cdSecs=10;updateCdUI();
+  S.cdTimer=setInterval(function(){
+    S.cdSecs--;updateCdUI();
+    if(S.cdSecs<=0){clearCd();doBack();}
+  },1000);
+}
+function updateCdUI(){
+  ge('cdb').textContent=S.cdSecs+'s';
+  ge('cdf').style.width=(S.cdSecs/10*100)+'%';
+  ge('cdf').style.background=S.cdSecs<=3?'var(--red)':'var(--gold)';
+}
+function clearCd(){ clearInterval(S.cdTimer);S.cdTimer=null; }
+function doBack(){ haptic();clearCd();setState('stage'); }
+
+// ── Fire ─────────────────────────────────────────────────────────────────────
+function doFire(){
+  haptic();clearCd();setState('firing');
+  var s=S.strike;
+  var url=BACKEND+'?action=placeOrder'+
+    '&symbol='+encodeURIComponent(s.symbol)+
+    '&price='+S.price.toFixed(2)+
+    '&qtyA1='+S.qtyA1+
+    '&qtyA2='+S.qtyA2;
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    if(d.error){showErr(d.error);return;}
+    showResults(d);
+  }).catch(function(e){ showErr(e.message||'Network error'); });
+}
+
+// ── Results ───────────────────────────────────────────────────────────────────
+function showResults(d){
+  var s=S.strike;
+  ge('rt').textContent='Trade Submitted';ge('rt').style.color='';
+  ge('rsub').textContent=s.type+' $'+fmtStrike(s.strike)+' @ '+fmtP(d.price);
+  var results=d.results||{};
+  ge('rcards').innerHTML=Object.keys(results).map(function(lbl){
+    var r=results[lbl];
+    var fi=parseInt(r.filled||0),ca=parseInt(r.cancelled||0),re=parseInt(r.rejected||0);
+    var st;
+    if(re>0&&fi===0) st='<div class="rrej">REJECTED</div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+re+' contracts</div>';
+    else if(ca>0&&fi===0) st='<div class="rpar">CANCELLED</div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+ca+' unfilled</div>';
+    else if(ca>0||re>0) st='<div class="rpar">'+fi+' FILLED</div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+ca+' cancelled · '+re+' rejected</div>';
+    else st='<div class="rfil">'+fi+' FILLED</div>';
+    return '<div class="rcard"><div class="rcl">'+lbl+'</div><div class="rcs">'+st+'</div></div>';
+  }).join('');
+  setState('results');
+}
+function showErr(msg){
+  ge('rt').textContent='Order Failed';ge('rt').style.color='var(--red)';
+  ge('rsub').textContent=msg;ge('rcards').innerHTML='';
+  setState('results');toast('Error: '+msg,4000);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+ge('base1').value=S.base1;
+ge('base2').value=S.base2;
+ge('mult-inp').value=S.mult;
+ge('r-min').value=S.rangeMin;
+ge('r-max').value=S.rangeMax;
+ge('a1-tog').className='acct-tog'+(S.en1?' on':'');
+ge('a1-block').className='acct-block'+(S.en1?'':' disabled');
+ge('a2-tog').className='acct-tog'+(S.en2?' on':'');
+ge('a2-block').className='acct-block'+(S.en2?'':' disabled');
+document.querySelectorAll('.mbtn').forEach(function(b){
+  b.className='mbtn'+(parseInt(b.dataset.m)===S.mult?' on':'');
+});
+setFilter(S.filter);
+updateExpTabs();
+updateRatioPreview();
+doFetch(true);
+</script>
+</body>
+</html>
++fmtStrike(s.strike)],
     ['Expiry',s.expiry],
     ['A1 Qty',S.qtyA1===0?'Skipped':S.qtyA1+' · '+bstr(S.qtyA1)],
     ['A2 Qty',S.qtyA2===0?'Skipped':S.qtyA2+' · '+bstr(S.qtyA2)],
-    ['Limit Price',fmtP(S.price)],
-    ['Total Exposure',fmtM(total)]
+    ['Limit Price',fmtP(S.price)+' ('+fmtP(cpx)+'/ct net)'],
+    ['Total Credit',fmtM(total)]
   ];
   ge('sumbox').innerHTML=rows.map(function(r){
     return '<div class="sr"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';

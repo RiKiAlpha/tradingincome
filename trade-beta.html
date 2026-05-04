@@ -399,8 +399,12 @@ input[type=number]{-moz-appearance:textfield;}
     </div>
     <div class="flbl">Limit Price</div>
     <div class="pfw">
+      <div class="bstep" onclick="adjPrice(-1)">-</div>
       <div class="psym">$</div>
-      <input class="pinp" type="number" id="pi" step="0.01" min="0.02" oninput="onPriceInput(this.value)">
+      <input class="pinp" type="number" id="pi" step="0.01" min="0.02"
+        oninput="onPriceInput(this.value)"
+        onblur="commitPrice(this.value)">
+      <div class="bstep" onclick="adjPrice(1)">+</div>
     </div>
     <div class="phint" id="phint"></div>
     <div class="pwarn" id="pwarn">Price is below 50% of mid — verify before staging</div>
@@ -740,7 +744,26 @@ function onAQInput(acct,v){
   if(acct===1) S.qtyA1=n; else S.qtyA2=n;
   updateExposure();
 }
-function onPriceInput(v){ S.price=Math.max(0.02,parseFloat(parseFloat(v||0).toFixed(2)));updatePriceUI(); }
+function onPriceInput(v){
+  // allow free typing — just update warning live, don't reformat
+  var n = parseFloat(v);
+  if(!isNaN(n) && S.strike){
+    ge('pwarn').style.display = n < S.strike.mid * 0.5 ? 'block' : 'none';
+  }
+}
+function commitPrice(v){
+  // only clamp + reformat on blur or stepper tap
+  S.price = Math.max(0.02, parseFloat(parseFloat(v||0).toFixed(2)));
+  ge('pi').value = S.price.toFixed(2);
+  updatePriceUI();
+}
+function adjPrice(dir){
+  haptic();
+  var cur = parseFloat(ge('pi').value) || S.price;
+  S.price = Math.max(0.02, parseFloat((cur + dir * 0.01).toFixed(2)));
+  ge('pi').value = S.price.toFixed(2);
+  updatePriceUI();
+}
 
 function updatePriceUI(){
   var s=S.strike;

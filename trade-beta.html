@@ -291,11 +291,11 @@ input[type=number]{-moz-appearance:textfield;}
         onblur="cancelTicker()">
       <div id="chg-dollar" class="flat" style="font-family:var(--mono);font-size:12px;font-weight:700;"></div>
       <div id="chg-pct" class="flat" style="font-family:var(--mono);font-size:11px;font-weight:500;opacity:.75;"></div>
-      <div id="spot-price" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text2);letter-spacing:-.01em;"></div>
+      <div id="spot-price" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text2);letter-spacing:-.01em;">Loading</div>
     </div>
     <div class="hdr-right">
       <div class="beta-tag">BETA</div>
-      <div id="market-pill" class="closed">CLOSED</div>
+      <div id="market-pill" class="closed">...</div>
       <div class="ring-wrap" onclick="doRefresh()">
         <svg viewBox="0 0 24 24">
           <circle class="ring-bg" cx="12" cy="12" r="9"/>
@@ -521,7 +521,13 @@ var S = {
 };
 
 function ge(id){ return document.getElementById(id); }
-function haptic(){ if(navigator.vibrate) navigator.vibrate(6); }
+function haptic(){
+  try{
+    if(navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive){
+      navigator.vibrate(6);
+    }
+  }catch(e){}
+}
 function fmtM(n){ n=parseFloat(n)||0; return (n<0?'\u2212$':'$')+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
 function fmtP(n){ return '$'+(parseFloat(n)||0).toFixed(2); }
 function fmtPct(n){ n=parseFloat(n)||0; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
@@ -611,7 +617,14 @@ function doFetch(force){
   if(S.sheetState&&!force)return;
   S.fetching=true;clearTimeout(S.pollTimer);
   var url=BACKEND+'?action=optionChain&ticker='+encodeURIComponent(S.ticker)+'&expiry='+encodeURIComponent(getExpiry())+'&rangeMin='+S.rangeMin+'&rangeMax='+S.rangeMax;
-  fetch(url).then(function(r){return r.json();}).then(function(d){
+    fetch(url)
+  .then(function(r){
+    console.log('HTTP status:', r.status, r.url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  })
+  .then(function(d){
+    console.log('BACKEND RESPONSE:', d);
     S.fetching=false;
     if(d.expiryDates){S.expiryDates=d.expiryDates;updateExpTabs();}
     if(d.bpMap)S.bpMap=d.bpMap;
@@ -619,9 +632,15 @@ function doFetch(force){
     renderHeader(d);renderChain();updateBP();
     if(!S.sheetState)ringPulse();
     scheduleNext();
-  }).catch(function(){
-    S.fetching=false;ringStale();
-    ge('updated-lbl').textContent='Fetch error — retrying';
+  }).catch(function(e){
+    console.error('FETCH FAILED:', e);
+    S.fetching=false;
+    S.marketOpen=false;
+    ringStale();
+    ge('market-pill').textContent='ERROR';
+    ge('market-pill').className='closed';
+    ge('updated-lbl').textContent='Fetch error — check console';
+    ge('cb').innerHTML='<tr><td colspan="8" class="es">Fetch error — check console</td></tr>';
     scheduleNext();
   });
 }

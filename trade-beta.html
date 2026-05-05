@@ -729,15 +729,6 @@ function renderHeader(d){
 
   ge('updated-lbl').textContent='Updated '+ts+(d.marketOpen?'':' · Read-only');
 }
-  var nc=parseFloat(d.netChange||0),np=parseFloat(d.netPctChange||0);
-  var cls=nc>0?'up':nc<0?'dn':'flat',sign=nc>=0?'+':'';
-  ge('chg-dollar').className=cls;
-  ge('chg-dollar').textContent=sign+(nc>=0?'$':'\u2212$')+Math.abs(nc).toFixed(2);
-  ge('chg-pct').className=cls;
-  ge('chg-pct').textContent=sign+np.toFixed(2)+'%';
-  var ts=new Date(d.fetchedAt||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
-  ge('updated-lbl').textContent='Updated '+ts+(d.marketOpen?'':' · Read-only');
-}
 
 // ── Chain render ──────────────────────────────────────────────────────────
 function creditPerContract(price){ return parseFloat(((price*100)-0.35-0.0159).toFixed(2)); }

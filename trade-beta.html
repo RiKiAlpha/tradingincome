@@ -697,15 +697,53 @@ function doFire(){
   haptic();clearCd();setState('firing');
   var s=S.strike;
   var url=BACKEND+'?action=placeOrder&symbol='+encodeURIComponent(s.symbol)+'&price='+S.price.toFixed(2)+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2;
-  fetch(url).then(function(r){return r.json();}).then(function(d){
-    if(d.error){showErr(d.error);return;}showResults(d);
-  }).catch(function(e){showErr(e.message||'Network error');});
+
+  var didTimeout=false;
+  var timeoutId;
+
+  var timeoutPromise=new Promise(function(_,reject){
+    timeoutId=setTimeout(function(){
+      didTimeout=true;
+      reject(new Error('TIMEOUT'));
+    },30000);
+  });
+
+  var fetchPromise=fetch(url).then(function(r){return r.json();});
+
+  Promise.race([fetchPromise,timeoutPromise])
+    .then(function(d){
+      clearTimeout(timeoutId);
+      if(d.error){showErr(d.error);return;}
+      showResults(d);
+    })
+    .catch(function(e){
+      clearTimeout(timeoutId);
+      if(didTimeout||e.message==='TIMEOUT'){
+        showTimeout(s);
+      } else {
+        showErr(e.message||'Network error');
+      }
+    });
 }
 
 function showResults(d){
   var s=S.strike;
   ge('rt').textContent='Trade Submitted';ge('rt').style.color='';
-  ge('rsub').textContent=s.type+' $'+fmtStrike(s.strike)+' @ '+fmtP(d.price);
+  ge('rsub').textContent=s.type+' 
+
+ge('tkr-badge').textContent=S.ticker;
+ge('base1').value=S.base1;ge('base2').value=S.base2;ge('mult-inp').value=S.mult;
+ge('r-min').value=S.rangeMin;ge('r-max').value=S.rangeMax;
+ge('a1-tog').className='acct-tog'+(S.en1?' on':'');
+ge('a1-block').className='acct-block'+(S.en1?'':' disabled');
+ge('a2-tog').className='acct-tog'+(S.en2?' on':'');
+ge('a2-block').className='acct-block'+(S.en2?'':' disabled');
+document.querySelectorAll('.mbtn').forEach(function(b){b.className='mbtn'+(parseInt(b.dataset.m)===S.mult?' on':'');});
+setFilter(S.filter);updateExpTabs();updateRatioPreview();doFetch(true);
+</script>
+</body>
+</html>
++fmtStrike(s.strike)+' @ '+fmtP(d.price);
   var results=d.results||{};
   ge('rcards').innerHTML=Object.keys(results).map(function(lbl){
     var r=results[lbl],fi=parseInt(r.filled||0),ca=parseInt(r.cancelled||0),re=parseInt(r.rejected||0),st;
@@ -717,6 +755,79 @@ function showResults(d){
   }).join('');
   setState('results');
 }
+
+function showTimeout(s){
+  ge('rt').textContent='Status Unknown';
+  ge('rt').style.color='var(--gold)';
+  ge('rsub').textContent='Orders were sent — 30s timeout before fill confirmation';
+  ge('rcards').innerHTML=
+    '<div style="background:rgba(244,197,66,.07);border:1px solid rgba(244,197,66,.2);border-radius:10px;padding:14px;margin-bottom:4px;">'+
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px;">&#9888; Orders submitted to Schwab</div>'+
+      '<div style="font-size:10px;color:var(--text2);line-height:1.6;">'+
+        s.type+' 
+
+ge('tkr-badge').textContent=S.ticker;
+ge('base1').value=S.base1;ge('base2').value=S.base2;ge('mult-inp').value=S.mult;
+ge('r-min').value=S.rangeMin;ge('r-max').value=S.rangeMax;
+ge('a1-tog').className='acct-tog'+(S.en1?' on':'');
+ge('a1-block').className='acct-block'+(S.en1?'':' disabled');
+ge('a2-tog').className='acct-tog'+(S.en2?' on':'');
+ge('a2-block').className='acct-block'+(S.en2?'':' disabled');
+document.querySelectorAll('.mbtn').forEach(function(b){b.className='mbtn'+(parseInt(b.dataset.m)===S.mult?' on':'');});
+setFilter(S.filter);updateExpTabs();updateRatioPreview();doFetch(true);
+</script>
+</body>
+</html>
++fmtStrike(s.strike)+' &middot; '+fmtP(S.price)+' limit<br>'+
+        'A1: '+S.qtyA1+' &middot; A2: '+S.qtyA2+' contracts<br>'+
+        'Fill status could not be confirmed in time.<br>'+
+        'Cancel all working orders below, then verify in Schwab.'+
+      '</div>'+
+    '</div>'+
+    '<button id="cf-cancel-btn" onclick="doCancelFromResults(this)" '+
+      'style="width:100%;height:44px;border-radius:10px;border:1px solid rgba(229,83,83,.35);'+
+      'background:rgba(229,83,83,.1);color:var(--red);font-size:13px;font-weight:700;'+
+      'cursor:pointer;font-family:var(--sans);touch-action:manipulation;margin-top:8px;">'+
+      'Cancel All Working Orders'+
+    '</button>';
+  setState('results');
+}
+
+function doCancelFromResults(btn){
+  haptic();
+  btn.disabled=true;
+  btn.textContent='Cancelling\u2026';
+  btn.style.opacity='0.7';
+  fetch(BACKEND+'?action=cancelAllOrders')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.success){
+        if(d.cancelled===0){
+          btn.textContent='No working orders found';
+          btn.style.color='var(--text2)';
+          btn.style.borderColor='var(--border)';
+          btn.style.background='transparent';
+        } else {
+          btn.textContent='\u2713 Cancelled '+d.cancelled+' order'+(d.cancelled===1?'':'s')+(d.failed>0?' ('+d.failed+' failed)':'');
+          btn.style.color='var(--call)';
+          btn.style.borderColor='rgba(0,212,166,.3)';
+          btn.style.background='rgba(0,212,166,.08)';
+        }
+      } else {
+        btn.textContent='Cancel failed: '+(d.error||'unknown');
+        btn.style.color='var(--red)';
+        btn.disabled=false;
+        btn.style.opacity='1';
+      }
+    })
+    .catch(function(e){
+      btn.textContent='Cancel error: '+(e.message||'network');
+      btn.style.color='var(--red)';
+      btn.disabled=false;
+      btn.style.opacity='1';
+    });
+}
+
 function showErr(msg){ ge('rt').textContent='Order Failed';ge('rt').style.color='var(--red)';ge('rsub').textContent=msg;ge('rcards').innerHTML='';setState('results');toast('Error: '+msg,4000); }
 
 ge('tkr-badge').textContent=S.ticker;

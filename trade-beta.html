@@ -548,9 +548,21 @@ function onMultInput(v){
   saveAll(); updateRatioPreview();
 }
 function setExpiry(idx){
-  haptic(); S.expiryIdx=idx;
-  document.querySelectorAll('.exp-tab').forEach(function(t,i){ if(i===idx)t.classList.add('on'); else t.classList.remove('on'); });
-  saveAll(); renderChain();
+  haptic();
+  S.expiryIdx = idx;
+
+  document.querySelectorAll('.exp-tab').forEach(function(t,i){
+    if(i === idx) t.classList.add('on');
+    else t.classList.remove('on');
+  });
+
+  if(S.expiryDates && S.expiryDates[idx]){
+    S.activeExpiry = S.expiryDates[idx];
+  }
+
+  saveAll();
+  markChainLoading('Loading '+(S.activeExpiry || 'selected expiry')+' chain...');
+  doFetch(true);
 }
 function setFilter(f){
   haptic(); S.filter=f;
@@ -562,7 +574,27 @@ function applyRange(){
   S.rangeMin=mn; S.rangeMax=mx; saveAll(); renderChain();
 }
 function toggleExpand(){ haptic(); S.expanded=!S.expanded; ge('xbtn').className='xbtn '+(S.expanded?'on':''); renderChain(); }
-function markChainLoading(msg){ ge('tw').className='loading'; }
+function markChainLoading(msg){
+  var tw = ge('tw');
+  if(tw) tw.className = 'loading';
+
+  var cb = ge('cb');
+  if(cb){
+    cb.innerHTML =
+      '<tr><td colspan="8" class="chain-load">'+
+        '<div class="chain-loader">'+
+          '<div class="chain-spinner"></div>'+
+          '<div class="chain-load-label">Updating</div>'+
+        '</div>'+
+      '</td></tr>';
+  }
+
+  var fresh = ge('chain-fresh');
+  if(fresh){
+    fresh.className = 'chain-fresh loading';
+    fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
+  }
+}
 function doRefresh(){ if(S.fetching)return; haptic(); var r=ge('ring'); r.className=''; void r.offsetWidth; r.className='drain'; doFetch(false); }
 
 function doFetch(firstTime){
@@ -667,20 +699,24 @@ function filterRange(arr){
 }
 
 function renderRow(o,type){
-  var cl=type==='C'?'c':'p';
-  var staged1=calcQty(S.base1,S.en1), staged2=calcQty(S.base2,S.en2);
-  var szLbl='<span class="pxsz">'+staged1+' &middot; '+staged2+'</span>';
-  var sKey=o.symbol.replace(/ /g,'_');
-  return '<tr onclick="openOrderSheet(\''+cl+'\',\''+sKey+'\')">'+
-    '<td style="text-align:left;font-weight:700;">'+fmtStrike(o.strike)+'</td>'+
-    '<td class="flat">'+(parseFloat(o.pctAway)||0).toFixed(1)+'%</td>'+
-    '<td style="color:var(--text2)">'+(o.delta?(o.delta).toFixed(2).replace('0.'):'.00')+'</td>'+
-    '<td>'+(o.bid).toFixed(2)+'</td>'+
-    '<td style="color:var(--gold);font-weight:700;">'+(o.mid).toFixed(2)+'</td>'+
-    '<td>'+(o.ask).toFixed(2)+'</td>'+
-    '<td><button class="sto '+cl+'">'+szLbl+'STO</button></td>'+
-    '<td style="color:var(--text3);font-size:10px;">'+fmtOI(o.openInterest)+'</td>'+
-    '</tr>';
+  var cl = type === 'C' ? 'c' : 'p';
+  var sKey = o.symbol.replace(/ /g,'_');
+  var defPrice = Math.max(0.02, parseFloat(((parseFloat(o.mid)||0) - 0.02).toFixed(2)));
+  var bidCell = fmtP(o.bid) + ((parseInt(o.bidSize)||0) > 0 ? '<span class="pxsz">'+o.bidSize+'</span>' : '');
+  var askCell = fmtP(o.ask) + ((parseInt(o.askSize)||0) > 0 ? '<span class="pxsz">'+o.askSize+'</span>' : '');
+  var deltaVal = Number(o.delta || 0).toFixed(2);
+  var oiVal = o.oi != null ? o.oi : o.openInterest;
+
+  return '<tr>'+
+    '<td style="font-weight:700;color:var(--'+(cl==='c'?'call':'put')+')">$'+fmtStrike(o.strike)+'</td>'+
+    '<td style="color:var(--text2)">'+fmtPct(o.pctAway)+'</td>'+
+    '<td style="color:var(--text3)">'+deltaVal+'</td>'+
+    '<td>'+bidCell+'</td>'+
+    '<td style="color:var(--gold);font-weight:800">'+fmtP(o.mid)+'</td>'+
+    '<td>'+askCell+'</td>'+
+    '<td><button class="sto '+cl+'" onclick="openOrderSheet(\''+cl+'\',\''+sKey+'\')">'+defPrice.toFixed(2)+'</button></td>'+
+    '<td style="color:var(--text3);font-size:10px">'+fmtOI(oiVal)+'</td>'+
+  '</tr>';
 }
 
 function openOrderSheet(type,sKey){

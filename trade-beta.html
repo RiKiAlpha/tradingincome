@@ -498,30 +498,21 @@ function triggerPanicClose() {
   btn.textContent = "FIRING...";
   btn.style.opacity = "0.5";
 
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(function(res) {
-        btn.disabled = false;
-        btn.textContent = "⚡ BTC All Shorts";
-        btn.style.opacity = "1";
-        toast("Panic Close Complete: " + res, 4000);
-      })
-      .withFailureHandler(function(err) {
-        btn.disabled = false;
-        btn.textContent = "⚡ BTC All Shorts";
-        btn.style.opacity = "1";
-        alert("Execution Error: " + (err.message || err));
-      })
-      .panicCloseAllTickerShorts(S.ticker, limitPrice, sliceChecked);
-  } else {
-    setTimeout(function() {
+  fetch(BACKEND + '?action=panicBtc&ticker=' + encodeURIComponent(S.ticker) +
+        '&price=' + limitPrice.toFixed(2) + '&slice=' + (sliceChecked ? '1' : '0'))
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
       btn.disabled = false;
-      btn.textContent = "⚡ BTC All Shorts";
-      btn.style.opacity = "1";
-      alert("Local Engine Sandbox: Dispatched execution for " + S.ticker + " at $" + limitPrice.toFixed(2) + " (Slicing=" + sliceChecked + ")");
-    }, 1000);
-  }
-}
+      btn.textContent = '⚡ BTC All Shorts';
+      btn.style.opacity = '1';
+      toast('Panic Close: ' + (res.summary || JSON.stringify(res)), 5000);
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = '⚡ BTC All Shorts';
+      btn.style.opacity = '1';
+      alert('Execution Error: ' + (err.message || err));
+    });
 
 function updateRatioPreview(){
   var q1=calcQty(S.base1,S.en1),q2=calcQty(S.base2,S.en2);
@@ -579,7 +570,7 @@ function doFetch(firstTime){
   var badge=ge('tkr-badge'), fresh=ge('chain-fresh');
   badge.className='ticker-badge loading'; fresh.className='chain-fresh loading'; fresh.innerHTML='<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
   
-  var url=BACKEND+'?action=getChain&ticker='+encodeURIComponent(S.ticker);
+  var url=BACKEND+'?action=optionChain&ticker='+encodeURIComponent(S.ticker)+'&expiry='+encodeURIComponent(S.activeExpiry||'');
   fetch(url).then(function(r){return r.json();}).then(function(d){
     S.fetching=false; badge.className='ticker-badge ready';
     var r=ge('ring'); r.className='pulse';

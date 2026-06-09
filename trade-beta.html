@@ -547,20 +547,33 @@ function onMultInput(v){
   var match=document.querySelector('.mbtn[data-m="'+n+'"]'); if(match)match.classList.add('on');
   saveAll(); updateRatioPreview();
 }
-function setExpiry(idx){
-  haptic();
-  S.expiryIdx = idx;
+function getSelectedExpiry(){
+  if(Array.isArray(S.expiryDates) && S.expiryDates[S.expiryIdx]){
+    return S.expiryDates[S.expiryIdx];
+  }
+  return S.activeExpiry || '';
+}
 
+function updateExpTabs(){
   document.querySelectorAll('.exp-tab').forEach(function(t,i){
-    if(i === idx) t.classList.add('on');
+    if(i === S.expiryIdx) t.classList.add('on');
     else t.classList.remove('on');
   });
 
-  if(S.expiryDates && S.expiryDates[idx]){
-    S.activeExpiry = S.expiryDates[idx];
+  if(Array.isArray(S.expiryDates)){
+    for(var i=0;i<3;i++){
+      var el = ge('ed'+i);
+      if(el && S.expiryDates[i]) el.textContent = S.expiryDates[i].substring(5);
+    }
   }
+}
+function setExpiry(idx){
+  haptic();
+  S.expiryIdx = idx;
+  S.activeExpiry = getSelectedExpiry();
 
   saveAll();
+  updateExpTabs();
   markChainLoading('Loading '+(S.activeExpiry || 'selected expiry')+' chain...');
   doFetch(true);
 }
@@ -570,11 +583,41 @@ function setFilter(f){
   saveAll(); renderChain();
 }
 function applyRange(){
-  var mn=parseFloat(ge('r-min').value)||0,mx=parseFloat(ge('r-max').value)||0;
-  S.rangeMin=mn; S.rangeMax=mx; saveAll(); renderChain();
+  var mn = parseFloat(ge('r-min').value);
+  var mx = parseFloat(ge('r-max').value);
+
+  if(isNaN(mn)) mn = 40;
+  if(isNaN(mx)) mx = 80;
+  if(mn < 0) mn = 0;
+  if(mx <= mn) mx = mn + 5;
+
+  S.rangeMin = mn;
+  S.rangeMax = mx;
+  S.expanded = false;
+
+  var xbtn = ge('xbtn');
+  if(xbtn){
+    xbtn.className = 'xbtn';
+    xbtn.textContent = 'All';
+  }
+
+  saveAll();
+  markChainLoading('Loading '+mn+'-'+mx+'% strikes...');
+  doFetch(true);
 }
-function toggleExpand(){ haptic(); S.expanded=!S.expanded; ge('xbtn').className='xbtn '+(S.expanded?'on':''); renderChain(); }
-function markChainLoading(msg){
+function toggleExpand(){
+  haptic();
+  S.expanded = !S.expanded;
+
+  var btn = ge('xbtn');
+  if(btn){
+    btn.className = 'xbtn ' + (S.expanded ? 'on' : '');
+    btn.textContent = S.expanded ? 'Less' : 'All';
+  }
+
+  markChainLoading(S.expanded ? 'Loading all strikes...' : 'Loading selected range...');
+  doFetch(true);
+}function markChainLoading(msg){
   var tw = ge('tw');
   if(tw) tw.className = 'loading';
 
@@ -599,101 +642,243 @@ function doRefresh(){ if(S.fetching)return; haptic(); var r=ge('ring'); r.classN
 
 function doFetch(firstTime){
   console.log('[RiKi] doFetch called, firstTime='+firstTime+' S.fetching='+S.fetching);
-  if(S.fetching){ console.log('[RiKi] doFetch: already fetching, bailing'); return; }
-  S.fetching=true;
-  var badge=ge('tkr-badge'), fresh=ge('chain-fresh');
-  badge.className='ticker-badge loading'; fresh.className='chain-fresh loading'; fresh.innerHTML='<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
-  
-  var url=BACKEND+'?action=optionChain&ticker='+encodeURIComponent(S.ticker)+'&expiry='+encodeURIComponent(S.activeExpiry||'');
-  console.log('[RiKi] doFetch: fetching URL='+url);
-  fetch(url)
-  .then(function(r){
-    console.log('[RiKi] doFetch: HTTP status='+r.status+' ok='+r.ok);
-    return r.text();
-  })
-  .then(function(raw){
-    console.log('[RiKi] doFetch: raw response (first 300)='+raw.substring(0,300));
-    var d;
-    try { d=JSON.parse(raw); } catch(parseErr){ 
-      console.error('[RiKi] doFetch: JSON parse FAILED: '+parseErr.message);
-      ge('tw').className='';
-      S.fetching=false; badge.className='ticker-badge ready'; fresh.className='chain-fresh ready';
-      toast('Parse error: '+parseErr.message, 5000); return;
-    }
-    console.log('[RiKi] doFetch: parsed OK. keys='+Object.keys(d).join(','));
-    S.fetching=false; badge.className='ticker-badge ready';
-    var r=ge('ring'); r.className='pulse';
-    if(d.error){
-      console.error('[RiKi] doFetch: d.error='+d.error);
-      ge('tw').className='';
-      toast(d.error,4000); return;
-    }
-    console.log('[RiKi] doFetch: spot='+d.spot+' expiryDates='+JSON.stringify(d.expiryDates)+' chains keys='+Object.keys(d.chains||{}).join(','));
-    S.expiryDates=d.expiryDates||[];
-    S.activeExpiry=d.expiry||(S.expiryDates[S.expiryIdx]||S.expiryDates[0]||'');
-    console.log('[RiKi] doFetch: S.activeExpiry='+S.activeExpiry+' S.expiryIdx='+S.expiryIdx);
-    for(var i=0;i<3;i++){
-      var lbl=ge('ed'+i);
-      if(lbl&&S.expiryDates[i]){
-        var pt=S.expiryDates[i].split('-');
-        lbl.textContent=(pt[1]||'')+'/'+(pt[2]||'');
-      }
-    }
-    ge('spot-price').textContent=fmtP(d.spot);
-    var pct=ge('chg-pct'), dl=ge('chg-dollar');
-    pct.textContent=fmtPct(d.netPctChange); pct.className=(d.netPctChange>=0?(d.netPctChange===0?'flat':'up'):'dn');
-    dl.textContent=fmtM(d.netChange); dl.className=(d.netChange>=0?(d.netChange===0?'flat':'up'):'dn');
-    ge('hdr-bp1').textContent=fmtM(d.bpMap&&d.bpMap['5260']);
-    ge('hdr-bp2').textContent=fmtM(d.bpMap&&d.bpMap['4987']);
-    S.bpMap=d.bpMap||{};
-    S.data=d.chains||{};
-    var fTime='--:--';
-    if(d.updated){ var dt=new Date(d.updated); fTime=dt.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'}); }
-    fresh.className='chain-fresh flash'; fresh.innerHTML='<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">'+fTime+'</span>';
-    setTimeout(function(){ fresh.className='chain-fresh ready'; },600);
-    ge('updated-lbl').textContent='Updated: '+new Date(d.updated).toLocaleString();
-    console.log('[RiKi] doFetch: about to clear #tw and call renderChain');
-    ge('tw').className=''; 
-    renderChain();
-    console.log('[RiKi] doFetch: renderChain returned OK');
-  })
-  .catch(function(e){
-    console.error('[RiKi] doFetch: CATCH error='+e.message, e);
-    S.fetching=false; badge.className='ticker-badge ready'; fresh.className='chain-fresh ready';
-    ge('tw').className='';
-    toast('Fetch error: '+e.message, 5000);
-  });
-}
 
+  if(S.fetching){
+    console.log('[RiKi] doFetch: already fetching, bailing');
+    return;
+  }
+
+  S.fetching = true;
+  S.fetchSeq = (S.fetchSeq || 0) + 1;
+
+  var seq = S.fetchSeq;
+  var reqExpiry = getSelectedExpiry();
+  S.activeExpiry = reqExpiry || S.activeExpiry || '';
+
+  var badge = ge('tkr-badge');
+  var fresh = ge('chain-fresh');
+
+  if(badge) badge.className = 'ticker-badge loading';
+  if(fresh){
+    fresh.className = 'chain-fresh loading';
+    fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
+  }
+
+  var url =
+    BACKEND +
+    '?action=optionChain' +
+    '&ticker=' + encodeURIComponent(S.ticker) +
+    '&expiry=' + encodeURIComponent(S.activeExpiry || '') +
+    '&rangeMin=' + encodeURIComponent(S.rangeMin) +
+    '&rangeMax=' + encodeURIComponent(S.rangeMax) +
+    '&all=' + (S.expanded ? '1' : '0');
+
+  console.log('[RiKi] doFetch: fetching URL='+url);
+
+  fetch(url)
+    .then(function(r){
+      console.log('[RiKi] doFetch: HTTP status='+r.status+' ok='+r.ok);
+      return r.text();
+    })
+    .then(function(raw){
+      if(seq !== S.fetchSeq){
+        console.log('[RiKi] doFetch: stale response ignored');
+        return;
+      }
+
+      console.log('[RiKi] doFetch: raw response (first 300)='+raw.substring(0,300));
+
+      var d;
+      try {
+        d = JSON.parse(raw);
+      } catch(parseErr){
+        console.error('[RiKi] doFetch: JSON parse FAILED: '+parseErr.message);
+        S.fetching = false;
+        if(badge) badge.className = 'ticker-badge ready';
+        if(fresh) fresh.className = 'chain-fresh ready';
+        var tw = ge('tw'); if(tw) tw.className = '';
+        toast('Parse error: '+parseErr.message, 5000);
+        return;
+      }
+
+      console.log('[RiKi] doFetch: parsed OK. keys='+Object.keys(d).join(','));
+
+      S.fetching = false;
+
+      if(d.error){
+        console.warn('[RiKi] doFetch: backend error='+d.error);
+        if(badge) badge.className = 'ticker-badge ready';
+        if(fresh) fresh.className = 'chain-fresh ready';
+        var twErr = ge('tw'); if(twErr) twErr.className = '';
+        ge('cb').innerHTML = '<tr><td colspan="8" class="es">Backend error: '+d.error+'</td></tr>';
+        toast('Backend error: '+d.error, 5000);
+        return;
+      }
+
+      if(Array.isArray(d.expiryDates)){
+        S.expiryDates = d.expiryDates;
+      }
+
+      if(d.expiry){
+        S.activeExpiry = d.expiry;
+      } else if(!S.activeExpiry && Array.isArray(S.expiryDates) && S.expiryDates[S.expiryIdx]){
+        S.activeExpiry = S.expiryDates[S.expiryIdx];
+      }
+
+      updateExpTabs();
+
+      if(d.ticker){
+        S.ticker = String(d.ticker).toUpperCase();
+        if(badge) badge.textContent = S.ticker;
+      }
+
+      if(badge) badge.className = 'ticker-badge ready';
+
+      var r = ge('ring');
+      if(r){
+        r.className = 'pulse';
+        setTimeout(function(){ r.className = ''; }, 500);
+      }
+
+      var spot = Number(d.spot || d.spotPrice || 0);
+      if(spot){
+        ge('spot-price').textContent = '$'+spot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      }
+
+      var nc = Number(d.netChange || 0);
+      var np = Number(d.netPctChange || 0);
+      var cls = nc === 0 ? 'flat' : (nc > 0 ? 'up' : 'dn');
+
+      ge('chg-pct').textContent = (np >= 0 ? '+' : '') + np.toFixed(2) + '%';
+      ge('chg-pct').className = cls;
+
+      ge('chg-dollar').textContent = (nc >= 0 ? '+$' : '−$') + Math.abs(nc).toFixed(2);
+      ge('chg-dollar').className = cls;
+
+      ge('market-pill').textContent = d.marketOpen ? 'LIVE' : 'CLOSED';
+      ge('market-pill').className = d.marketOpen ? 'live' : 'closed';
+
+      ge('hdr-bp1').textContent = fmtM(d.bpMap && d.bpMap['5260']);
+      ge('hdr-bp2').textContent = fmtM(d.bpMap && d.bpMap['4987']);
+
+      S.bpMap = d.bpMap || {};
+      S.data = d.chains || {};
+      S._lastMissingFetch = '';
+
+      var fTime = '--:--';
+      if(d.updated){
+        var dt = new Date(d.updated);
+        fTime = dt.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+      }
+
+      if(fresh){
+        fresh.className = 'chain-fresh flash';
+        fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">'+fTime+'</span>';
+        setTimeout(function(){ fresh.className = 'chain-fresh ready'; },600);
+      }
+
+      ge('updated-lbl').textContent = 'Updated: '+new Date(d.updated || Date.now()).toLocaleString();
+
+      console.log('[RiKi] doFetch: about to clear #tw and call renderChain');
+      var tw = ge('tw'); if(tw) tw.className = '';
+      renderChain();
+      console.log('[RiKi] doFetch: renderChain returned OK');
+    })
+    .catch(function(e){
+      if(seq !== S.fetchSeq) return;
+
+      console.error('[RiKi] doFetch: CATCH error='+e.message, e);
+      S.fetching = false;
+
+      if(badge) badge.className = 'ticker-badge ready';
+      if(fresh) fresh.className = 'chain-fresh ready';
+
+      var tw = ge('tw');
+      if(tw) tw.className = '';
+
+      toast('Fetch error: '+e.message, 5000);
+    });
+}
 function renderChain(){
   console.log('[RiKi] renderChain: S.data='+!!S.data+' S.expiryDates='+JSON.stringify(S.expiryDates)+' S.expiryIdx='+S.expiryIdx);
-  if(!S.data||!S.expiryDates){ console.warn('[RiKi] renderChain: no data/expiryDates, returning'); return; }
-  var expDate=S.expiryDates[S.expiryIdx]||S.expiryDates[0];
-  console.log('[RiKi] renderChain: expDate='+expDate+' chains keys='+Object.keys(S.data).join(','));
-  if(!expDate){ ge('cb').innerHTML='<tr><td colspan="8" class="es">No expiry date available</td></tr>'; return; }
-  var eData=S.data[expDate];
-  console.log('[RiKi] renderChain: eData='+!!eData+(eData?' calls='+( eData.calls||[]).length+' puts='+(eData.puts||[]).length:''));
-  if(!eData){ ge('cb').innerHTML='<tr><td colspan="8" class="es">No chain mapping for '+expDate+'</td></tr>'; return; }
-  
-  var html='';
-  if(S.filter==='B'||S.filter==='C'){
-    var list=eData.calls||[]; if(!S.expanded) list=filterRange(list);
-    if(list.length>0){
-      html+='<tr class="shdr c"><td colspan="8">Calls ('+expDate+')</td></tr>';
-      list.forEach(function(o){ html+=renderRow(o,'C'); });
-    }
-  }
-  if(S.filter==='B'||S.filter==='P'){
-    var list=eData.puts||[]; if(!S.expanded) list=filterRange(list);
-    if(list.length>0){
-      html+='<tr class="shdr p"><td colspan="8">Puts ('+expDate+')</td></tr>';
-      list.forEach(function(o){ html+=renderRow(o,'P'); });
-    }
-  }
-  if(!html) html='<tr><td colspan="8" class="es">No results match filters</td></tr>';
-  ge('cb').innerHTML=html;
-}
 
+  if(!S.data){
+    console.warn('[RiKi] renderChain: no data, returning');
+    return;
+  }
+
+  var expDate = getSelectedExpiry();
+
+  if(!expDate && S.activeExpiry){
+    expDate = S.activeExpiry;
+  }
+
+  if(!expDate){
+    ge('cb').innerHTML = '<tr><td colspan="8" class="es">No expiry date available</td></tr>';
+    return;
+  }
+
+  console.log('[RiKi] renderChain: expDate='+expDate+' chain keys='+Object.keys(S.data).join(','));
+
+  var eData = S.data[expDate];
+
+  if(!eData){
+    console.warn('[RiKi] renderChain: missing mapping for '+expDate);
+
+    if(S.fetching){
+      markChainLoading('Loading '+expDate+' chain...');
+      return;
+    }
+
+    if(S._lastMissingFetch !== expDate){
+      S._lastMissingFetch = expDate;
+      markChainLoading('Retrying '+expDate+' chain...');
+      setTimeout(function(){
+        if(!S.fetching) doFetch(true);
+      }, 0);
+      return;
+    }
+
+    ge('cb').innerHTML = '<tr><td colspan="8" class="es">No chain mapping for '+expDate+'</td></tr>';
+    return;
+  }
+
+  var html = '';
+
+  if(S.filter === 'B' || S.filter === 'C'){
+    var calls = eData.calls || [];
+    if(!S.expanded) calls = filterRange(calls);
+
+    if(calls.length > 0){
+      html += '<tr class="shdr c"><td colspan="8">Calls ('+expDate+')</td></tr>';
+      calls.forEach(function(o){
+        html += renderRow(o,'C');
+      });
+    }
+  }
+
+  if(S.filter === 'B' || S.filter === 'P'){
+    var puts = eData.puts || [];
+    if(!S.expanded) puts = filterRange(puts);
+
+    if(puts.length > 0){
+      html += '<tr class="shdr p"><td colspan="8">Puts ('+expDate+')</td></tr>';
+      puts.forEach(function(o){
+        html += renderRow(o,'P');
+      });
+    }
+  }
+
+  if(!html){
+    ge('cb').innerHTML =
+      '<tr><td colspan="8" class="es">'+
+      (S.expanded ? 'No strikes returned for this expiry' : 'No strikes in '+S.rangeMin+'-'+S.rangeMax+'% range — tap All to expand')+
+      '</td></tr>';
+    return;
+  }
+
+  ge('cb').innerHTML = html;
+}
 function filterRange(arr){
   return arr.filter(function(o){ var aw=parseFloat(o.pctAway||0); return aw>=S.rangeMin && aw<=S.rangeMax; });
 }

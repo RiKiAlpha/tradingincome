@@ -513,7 +513,7 @@ function triggerPanicClose() {
       btn.style.opacity = '1';
       alert('Execution Error: ' + (err.message || err));
     });
-
+}
 function updateRatioPreview(){
   var q1=calcQty(S.base1,S.en1),q2=calcQty(S.base2,S.en2);
   ge('ratio-preview').innerHTML='A1: <b>'+q1+'</b> &middot; A2: <b>'+q2+'</b>';

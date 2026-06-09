@@ -438,7 +438,7 @@ var S = {
   en1: localStorage.getItem('tr_en1') !== '0',
   en2: localStorage.getItem('tr_en2') !== '0',
   expanded: false, sheetState:null, strike:null, qtyA1:4, qtyA2:3,
-  price:0.02, expiryDates:null, data:null, activeExpiry:'', bpMap:{}, marketOpen:false,
+  price:0.02, expiryDates:null, data:null, bpMap:{}, marketOpen:false,
   pollTimer:null, cdTimer:null, cdSecs:10, fetching:false
 };
 function ge(id){ return document.getElementById(id); }
@@ -566,18 +566,40 @@ function markChainLoading(msg){ ge('tw').className='loading'; }
 function doRefresh(){ if(S.fetching)return; haptic(); var r=ge('ring'); r.className=''; void r.offsetWidth; r.className='drain'; doFetch(false); }
 
 function doFetch(firstTime){
-  if(S.fetching)return; S.fetching=true;
+  console.log('[RiKi] doFetch called, firstTime='+firstTime+' S.fetching='+S.fetching);
+  if(S.fetching){ console.log('[RiKi] doFetch: already fetching, bailing'); return; }
+  S.fetching=true;
   var badge=ge('tkr-badge'), fresh=ge('chain-fresh');
   badge.className='ticker-badge loading'; fresh.className='chain-fresh loading'; fresh.innerHTML='<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
   
   var url=BACKEND+'?action=optionChain&ticker='+encodeURIComponent(S.ticker)+'&expiry='+encodeURIComponent(S.activeExpiry||'');
-  fetch(url).then(function(r){return r.json();}).then(function(d){
+  console.log('[RiKi] doFetch: fetching URL='+url);
+  fetch(url)
+  .then(function(r){
+    console.log('[RiKi] doFetch: HTTP status='+r.status+' ok='+r.ok);
+    return r.text();
+  })
+  .then(function(raw){
+    console.log('[RiKi] doFetch: raw response (first 300)='+raw.substring(0,300));
+    var d;
+    try { d=JSON.parse(raw); } catch(parseErr){ 
+      console.error('[RiKi] doFetch: JSON parse FAILED: '+parseErr.message);
+      ge('tw').className='';
+      S.fetching=false; badge.className='ticker-badge ready'; fresh.className='chain-fresh ready';
+      toast('Parse error: '+parseErr.message, 5000); return;
+    }
+    console.log('[RiKi] doFetch: parsed OK. keys='+Object.keys(d).join(','));
     S.fetching=false; badge.className='ticker-badge ready';
     var r=ge('ring'); r.className='pulse';
-    if(d.error){ ge('tw').className=''; toast(d.error,4000); return; }
-    
+    if(d.error){
+      console.error('[RiKi] doFetch: d.error='+d.error);
+      ge('tw').className='';
+      toast(d.error,4000); return;
+    }
+    console.log('[RiKi] doFetch: spot='+d.spot+' expiryDates='+JSON.stringify(d.expiryDates)+' chains keys='+Object.keys(d.chains||{}).join(','));
     S.expiryDates=d.expiryDates||[];
     S.activeExpiry=d.expiry||(S.expiryDates[S.expiryIdx]||S.expiryDates[0]||'');
+    console.log('[RiKi] doFetch: S.activeExpiry='+S.activeExpiry+' S.expiryIdx='+S.expiryIdx);
     for(var i=0;i<3;i++){
       var lbl=ge('ed'+i);
       if(lbl&&S.expiryDates[i]){
@@ -585,33 +607,41 @@ function doFetch(firstTime){
         lbl.textContent=(pt[1]||'')+'/'+(pt[2]||'');
       }
     }
-    
     ge('spot-price').textContent=fmtP(d.spot);
     var pct=ge('chg-pct'), dl=ge('chg-dollar');
     pct.textContent=fmtPct(d.netPctChange); pct.className=(d.netPctChange>=0?(d.netPctChange===0?'flat':'up'):'dn');
     dl.textContent=fmtM(d.netChange); dl.className=(d.netChange>=0?(d.netChange===0?'flat':'up'):'dn');
-    
     ge('hdr-bp1').textContent=fmtM(d.bpMap&&d.bpMap['5260']);
     ge('hdr-bp2').textContent=fmtM(d.bpMap&&d.bpMap['4987']);
     S.bpMap=d.bpMap||{};
     S.data=d.chains||{};
-    
     var fTime='--:--';
     if(d.updated){ var dt=new Date(d.updated); fTime=dt.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'}); }
     fresh.className='chain-fresh flash'; fresh.innerHTML='<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">'+fTime+'</span>';
     setTimeout(function(){ fresh.className='chain-fresh ready'; },600);
     ge('updated-lbl').textContent='Updated: '+new Date(d.updated).toLocaleString();
-    
-    ge('tw').className=''; renderChain();
-  }).catch(function(e){ S.fetching=false; badge.className='ticker-badge ready'; fresh.className='chain-fresh ready'; toast('Fetch error',3000); });
+    console.log('[RiKi] doFetch: about to clear #tw and call renderChain');
+    ge('tw').className=''; 
+    renderChain();
+    console.log('[RiKi] doFetch: renderChain returned OK');
+  })
+  .catch(function(e){
+    console.error('[RiKi] doFetch: CATCH error='+e.message, e);
+    S.fetching=false; badge.className='ticker-badge ready'; fresh.className='chain-fresh ready';
+    ge('tw').className='';
+    toast('Fetch error: '+e.message, 5000);
+  });
 }
 
 function renderChain(){
-  if(!S.data||!S.expiryDates)return;
+  console.log('[RiKi] renderChain: S.data='+!!S.data+' S.expiryDates='+JSON.stringify(S.expiryDates)+' S.expiryIdx='+S.expiryIdx);
+  if(!S.data||!S.expiryDates){ console.warn('[RiKi] renderChain: no data/expiryDates, returning'); return; }
   var expDate=S.expiryDates[S.expiryIdx]||S.expiryDates[0];
+  console.log('[RiKi] renderChain: expDate='+expDate+' chains keys='+Object.keys(S.data).join(','));
   if(!expDate){ ge('cb').innerHTML='<tr><td colspan="8" class="es">No expiry date available</td></tr>'; return; }
   var eData=S.data[expDate];
-  if(!eData){ ge('cb').innerHTML='<tr><td colspan="8" class="es">No chain mapping for date</td></tr>'; return; }
+  console.log('[RiKi] renderChain: eData='+!!eData+(eData?' calls='+( eData.calls||[]).length+' puts='+(eData.puts||[]).length:''));
+  if(!eData){ ge('cb').innerHTML='<tr><td colspan="8" class="es">No chain mapping for '+expDate+'</td></tr>'; return; }
   
   var html='';
   if(S.filter==='B'||S.filter==='C'){

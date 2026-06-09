@@ -574,7 +574,7 @@ function doFetch(firstTime){
   fetch(url).then(function(r){return r.json();}).then(function(d){
     S.fetching=false; badge.className='ticker-badge ready';
     var r=ge('ring'); r.className='pulse';
-    if(d.error){ toast(d.error,4000); return; }
+    if(d.error){ ge('tw').className=''; toast(d.error,4000); return; }
     
     S.expiryDates=d.expiryDates||[];
     S.activeExpiry=d.expiry||(S.expiryDates[S.expiryIdx]||S.expiryDates[0]||'');

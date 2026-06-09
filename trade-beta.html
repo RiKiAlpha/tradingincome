@@ -438,7 +438,7 @@ var S = {
   en1: localStorage.getItem('tr_en1') !== '0',
   en2: localStorage.getItem('tr_en2') !== '0',
   expanded: false, sheetState:null, strike:null, qtyA1:4, qtyA2:3,
-  price:0.02, expiryDates:null, data:null, bpMap:{}, marketOpen:false,
+  price:0.02, expiryDates:null, data:null, activeExpiry:'', bpMap:{}, marketOpen:false,
   pollTimer:null, cdTimer:null, cdSecs:10, fetching:false
 };
 function ge(id){ return document.getElementById(id); }
@@ -577,6 +577,7 @@ function doFetch(firstTime){
     if(d.error){ toast(d.error,4000); return; }
     
     S.expiryDates=d.expiryDates||[];
+    S.activeExpiry=d.expiry||(S.expiryDates[S.expiryIdx]||S.expiryDates[0]||'');
     for(var i=0;i<3;i++){
       var lbl=ge('ed'+i);
       if(lbl&&S.expiryDates[i]){
@@ -606,8 +607,8 @@ function doFetch(firstTime){
 }
 
 function renderChain(){
-  if(!S.data)return;
-  var expDate=S.expiryDates[S.expiryIdx];
+  if(!S.data||!S.expiryDates)return;
+  var expDate=S.expiryDates[S.expiryIdx]||S.expiryDates[0];
   if(!expDate){ ge('cb').innerHTML='<tr><td colspan="8" class="es">No expiry date available</td></tr>'; return; }
   var eData=S.data[expDate];
   if(!eData){ ge('cb').innerHTML='<tr><td colspan="8" class="es">No chain mapping for date</td></tr>'; return; }

@@ -130,34 +130,37 @@
     #ct td:last-child{text-align:right;padding-right:8px;}
     #ct tbody tr:hover {background-color: var(--bg4) !important;box-shadow: inset 0 1px 0 var(--border), inset 0 -1px 0 var(--border) !important;cursor: pointer;}
     #ct tbody tr:hover .sto {background-color: var(--bg2);box-shadow: 0 2px 6px rgba(0,0,0,0.15);}
-    .shdr td{padding:4px 10px;font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:var(--bg2);border-bottom:1px solid var(--border);text-align:left !important;font-family:var(--sans);}
+    .shdr td{padding:7px 10px;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(90deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border-top:1px solid rgba(255,255,255,.04);border-bottom:1px solid var(--border);text-align:left !important;font-family:var(--sans);}
     .shdr.c td{color:rgba(0,212,166,.6);}
     .shdr.p td{color:rgba(240,140,48,.6);}
-    .sec-hdr{
+.sec-hdr{
   display:flex;
   align-items:center;
   justify-content:space-between;
   width:100%;
+  min-height:22px;
 }
 
 .sec-title{
   font-family:var(--sans);
-  font-size:8px;
-  font-weight:800;
-  letter-spacing:.16em;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.14em;
   text-transform:uppercase;
+  line-height:1;
 }
 
 .sec-exp{
   font-family:var(--mono);
-  font-size:8px;
-  font-weight:700;
+  font-size:9px;
+  font-weight:800;
   letter-spacing:.04em;
   color:var(--text3);
-  background:rgba(255,255,255,.035);
+  background:rgba(255,255,255,.045);
   border:1px solid var(--border);
   border-radius:999px;
-  padding:2px 7px;
+  padding:3px 8px;
+  line-height:1;
 }
 
 .shdr.c .sec-title{
@@ -926,7 +929,10 @@ function renderChain(){
   ge('cb').innerHTML = html;
 }
 function filterRange(arr){
-  return arr.filter(function(o){ var aw=parseFloat(o.pctAway||0); return aw>=S.rangeMin && aw<=S.rangeMax; });
+  return arr.filter(function(o){
+    var aw = Math.abs(parseFloat(o.pctAway || 0));
+    return aw >= S.rangeMin && aw <= S.rangeMax;
+  });
 }
 
 function renderRow(o,type){

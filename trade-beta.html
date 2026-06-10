@@ -133,6 +133,52 @@
     .shdr td{padding:4px 10px;font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:var(--bg2);border-bottom:1px solid var(--border);text-align:left !important;font-family:var(--sans);}
     .shdr.c td{color:rgba(0,212,166,.6);}
     .shdr.p td{color:rgba(240,140,48,.6);}
+    .sec-hdr{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+}
+
+.sec-title{
+  font-family:var(--sans);
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+.sec-exp{
+  font-family:var(--mono);
+  font-size:8px;
+  font-weight:700;
+  letter-spacing:.04em;
+  color:var(--text3);
+  background:rgba(255,255,255,.035);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:2px 7px;
+}
+
+.shdr.c .sec-title{
+  color:rgba(0,212,166,.78);
+}
+
+.shdr.p .sec-title{
+  color:rgba(240,140,48,.78);
+}
+
+.shdr.c .sec-exp{
+  color:rgba(0,212,166,.58);
+  border-color:rgba(0,212,166,.16);
+  background:rgba(0,212,166,.035);
+}
+
+.shdr.p .sec-exp{
+  color:rgba(240,140,48,.58);
+  border-color:rgba(240,140,48,.16);
+  background:rgba(240,140,48,.035);
+}
     .pxsz{display:block;font-size:8px;color:var(--text3);line-height:1.2;text-align:right;}
     .sto{padding:3px 6px;border-radius:5px;border:1px solid;font-size:10px;font-weight:700;font-family:var(--mono);cursor:pointer;touch-action:manipulation;background:transparent;transition:background .12s,box-shadow .12s;white-space:nowrap;}
     .sto.c{border-color:rgba(0,212,166,.3);color:var(--call);}
@@ -850,7 +896,7 @@ function renderChain(){
     if(!S.expanded) calls = filterRange(calls);
 
     if(calls.length > 0){
-      html += '<tr class="shdr c"><td colspan="8">Calls ('+expDate+')</td></tr>';
+      html += '<tr class="shdr c"><td colspan="8"><div class="sec-hdr"><span class="sec-title">CALLS</span><span class="sec-exp">'+expDate.substring(5)+'</span></div></td></tr>';
       calls.forEach(function(o){
         html += renderRow(o,'C');
       });
@@ -862,7 +908,7 @@ function renderChain(){
     if(!S.expanded) puts = filterRange(puts);
 
     if(puts.length > 0){
-      html += '<tr class="shdr p"><td colspan="8">Puts ('+expDate+')</td></tr>';
+      html += '<tr class="shdr p"><td colspan="8"><div class="sec-hdr"><span class="sec-title">PUTS</span><span class="sec-exp">'+expDate.substring(5)+'</span></div></td></tr>';
       puts.forEach(function(o){
         html += renderRow(o,'P');
       });

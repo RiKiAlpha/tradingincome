@@ -90,6 +90,35 @@
     .panic-btn:disabled{opacity:0.4;pointer-events:none;}
     .panic-lbl{font-size:9px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px;}
     .panic-cb{accent-color:var(--red);width:13px;height:13px;cursor:pointer;}
+    .pr-modal{position:fixed;inset:0;z-index:9999;background:rgba(6,10,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:14px;}
+.pr-modal.on{display:flex;}
+.pr-card{width:min(980px,100%);max-height:90vh;background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden;}
+.pr-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(229,83,83,.12),rgba(255,255,255,.015));}
+.pr-kicker{font-size:9px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--red);margin-bottom:4px;}
+.pr-title{font-family:var(--mono);font-size:14px;font-weight:900;color:var(--text);}
+.pr-status{font-family:var(--mono);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:5px 10px;border:1px solid var(--border);color:var(--text2);white-space:nowrap;}
+.pr-status.ok{color:var(--call);border-color:rgba(0,212,166,.28);background:rgba(0,212,166,.08);}
+.pr-status.warn{color:var(--gold);border-color:rgba(244,197,66,.28);background:rgba(244,197,66,.08);}
+.pr-status.bad{color:var(--red);border-color:rgba(229,83,83,.34);background:rgba(229,83,83,.09);}
+.pr-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.pr-metric{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 10px;min-width:0;}
+.pr-mk{font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.pr-mv{font-family:var(--mono);font-size:15px;font-weight:900;color:var(--text);}
+.pr-mv.call{color:var(--call);}
+.pr-mv.gold{color:var(--gold);}
+.pr-mv.red{color:var(--red);}
+.pr-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:56vh;}
+.pr-table{width:100%;border-collapse:collapse;min-width:880px;}
+.pr-table th{position:sticky;top:0;z-index:2;background:var(--bg2);border-bottom:1px solid var(--border);padding:7px 8px;text-align:left;font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);}
+.pr-table td{border-bottom:1px solid var(--border2);padding:6px 8px;font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap;}
+.pr-table td.sym{color:var(--text);font-weight:800;}
+.pr-table td.good{color:var(--call);font-weight:900;}
+.pr-table td.warn{color:var(--gold);font-weight:900;}
+.pr-table td.bad{color:var(--red);font-weight:900;}
+.pr-actions{display:flex;align-items:center;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border);background:rgba(255,255,255,.012);}
+.pr-ok{height:38px;min-width:96px;border-radius:10px;border:1px solid rgba(0,212,166,.35);background:rgba(0,212,166,.1);color:var(--call);font-family:var(--sans);font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+.pr-ok:disabled{opacity:.35;cursor:not-allowed;}
+@media(max-width:720px){.pr-summary{grid-template-columns:repeat(2,1fr);}.pr-card{max-height:92vh;}.pr-title{font-size:12px;}}
     .seg{display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px;}
     .sbtn{flex:1;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--text3);cursor:pointer;touch-action:manipulation;white-space:nowrap;}
     .sbtn.ob{background:var(--bg4);color:var(--text);}
@@ -473,6 +502,40 @@
   </div>
 </div>
 <div id="toast"></div>
+  <div id="panic-result-modal" class="pr-modal">
+  <div class="pr-card">
+    <div class="pr-head">
+      <div>
+        <div class="pr-kicker">Panic BTC Result</div>
+        <div class="pr-title" id="pr-title">—</div>
+      </div>
+      <div class="pr-status warn" id="pr-status">RUNNING</div>
+    </div>
+    <div class="pr-summary" id="pr-summary"></div>
+    <div class="pr-table-wrap">
+      <table class="pr-table">
+        <thead>
+          <tr>
+            <th>Acct</th>
+            <th>Symbol</th>
+            <th>Qty</th>
+            <th>Order ID</th>
+            <th>Submit</th>
+            <th>Pre</th>
+            <th>Cancel</th>
+            <th>Final</th>
+            <th>Filled</th>
+            <th>Remain</th>
+          </tr>
+        </thead>
+        <tbody id="pr-body"></tbody>
+      </table>
+    </div>
+    <div class="pr-actions">
+      <button class="pr-ok" id="pr-ok" onclick="closePanicResult()">OK</button>
+    </div>
+  </div>
+</div>
 <script>
 var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
 var S = {
@@ -527,41 +590,183 @@ function _closeTicker(){
   inp.className='ticker-inp'; badge.classList.remove('hidden'); badge.textContent=S.ticker;
 }
 function calcQty(base,enabled){ if(!enabled)return 0; return Math.max(1,Math.ceil(base*S.mult)); }
+  function panicEsc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function showPanicRunning(ticker, price, sliceMode){
+  var m = ge('panic-result-modal');
+  if(!m) return;
+
+  ge('pr-title').textContent = ticker+' @ $'+price.toFixed(2)+' · '+(sliceMode ? '1-CONTRACT' : 'MAX-10');
+  ge('pr-status').className = 'pr-status warn';
+  ge('pr-status').textContent = 'RUNNING';
+
+  ge('pr-summary').innerHTML =
+    '<div class="pr-metric"><div class="pr-mk">Mode</div><div class="pr-mv gold">'+(sliceMode?'1/ORDER':'MAX 10')+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Submitted</div><div class="pr-mv">—</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Filled</div><div class="pr-mv">—</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Cancelled</div><div class="pr-mv">—</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Still Open</div><div class="pr-mv gold">Running</div></div>';
+
+  ge('pr-body').innerHTML =
+    '<tr><td colspan="10" class="warn">Panic BTC running — do not refresh this page.</td></tr>';
+
+  ge('pr-ok').disabled = true;
+  ge('pr-ok').textContent = 'Running';
+  m.classList.add('on');
+}
+
+function showPanicResult(res){
+  var m = ge('panic-result-modal');
+  if(!m) return;
+
+  res = res || {};
+  var rows = res.rows || [];
+  var failed = Number(res.failed || 0) + Number(res.cancelFailed || 0);
+  var stillOpen = Number(res.stillOpenOrders || 0);
+  var manualReview = Number(res.manualReviewOrders || 0);
+
+  var isClean = !!res.success && failed === 0 && stillOpen === 0 && manualReview === 0;
+
+  ge('pr-title').textContent =
+    (res.ticker || S.ticker || '—')+
+    (res.price ? ' @ $'+res.price : '')+
+    ' · '+(res.sliceMode || 'PANIC');
+
+  ge('pr-status').className = 'pr-status '+(isClean ? 'ok' : (stillOpen > 0 || failed > 0 ? 'bad' : 'warn'));
+  ge('pr-status').textContent = isClean ? 'CLEAN' : (stillOpen > 0 ? 'OPEN ORDERS' : 'CHECK');
+
+  ge('pr-summary').innerHTML =
+    '<div class="pr-metric"><div class="pr-mk">Submitted</div><div class="pr-mv">'+panicEsc(res.submitted || 0)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Filled Ct</div><div class="pr-mv call">'+panicEsc(res.filledContracts || 0)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Cancelled Ct</div><div class="pr-mv gold">'+panicEsc(res.cancelledContracts || 0)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Still Open</div><div class="pr-mv '+(stillOpen>0?'red':'call')+'">'+panicEsc(stillOpen)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Failed</div><div class="pr-mv '+(failed>0?'red':'call')+'">'+panicEsc(failed)+'</div></div>';
+
+  if(res.error && rows.length === 0){
+    ge('pr-body').innerHTML =
+      '<tr><td colspan="10" class="bad">'+panicEsc(res.error)+'</td></tr>';
+  } else if(rows.length === 0){
+    ge('pr-body').innerHTML =
+      '<tr><td colspan="10" class="warn">'+panicEsc(res.summary || 'No rows returned')+'</td></tr>';
+  } else {
+    ge('pr-body').innerHTML = rows.map(function(r){
+      var finalStatus = String(r.finalStatus || '');
+      var finalUpper = finalStatus.toUpperCase();
+      var finalClass =
+        finalUpper === 'FILLED' ? 'good' :
+        (finalUpper === 'CANCELED' || finalUpper === 'CANCELLED') ? 'warn' :
+        (finalUpper.indexOf('FAILED') >= 0 || finalUpper.indexOf('OPEN') >= 0 || finalUpper.indexOf('MANUAL') >= 0 ? 'bad' : '');
+
+      return '<tr>'+
+        '<td>'+panicEsc(r.acctLabel || r.acct || '')+'</td>'+
+        '<td class="sym">'+panicEsc(r.symbol || '')+'</td>'+
+        '<td>'+panicEsc(r.qty || 0)+'</td>'+
+        '<td>'+panicEsc(r.orderId || '—')+'</td>'+
+        '<td class="'+(String(r.submitStatus||'').indexOf('FAILED')>=0?'bad':'good')+'">'+panicEsc(r.submitStatus || r.submitHttp || '')+'</td>'+
+        '<td>'+panicEsc(r.preCancelStatus || '—')+'</td>'+
+        '<td>'+panicEsc(r.cancelStatus || r.cancelHttp || '—')+'</td>'+
+        '<td class="'+finalClass+'">'+panicEsc(finalStatus || '—')+'</td>'+
+        '<td class="good">'+panicEsc(r.filledQty || 0)+'</td>'+
+        '<td class="'+(Number(r.remainingQty||0)>0?'bad':'')+'">'+panicEsc(r.remainingQty || 0)+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  ge('pr-ok').disabled = false;
+  ge('pr-ok').textContent = 'OK';
+  m.classList.add('on');
+}
+
+function closePanicResult(){
+  var m = ge('panic-result-modal');
+  if(m) m.classList.remove('on');
+}
 
 // EMERGENCY FRONTEND CONTROLLER FUNCTION
 function triggerPanicClose() {
   var btn = ge('panic-close-btn');
   var pPrice = prompt("Enter Buy-To-Close Limit Price ($):", "0.02");
   if (pPrice === null) return;
+
   var limitPrice = parseFloat(pPrice);
   if (isNaN(limitPrice) || limitPrice <= 0) {
     alert("Invalid entry. Order placement aborted.");
     return;
   }
-  var sliceChecked = ge('panic-slice-cb').checked;
-  var conf = confirm("⚠️ CRITICAL ACTION ⚠️\n\nAre you sure you want to trigger emergency close for ALL open short positions on target " + S.ticker + " at limit $" + limitPrice.toFixed(2) + "?\n\n(Nickel Closer routine will automatically mute during execution)");
+
+  var sliceEl = ge('panic-slice-cb');
+  var sliceChecked = !!(sliceEl && sliceEl.checked);
+
+  var conf = confirm(
+    "⚠️ CRITICAL ACTION ⚠️\n\n" +
+    "Trigger emergency BUY-TO-CLOSE for ALL open short positions on " + S.ticker + "?\n\n" +
+    "Limit price: $" + limitPrice.toFixed(2) + "\n" +
+    "Mode: " + (sliceChecked ? "1 contract per order" : "max 10 contracts per order") + "\n\n" +
+    "Nickel closer will be muted during execution, then restored."
+  );
+
   if (!conf) return;
 
   haptic();
+
+  showPanicRunning(S.ticker, limitPrice, sliceChecked);
+
   btn.disabled = true;
   btn.textContent = "FIRING...";
   btn.style.opacity = "0.5";
 
-  fetch(BACKEND + '?action=panicBtc&ticker=' + encodeURIComponent(S.ticker) +
-        '&price=' + limitPrice.toFixed(2) + '&slice=' + (sliceChecked ? '1' : '0'))
-    .then(function(r) { return r.json(); })
-    .then(function(res) {
-      btn.disabled = false;
-      btn.textContent = '⚡ BTC All Shorts';
-      btn.style.opacity = '1';
-      toast('Panic Close: ' + (res.summary || JSON.stringify(res)), 5000);
-    })
-    .catch(function(err) {
-      btn.disabled = false;
-      btn.textContent = '⚡ BTC All Shorts';
-      btn.style.opacity = '1';
-      alert('Execution Error: ' + (err.message || err));
+  function resetBtn(){
+    btn.disabled = false;
+    btn.textContent = '⚡ BTC All Shorts';
+    btn.style.opacity = '1';
+  }
+
+  fetch(
+    BACKEND +
+    '?action=panicBtc' +
+    '&ticker=' + encodeURIComponent(S.ticker) +
+    '&price=' + encodeURIComponent(limitPrice.toFixed(2)) +
+    '&slice=' + (sliceChecked ? '1' : '0')
+  )
+  .then(function(r) {
+    return r.text();
+  })
+  .then(function(raw) {
+    resetBtn();
+
+    var res;
+    try {
+      res = JSON.parse(raw);
+    } catch(parseErr) {
+      showPanicResult({
+        success: false,
+        ticker: S.ticker,
+        price: limitPrice.toFixed(2),
+        error: "Backend returned non-JSON response: " + parseErr.message,
+        rows: []
+      });
+      return;
+    }
+
+    showPanicResult(res);
+  })
+  .catch(function(err) {
+    resetBtn();
+    showPanicResult({
+      success: false,
+      ticker: S.ticker,
+      price: limitPrice.toFixed(2),
+      error: err.message || String(err),
+      rows: []
     });
+  });
 }
 function updateRatioPreview(){
   var q1=calcQty(S.base1,S.en1),q2=calcQty(S.base2,S.en2);

@@ -139,8 +139,12 @@
 .pr-table td.warn{color:var(--gold);font-weight:900;}
 .pr-table td.bad{color:var(--red);font-weight:900;}
 .pr-actions{display:flex;align-items:center;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border);background:rgba(255,255,255,.012);}
-.pr-ok{height:38px;min-width:96px;border-radius:10px;border:1px solid rgba(0,212,166,.35);background:rgba(0,212,166,.1);color:var(--call);font-family:var(--sans);font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
-.pr-ok:disabled{opacity:.35;cursor:not-allowed;}
+.pr-ok,.pr-abort,.pr-continue{height:38px;min-width:96px;border-radius:10px;font-family:var(--sans);font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+.pr-ok{border:1px solid rgba(0,212,166,.35);background:rgba(0,212,166,.1);color:var(--call);}
+.pr-abort{border:1px solid rgba(229,83,83,.38);background:rgba(229,83,83,.10);color:var(--red);}
+.pr-continue{border:1px solid rgba(0,212,166,.38);background:rgba(0,212,166,.12);color:var(--call);}
+.pr-ok:disabled,.pr-abort:disabled,.pr-continue:disabled{opacity:.35;cursor:not-allowed;}
+.pr-hidden{display:none!important;}
 @media(max-width:720px){.pr-summary{grid-template-columns:repeat(2,1fr);}.pr-card{max-height:92vh;}.pr-title{font-size:12px;}}
     .seg{display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px;}
     .sbtn{flex:1;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--text3);cursor:pointer;touch-action:manipulation;white-space:nowrap;}
@@ -555,7 +559,9 @@
         <tbody id="pr-body"></tbody>
       </table>
     </div>
-    <div class="pr-actions">
+    <div class="pr-actions" style="gap:8px;">
+      <button class="pr-abort pr-hidden" id="pr-abort" onclick="abortPanicResume()">Abort</button>
+      <button class="pr-continue pr-hidden" id="pr-continue" onclick="continuePanicNextRound()">Continue Next Round</button>
       <button class="pr-ok" id="pr-ok" onclick="closePanicResult()">OK</button>
     </div>
   </div>
@@ -614,7 +620,42 @@ function _closeTicker(){
   inp.className='ticker-inp'; badge.classList.remove('hidden'); badge.textContent=S.ticker;
 }
 function calcQty(base,enabled){ if(!enabled)return 0; return Math.max(1,Math.ceil(base*S.mult)); }
-  let panicRetryTimerId = null;
+ let panicRetryTimerId = null;
+let panicLastRun = null;
+let panicResumeCanContinue = false;
+  function setPanicActionMode(mode) {
+  var ok = ge('pr-ok');
+  var abort = ge('pr-abort');
+  var cont = ge('pr-continue');
+
+  if (!ok || !abort || !cont) return;
+
+  if (mode === 'resume') {
+    ok.classList.add('pr-hidden');
+    abort.classList.remove('pr-hidden');
+    cont.classList.remove('pr-hidden');
+    abort.disabled = false;
+    cont.disabled = true;
+    cont.textContent = 'Continue Next Round';
+    abort.textContent = 'Abort';
+    return;
+  }
+
+  if (mode === 'running') {
+    ok.classList.remove('pr-hidden');
+    abort.classList.add('pr-hidden');
+    cont.classList.add('pr-hidden');
+    ok.disabled = true;
+    ok.textContent = 'Running';
+    return;
+  }
+
+  ok.classList.remove('pr-hidden');
+  abort.classList.add('pr-hidden');
+  cont.classList.add('pr-hidden');
+  ok.disabled = false;
+  ok.textContent = 'OK';
+}
   function panicEsc(v){
   return String(v == null ? '' : v)
     .replace(/&/g,'&amp;')
@@ -650,8 +691,16 @@ function showPanicRunning(ticker, price, sliceMode){
     panicRetryTimerId = null;
   }
 
-  ge('pr-ok').disabled = true;
-  ge('pr-ok').textContent = 'Running';
+  var retrySlot = ge('panic-retry-slot');
+  if(retrySlot) retrySlot.innerHTML = '';
+
+  if (panicRetryTimerId) {
+    clearInterval(panicRetryTimerId);
+    panicRetryTimerId = null;
+  }
+
+  panicResumeCanContinue = false;
+  setPanicActionMode('running');
   m.classList.add('on');
 }
 
@@ -726,23 +775,34 @@ function showPanicResult(res){
     }).join('');
   }
 
-  ge('pr-ok').disabled = false;
-  ge('pr-ok').textContent = 'OK';
   m.classList.add('on');
 
   if(res && res.continueNeeded){
-    startPanicRetryCountdown(res.retryAfterMs || 60000);
+    setPanicActionMode('resume');
+    startPanicRetryCountdown(res.retryAfterMs || 60000, stillOpen === 0 && manualReview === 0);
+  } else {
+    panicResumeCanContinue = false;
+    setPanicActionMode('normal');
   }
 }
 
-function startPanicRetryCountdown(ms) {
+function startPanicRetryCountdown(ms, canContinue) {
   if (panicRetryTimerId) {
     clearInterval(panicRetryTimerId);
     panicRetryTimerId = null;
   }
 
+  panicResumeCanContinue = !!canContinue;
+
   const box = document.getElementById('panic-retry-box');
   const timer = document.getElementById('panic-retry-timer');
+  const cont = ge('pr-continue');
+
+  if (cont) {
+    cont.disabled = true;
+    cont.textContent = 'Wait...';
+  }
+
   if (!box || !timer) return;
 
   let remaining = Math.max(0, Math.ceil((Number(ms) || 60000) / 1000));
@@ -752,7 +812,20 @@ function startPanicRetryCountdown(ms) {
       clearInterval(panicRetryTimerId);
       panicRetryTimerId = null;
       box.classList.add('pr-retry-ready');
-      timer.textContent = 'Ready — press BTC again with the same ticker, price, and slice setting.';
+
+      if (panicResumeCanContinue) {
+        timer.textContent = 'Ready — click Continue Next Round.';
+        if (cont) {
+          cont.disabled = false;
+          cont.textContent = 'Continue Next Round';
+        }
+      } else {
+        timer.textContent = 'Do not continue — open/manual-review orders exist.';
+        if (cont) {
+          cont.disabled = true;
+          cont.textContent = 'Continue Blocked';
+        }
+      }
       return;
     }
 
@@ -772,7 +845,137 @@ function closePanicResult(){
   var m = ge('panic-result-modal');
   if(m) m.classList.remove('on');
 }
+function abortPanicResume() {
+  if (!panicLastRun) {
+    closePanicResult();
+    return;
+  }
 
+  var conf = confirm("Abort saved panic queue? Later BTC will start fresh.");
+  if (!conf) return;
+
+  var abort = ge('pr-abort');
+  var cont = ge('pr-continue');
+
+  if (abort) {
+    abort.disabled = true;
+    abort.textContent = 'Aborting...';
+  }
+  if (cont) cont.disabled = true;
+
+  fetch(
+    BACKEND +
+    '?action=abortPanicResume' +
+    '&ticker=' + encodeURIComponent(panicLastRun.ticker) +
+    '&price=' + encodeURIComponent(panicLastRun.price) +
+    '&slice=' + (panicLastRun.slice ? '1' : '0') +
+    '&_=' + Date.now()
+  )
+  .then(function(r){ return r.json(); })
+  .then(function(res){
+    if (!res || !res.success) {
+      alert('Abort failed: ' + ((res && res.error) || 'unknown'));
+      if (abort) {
+        abort.disabled = false;
+        abort.textContent = 'Abort';
+      }
+      if (cont && panicResumeCanContinue) cont.disabled = false;
+      return;
+    }
+
+    panicLastRun = null;
+    panicResumeCanContinue = false;
+    closePanicResult();
+    toast('Saved panic queue aborted', 3000);
+  })
+  .catch(function(err){
+    alert('Abort error: ' + (err.message || String(err)));
+    if (abort) {
+      abort.disabled = false;
+      abort.textContent = 'Abort';
+    }
+    if (cont && panicResumeCanContinue) cont.disabled = false;
+  });
+}
+
+function continuePanicNextRound() {
+  if (!panicLastRun) {
+    alert('No saved panic context found.');
+    return;
+  }
+
+  if (!panicResumeCanContinue) {
+    alert('Continue is blocked until timer is ready and Still Open is 0.');
+    return;
+  }
+
+  var cont = ge('pr-continue');
+  var abort = ge('pr-abort');
+  var btn = ge('panic-close-btn');
+
+  if (cont) {
+    cont.disabled = true;
+    cont.textContent = 'Running...';
+  }
+  if (abort) abort.disabled = true;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'FIRING...';
+    btn.style.opacity = '0.5';
+  }
+
+  haptic();
+
+  showPanicRunning(panicLastRun.ticker, parseFloat(panicLastRun.price), panicLastRun.slice);
+
+  fetch(
+    BACKEND +
+    '?action=panicBtc' +
+    '&ticker=' + encodeURIComponent(panicLastRun.ticker) +
+    '&price=' + encodeURIComponent(panicLastRun.price) +
+    '&slice=' + (panicLastRun.slice ? '1' : '0') +
+    '&_=' + Date.now()
+  )
+  .then(function(r){ return r.text(); })
+  .then(function(raw){
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ BTC All Shorts';
+      btn.style.opacity = '1';
+    }
+
+    var res;
+    try {
+      res = JSON.parse(raw);
+    } catch(parseErr) {
+      showPanicResult({
+        success: false,
+        ticker: panicLastRun.ticker,
+        price: panicLastRun.price,
+        error: "Backend returned non-JSON response: " + parseErr.message,
+        rows: []
+      });
+      return;
+    }
+
+    showPanicResult(res);
+  })
+  .catch(function(err){
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⚡ BTC All Shorts';
+      btn.style.opacity = '1';
+    }
+
+    showPanicResult({
+      success: false,
+      ticker: panicLastRun.ticker,
+      price: panicLastRun.price,
+      error: err.message || String(err),
+      rows: []
+    });
+  });
+}
 // EMERGENCY FRONTEND CONTROLLER FUNCTION
 function triggerPanicClose() {
   var btn = ge('panic-close-btn');
@@ -798,7 +1001,13 @@ function triggerPanicClose() {
 
   if (!conf) return;
 
-  haptic();
+   haptic();
+
+  panicLastRun = {
+    ticker: S.ticker,
+    price: limitPrice.toFixed(2),
+    slice: sliceChecked
+  };
 
   showPanicRunning(S.ticker, limitPrice, sliceChecked);
 

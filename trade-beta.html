@@ -738,7 +738,7 @@ function showPanicResult(res){
           'Submit throttle detected — remaining planned queue saved.'+
           '<span class="muted">Deferred orders: <b>'+panicEsc(res.deferredSubmitCount || 0)+'</b></span>'+
           '<span class="muted">Wait: <b id="panic-retry-timer">60 sec</b></span>'+
-          '<span class="muted">After timer finishes, press BTC again with the same ticker, price, and slice setting.</span>'+
+          '<span class="muted">After timer finishes, click Continue Next Round with the same ticker, price, and slice setting.</span>'+
         '</div>';
     } else {
       retrySlot.innerHTML = '';

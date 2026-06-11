@@ -107,6 +107,29 @@
 .pr-mv.call{color:var(--call);}
 .pr-mv.gold{color:var(--gold);}
 .pr-mv.red{color:var(--red);}
+    .pr-retry-box{
+  margin-top:12px;
+  padding:12px 14px;
+  border:1px solid rgba(245,158,11,.38);
+  background:rgba(245,158,11,.10);
+  border-radius:14px;
+  color:#fbbf24;
+  font-weight:800;
+  font-size:13px;
+  box-shadow:0 0 18px rgba(245,158,11,.08);
+}
+.pr-retry-box .muted{
+  display:block;
+  margin-top:4px;
+  color:#cbd5e1;
+  font-weight:600;
+  font-size:12px;
+}
+.pr-retry-ready{
+  color:#22c55e;
+  border-color:rgba(34,197,94,.38);
+  background:rgba(34,197,94,.10);
+}
 .pr-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:56vh;}
 .pr-table{width:100%;border-collapse:collapse;min-width:880px;}
 .pr-table th{position:sticky;top:0;z-index:2;background:var(--bg2);border-bottom:1px solid var(--border);padding:7px 8px;text-align:left;font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);}
@@ -512,6 +535,7 @@
       <div class="pr-status warn" id="pr-status">RUNNING</div>
     </div>
     <div class="pr-summary" id="pr-summary"></div>
+    <div id="panic-retry-slot"></div>
     <div class="pr-table-wrap">
       <table class="pr-table">
         <thead>
@@ -590,6 +614,7 @@ function _closeTicker(){
   inp.className='ticker-inp'; badge.classList.remove('hidden'); badge.textContent=S.ticker;
 }
 function calcQty(base,enabled){ if(!enabled)return 0; return Math.max(1,Math.ceil(base*S.mult)); }
+  let panicRetryTimerId = null;
   function panicEsc(v){
   return String(v == null ? '' : v)
     .replace(/&/g,'&amp;')
@@ -616,6 +641,14 @@ function showPanicRunning(ticker, price, sliceMode){
 
   ge('pr-body').innerHTML =
     '<tr><td colspan="10" class="warn">Panic BTC running — do not refresh this page.</td></tr>';
+
+  var retrySlot = ge('panic-retry-slot');
+  if(retrySlot) retrySlot.innerHTML = '';
+
+  if (panicRetryTimerId) {
+    clearInterval(panicRetryTimerId);
+    panicRetryTimerId = null;
+  }
 
   ge('pr-ok').disabled = true;
   ge('pr-ok').textContent = 'Running';
@@ -648,6 +681,20 @@ function showPanicResult(res){
     '<div class="pr-metric"><div class="pr-mk">Cancelled Ct</div><div class="pr-mv gold">'+panicEsc(res.cancelledContracts || 0)+'</div></div>'+
     '<div class="pr-metric"><div class="pr-mk">Still Open</div><div class="pr-mv '+(stillOpen>0?'red':'call')+'">'+panicEsc(stillOpen)+'</div></div>'+
     '<div class="pr-metric"><div class="pr-mk">Failed</div><div class="pr-mv '+(failed>0?'red':'call')+'">'+panicEsc(failed)+'</div></div>';
+    var retrySlot = ge('panic-retry-slot');
+  if(retrySlot){
+    if(res && res.continueNeeded){
+      retrySlot.innerHTML =
+        '<div id="panic-retry-box" class="pr-retry-box">'+
+          'Submit throttle detected — remaining planned queue saved.'+
+          '<span class="muted">Deferred orders: <b>'+panicEsc(res.deferredSubmitCount || 0)+'</b></span>'+
+          '<span class="muted">Wait: <b id="panic-retry-timer">60 sec</b></span>'+
+          '<span class="muted">After timer finishes, press BTC again with the same ticker, price, and slice setting.</span>'+
+        '</div>';
+    } else {
+      retrySlot.innerHTML = '';
+    }
+  }
 
   if(res.error && rows.length === 0){
     ge('pr-body').innerHTML =
@@ -682,9 +729,46 @@ function showPanicResult(res){
   ge('pr-ok').disabled = false;
   ge('pr-ok').textContent = 'OK';
   m.classList.add('on');
+
+  if(res && res.continueNeeded){
+    startPanicRetryCountdown(res.retryAfterMs || 60000);
+  }
 }
 
+function startPanicRetryCountdown(ms) {
+  if (panicRetryTimerId) {
+    clearInterval(panicRetryTimerId);
+    panicRetryTimerId = null;
+  }
+
+  const box = document.getElementById('panic-retry-box');
+  const timer = document.getElementById('panic-retry-timer');
+  if (!box || !timer) return;
+
+  let remaining = Math.max(0, Math.ceil((Number(ms) || 60000) / 1000));
+
+  function paint() {
+    if (remaining <= 0) {
+      clearInterval(panicRetryTimerId);
+      panicRetryTimerId = null;
+      box.classList.add('pr-retry-ready');
+      timer.textContent = 'Ready — press BTC again with the same ticker, price, and slice setting.';
+      return;
+    }
+
+    timer.textContent = remaining + ' sec';
+    remaining--;
+  }
+
+  paint();
+  panicRetryTimerId = setInterval(paint, 1000);
+}
 function closePanicResult(){
+  if (panicRetryTimerId) {
+    clearInterval(panicRetryTimerId);
+    panicRetryTimerId = null;
+  }
+
   var m = ge('panic-result-modal');
   if(m) m.classList.remove('on');
 }

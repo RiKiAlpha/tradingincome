@@ -1250,8 +1250,8 @@ function abortBasketStoResume(){
         return;
       }
       S.basketResumeCanContinue = false;
-      closeBasketModal();
-      toast('Saved STO Basket queue aborted', 3000);
+      closeBasketResultAndClear();
+      toast('Saved STO Basket queue aborted and basket cleared', 3000);
     })
     .catch(function(err){
       alert('Abort error: '+(err.message || String(err)));

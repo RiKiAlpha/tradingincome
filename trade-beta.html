@@ -701,7 +701,7 @@ function basketEsc(v){
     .replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
 }
-function basketSymbolKey(symbol){ return String(symbol || '').replace(/\s+/g,' ').trim(); }
+function basketSymbolKey(symbol){ return String(symbol || '').trim(); }
 function basketTypeFull(t){ return String(t || '').toLowerCase().charAt(0)==='p' ? 'PUT' : 'CALL'; }
 function basketTypeShort(t){ return basketTypeFull(t)==='PUT' ? 'p' : 'c'; }
 
@@ -1113,10 +1113,13 @@ function showBasketResult(res){
       var submitClass = String(r.submitStatus || '').indexOf('FAILED') >= 0 ? 'bad' : 'good';
       var typ = basketTypeFull(r.type);
       var symText = (typ ? typ+' ' : '') + (r.strike || '') + ' @ $' + (r.price || '') + ' · ' + (r.symbol || '');
+      var errHtml = r.error
+        ? '<div style="font-size:8px;color:var(--red);margin-top:2px;max-width:360px;white-space:normal;">'+basketEsc(r.error)+'</div>'
+        : '';
 
       return '<tr>'+
         '<td>'+basketEsc(r.acctLabel || r.acct || '')+'</td>'+
-        '<td class="sym">'+basketEsc(symText)+'</td>'+
+        '<td class="sym">'+basketEsc(symText)+errHtml+'</td>'+
         '<td>'+basketEsc(r.qty || 1)+'</td>'+
         '<td>'+basketEsc(r.orderId || '—')+'</td>'+
         '<td class="'+submitClass+'">'+basketEsc(r.submitStatus || r.submitHttp || '')+'</td>'+

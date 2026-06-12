@@ -145,7 +145,30 @@
 .pr-continue{border:1px solid rgba(0,212,166,.38);background:rgba(0,212,166,.12);color:var(--call);}
 .pr-ok:disabled,.pr-abort:disabled,.pr-continue:disabled{opacity:.35;cursor:not-allowed;}
 .pr-hidden{display:none!important;}
-@media(max-width:720px){.pr-summary{grid-template-columns:repeat(2,1fr);}.pr-card{max-height:92vh;}.pr-title{font-size:12px;}}
+.pr-repeat{height:38px;min-width:118px;border-radius:10px;font-family:var(--sans);font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border:1px solid rgba(61,156,255,.38);background:rgba(61,156,255,.10);color:var(--blue);}
+.pr-repeat:disabled{opacity:.35;cursor:not-allowed;}
+
+.ctrl-basket-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;background:rgba(61,156,255,.035);border:1px dashed rgba(61,156,255,.20);border-radius:8px;padding:6px 8px;}
+.basket-mode-btn{height:26px;padding:0 10px;border-radius:6px;border:1px solid rgba(61,156,255,.35);background:rgba(61,156,255,.10);color:var(--blue);font-family:var(--sans);font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+.basket-mode-btn.on{border-color:rgba(0,212,166,.45);background:rgba(0,212,166,.12);color:var(--call);}
+.basket-count{font-family:var(--mono);font-size:10px;font-weight:800;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.basket-mini-btn{height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--sans);font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+.basket-mini-btn.call{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
+.basket-mini-btn.put{border-color:rgba(240,140,48,.32);background:rgba(240,140,48,.08);color:var(--put);}
+.basket-mini-btn:disabled{opacity:.35;cursor:not-allowed;}
+.basket-panel{display:none;margin-bottom:6px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px;gap:7px;}
+.basket-panel.on{display:flex;flex-direction:column;}
+.basket-line{display:flex;align-items:center;gap:5px;}
+.basket-lbl{font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+.basket-inp{height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:800;text-align:center;outline:none;width:54px;}
+.basket-inp:focus{border-color:rgba(61,156,255,.45);}
+.basket-sel{height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:10px;font-weight:800;outline:none;}
+.basket-row-selected.c{background:rgba(0,212,166,.055)!important;box-shadow:inset 3px 0 0 rgba(0,212,166,.65);}
+.basket-row-selected.p{background:rgba(240,140,48,.055)!important;box-shadow:inset 3px 0 0 rgba(240,140,48,.65);}
+.sto.sel.c{background:rgba(0,212,166,.18);box-shadow:0 0 10px rgba(0,212,166,.20);}
+.sto.sel.p{background:rgba(240,140,48,.18);box-shadow:0 0 10px rgba(240,140,48,.20);}
+
+@media(max-width:720px){.pr-summary{grid-template-columns:repeat(2,1fr);}.pr-card{max-height:92vh;}.pr-title{font-size:12px;}.ctrl-basket-row{flex-wrap:wrap}.basket-line{flex-wrap:wrap}}
     .seg{display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px;}
     .sbtn{flex:1;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--text3);cursor:pointer;touch-action:manipulation;white-space:nowrap;}
     .sbtn.ob{background:var(--bg4);color:var(--text);}
@@ -416,6 +439,43 @@
       <div class="chain-fresh loading" id="chain-fresh"><span class="cf-sym">MSTR</span><span class="cf-time">...</span></div>
       <div class="xbtn" id="xbtn" onclick="toggleExpand()">All</div>
     </div>
+    <div class="ctrl-basket-row">
+      <button id="basket-mode-btn" class="basket-mode-btn" onclick="toggleBasketMode()">Basket OFF</button>
+      <div id="basket-count" class="basket-count">0 selected</div>
+      <button id="basket-review-btn" class="basket-mini-btn call" onclick="reviewBasket()" disabled>Review</button>
+      <button class="basket-mini-btn" onclick="basketClear(true)">Clear</button>
+    </div>
+    <div id="basket-panel" class="basket-panel">
+      <div class="basket-line">
+        <span class="basket-lbl">Prices</span>
+        <span class="basket-lbl" style="color:var(--call)">C</span>
+        <input id="basket-call-price" class="basket-inp" type="number" min="0.01" step="0.01" value="0.05" onchange="syncBasketPrices()" oninput="syncBasketPrices()">
+        <span class="basket-lbl" style="color:var(--put)">P</span>
+        <input id="basket-put-price" class="basket-inp" type="number" min="0.01" step="0.01" value="0.03" onchange="syncBasketPrices()" oninput="syncBasketPrices()">
+      </div>
+      <div class="basket-line">
+        <span class="basket-lbl">Strike Range</span>
+        <select id="basket-range-type" class="basket-sel">
+          <option value="C">Calls</option>
+          <option value="P">Puts</option>
+          <option value="B">Both</option>
+        </select>
+        <input id="basket-strike-from" class="basket-inp" type="number" placeholder="From">
+        <input id="basket-strike-to" class="basket-inp" type="number" placeholder="To">
+        <button class="basket-mini-btn call" onclick="basketSelectStrikeRange()">Add Range</button>
+      </div>
+      <div class="basket-line">
+        <span class="basket-lbl">Percent Away</span>
+        <select id="basket-pct-type" class="basket-sel">
+          <option value="C">Calls</option>
+          <option value="P">Puts</option>
+          <option value="B">Both</option>
+        </select>
+        <input id="basket-pct-min" class="basket-inp" type="number" value="80">
+        <input id="basket-pct-max" class="basket-inp" type="number" value="200">
+        <button class="basket-mini-btn put" onclick="basketSelectPctRange()">Add %</button>
+      </div>
+    </div>
     <div class="ctrl-panic-row">
       <label class="panic-lbl">
         <input type="checkbox" id="panic-slice-cb" class="panic-cb">
@@ -559,7 +619,9 @@
         <tbody id="pr-body"></tbody>
       </table>
     </div>
-    <div class="pr-actions" style="gap:8px;">
+    <div class="pr-actions" style="gap:8px;flex-wrap:wrap;">
+      <button class="pr-repeat pr-hidden" id="pr-repeat-filled" onclick="basketRepeatFilledOnly()">Repeat Filled Only</button>
+      <button class="pr-repeat pr-hidden" id="pr-repeat-same" onclick="basketRepeatSame()">Repeat Same Basket</button>
       <button class="pr-abort pr-hidden" id="pr-abort" onclick="abortPanicResume()">Abort</button>
       <button class="pr-continue pr-hidden" id="pr-continue" onclick="continuePanicNextRound()">Continue Next Round</button>
       <button class="pr-ok" id="pr-ok" onclick="closePanicResult()">OK</button>
@@ -579,9 +641,18 @@ var S = {
   mult: parseInt(localStorage.getItem('tr_mult')) || 1,
   en1: localStorage.getItem('tr_en1') !== '0',
   en2: localStorage.getItem('tr_en2') !== '0',
-  expanded: false, sheetState:null, strike:null, qtyA1:4, qtyA2:3,
+   expanded: false, sheetState:null, strike:null, qtyA1:4, qtyA2:3,
   price:0.02, expiryDates:null, data:null, bpMap:{}, marketOpen:false,
-  pollTimer:null, cdTimer:null, cdSecs:10, fetching:false
+  pollTimer:null, cdTimer:null, cdSecs:10, fetching:false,
+  basketMode:false,
+  basketSelected:{},
+  basketCallPrice:parseFloat(localStorage.getItem('tr_basket_call_price') || '0.05') || 0.05,
+  basketPutPrice:parseFloat(localStorage.getItem('tr_basket_put_price') || '0.03') || 0.03,
+  basketPendingPayload:null,
+  basketLastPayload:null,
+  basketLastResult:null,
+  basketResumeCanContinue:false,
+  basketRetryTimerId:null
 };
 function ge(id){ return document.getElementById(id); }
 function haptic(){ try{ if(navigator.vibrate&&navigator.userActivation&&navigator.userActivation.hasBeenActive)navigator.vibrate(6); }catch(e){} }
@@ -620,6 +691,622 @@ function _closeTicker(){
   inp.className='ticker-inp'; badge.classList.remove('hidden'); badge.textContent=S.ticker;
 }
 function calcQty(base,enabled){ if(!enabled)return 0; return Math.max(1,Math.ceil(base*S.mult)); }
+
+// ── STO Basket frontend engine ────────────────────────────────────────────────
+function basketEsc(v){
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+function basketSymbolKey(symbol){ return String(symbol || '').replace(/\s+/g,' ').trim(); }
+function basketTypeFull(t){ return String(t || '').toLowerCase().charAt(0)==='p' ? 'PUT' : 'CALL'; }
+function basketTypeShort(t){ return basketTypeFull(t)==='PUT' ? 'p' : 'c'; }
+
+function syncBasketPrices(){
+  var cp = parseFloat(ge('basket-call-price') && ge('basket-call-price').value);
+  var pp = parseFloat(ge('basket-put-price') && ge('basket-put-price').value);
+  if(!isNaN(cp) && cp > 0) S.basketCallPrice = cp;
+  if(!isNaN(pp) && pp > 0) S.basketPutPrice = pp;
+  localStorage.setItem('tr_basket_call_price', String(S.basketCallPrice));
+  localStorage.setItem('tr_basket_put_price', String(S.basketPutPrice));
+  paintBasketControls();
+}
+
+function resetPanicModalActions(){
+  var ok = ge('pr-ok'), abort = ge('pr-abort'), cont = ge('pr-continue');
+  var rf = ge('pr-repeat-filled'), rs = ge('pr-repeat-same');
+
+  if(ok){ ok.onclick = closePanicResult; ok.textContent = 'OK'; ok.disabled = false; }
+  if(abort){ abort.onclick = abortPanicResume; abort.textContent = 'Abort'; abort.disabled = false; }
+  if(cont){ cont.onclick = continuePanicNextRound; cont.textContent = 'Continue Next Round'; cont.disabled = true; }
+  if(rf){ rf.classList.add('pr-hidden'); rf.disabled = false; }
+  if(rs){ rs.classList.add('pr-hidden'); rs.disabled = false; }
+}
+
+function paintBasketControls(){
+  var btn = ge('basket-mode-btn');
+  var panel = ge('basket-panel');
+  var cnt = ge('basket-count');
+  var review = ge('basket-review-btn');
+  var callInp = ge('basket-call-price');
+  var putInp = ge('basket-put-price');
+
+  var selected = Object.keys(S.basketSelected || {}).length;
+
+  if(btn){
+    btn.className = 'basket-mode-btn ' + (S.basketMode ? 'on' : '');
+    btn.textContent = S.basketMode ? 'Basket ON' : 'Basket OFF';
+  }
+  if(panel) panel.className = 'basket-panel ' + (S.basketMode ? 'on' : '');
+  if(cnt) cnt.textContent = selected + ' selected' + (S.basketMode ? ' · click STO to toggle' : '');
+  if(review) review.disabled = selected === 0;
+  if(callInp && document.activeElement !== callInp) callInp.value = Number(S.basketCallPrice || 0.05).toFixed(2);
+  if(putInp && document.activeElement !== putInp) putInp.value = Number(S.basketPutPrice || 0.03).toFixed(2);
+}
+
+function toggleBasketMode(){
+  haptic();
+  S.basketMode = !S.basketMode;
+  paintBasketControls();
+  renderChain();
+}
+
+function basketClear(withToast){
+  S.basketSelected = {};
+  paintBasketControls();
+  renderChain();
+  if(withToast) toast('Basket cleared', 1600);
+}
+
+function getBasketChainData(){
+  var expDate = getSelectedExpiry();
+  if(!expDate || !S.data || !S.data[expDate]) return null;
+  return { expiry: expDate, data: S.data[expDate] };
+}
+
+function basketAddContract(o,type){
+  if(!o || !o.symbol) return false;
+  var expDate = getSelectedExpiry();
+  var fullType = basketTypeFull(type || o.type);
+  var key = basketSymbolKey(o.symbol);
+
+  S.basketSelected[key] = {
+    symbol: key,
+    type: fullType,
+    strike: o.strike,
+    expiry: o.expiry || expDate,
+    bid: o.bid,
+    ask: o.ask,
+    mid: o.mid,
+    pctAway: o.pctAway,
+    delta: o.delta
+  };
+  return true;
+}
+
+function basketToggleSymbol(type,sKey){
+  haptic();
+  var sym = sKey.replace(/_/g,' ');
+  var chain = getBasketChainData();
+  if(!chain) return;
+
+  var arr = chain.data[type==='p'?'puts':'calls'] || [];
+  var o = arr.find(function(item){ return basketSymbolKey(item.symbol) === basketSymbolKey(sym); });
+  if(!o) return;
+
+  var key = basketSymbolKey(o.symbol);
+  if(S.basketSelected[key]) delete S.basketSelected[key];
+  else basketAddContract(o,type);
+
+  paintBasketControls();
+  renderChain();
+}
+
+function basketSelectStrikeRange(){
+  haptic();
+  if(!S.basketMode){ S.basketMode = true; }
+
+  var chain = getBasketChainData();
+  if(!chain){ toast('No chain loaded'); return; }
+
+  var typ = (ge('basket-range-type').value || 'C').toUpperCase();
+  var from = parseFloat(ge('basket-strike-from').value);
+  var to = parseFloat(ge('basket-strike-to').value);
+
+  if(isNaN(from) || isNaN(to)){ alert('Enter From and To strikes.'); return; }
+  var lo = Math.min(from,to), hi = Math.max(from,to);
+  var added = 0;
+
+  function addArr(arr,type){
+    (arr || []).forEach(function(o){
+      var st = parseFloat(o.strike);
+      if(isNaN(st) || st < lo || st > hi) return;
+      if(basketAddContract(o,type)) added++;
+    });
+  }
+
+  if(typ === 'C' || typ === 'B') addArr(chain.data.calls, 'c');
+  if(typ === 'P' || typ === 'B') addArr(chain.data.puts, 'p');
+
+  paintBasketControls();
+  renderChain();
+  toast('Added range: '+added+' contract'+(added===1?'':'s'), 2200);
+}
+
+function basketSelectPctRange(){
+  haptic();
+  if(!S.basketMode){ S.basketMode = true; }
+
+  var chain = getBasketChainData();
+  if(!chain){ toast('No chain loaded'); return; }
+
+  var typ = (ge('basket-pct-type').value || 'C').toUpperCase();
+  var mn = parseFloat(ge('basket-pct-min').value);
+  var mx = parseFloat(ge('basket-pct-max').value);
+
+  if(isNaN(mn)) mn = 80;
+  if(isNaN(mx)) mx = 200;
+
+  var lo = Math.min(mn,mx), hi = Math.max(mn,mx);
+  var added = 0;
+
+  function addArr(arr,type){
+    (arr || []).forEach(function(o){
+      var aw = Math.abs(parseFloat(o.pctAway || 0));
+      if(isNaN(aw) || aw < lo || aw > hi) return;
+      if(basketAddContract(o,type)) added++;
+    });
+  }
+
+  if(typ === 'C' || typ === 'B') addArr(chain.data.calls, 'c');
+  if(typ === 'P' || typ === 'B') addArr(chain.data.puts, 'p');
+
+  paintBasketControls();
+  renderChain();
+  toast('Added % range: '+added+' contract'+(added===1?'':'s'), 2200);
+}
+
+function basketSelectedList(){
+  return Object.keys(S.basketSelected || {}).map(function(k){ return S.basketSelected[k]; });
+}
+
+function buildBasketPayloadFromContracts(contracts, existingRows, keepBasketId){
+  syncBasketPrices();
+
+  var accounts = [];
+  if(S.en1) accounts.push('5260');
+  if(S.en2) accounts.push('4987');
+
+  if(accounts.length === 0) throw new Error('Turn on Account 1, Account 2, or both.');
+  if(Number(S.basketCallPrice || 0) <= 0 || Number(S.basketPutPrice || 0) <= 0) throw new Error('Call and Put prices must be greater than zero.');
+
+  var expDate = getSelectedExpiry();
+  var basketId = keepBasketId || ('BST_' + Date.now());
+
+  var rows = [];
+
+  if(Array.isArray(existingRows) && existingRows.length){
+    existingRows.forEach(function(r){
+      rows.push({
+        acct: String(r.acct || r.account || r.accountLast4 || ''),
+        symbol: basketSymbolKey(r.symbol),
+        type: basketTypeFull(r.type),
+        strike: r.strike || '',
+        expiry: r.expiry || expDate || '',
+        price: Number(r.price || (basketTypeFull(r.type)==='CALL' ? S.basketCallPrice : S.basketPutPrice)).toFixed(2)
+      });
+    });
+  } else {
+    contracts.forEach(function(c){
+      var typ = basketTypeFull(c.type);
+      var px = typ === 'CALL' ? S.basketCallPrice : S.basketPutPrice;
+      accounts.forEach(function(acct){
+        rows.push({
+          acct: acct,
+          symbol: basketSymbolKey(c.symbol),
+          type: typ,
+          strike: c.strike,
+          expiry: c.expiry || expDate || '',
+          price: Number(px).toFixed(2)
+        });
+      });
+    });
+  }
+
+  return {
+    basketId: basketId,
+    ticker: S.ticker,
+    expiry: expDate || '',
+    callPrice: Number(S.basketCallPrice).toFixed(2),
+    putPrice: Number(S.basketPutPrice).toFixed(2),
+    rows: rows
+  };
+}
+
+function reviewBasket(payloadOverride){
+  haptic();
+
+  var payload;
+  try {
+    if(payloadOverride){
+      payload = payloadOverride;
+    } else {
+      var selected = basketSelectedList();
+      if(selected.length === 0){ alert('No basket contracts selected.'); return; }
+      payload = buildBasketPayloadFromContracts(selected);
+    }
+  } catch(e) {
+    alert(e.message || String(e));
+    return;
+  }
+
+  S.basketPendingPayload = payload;
+  showBasketReview(payload);
+}
+
+function showBasketReview(payload){
+  resetPanicModalActions();
+
+  var rows = payload.rows || [];
+  var calls = rows.filter(function(r){ return basketTypeFull(r.type)==='CALL'; }).length;
+  var puts = rows.filter(function(r){ return basketTypeFull(r.type)==='PUT'; }).length;
+  var m = ge('panic-result-modal');
+  if(!m) return;
+
+  ge('pr-title').textContent = (payload.ticker || S.ticker) + ' · STO Basket Review';
+  ge('pr-status').className = 'pr-status warn';
+  ge('pr-status').textContent = 'REVIEW';
+
+  ge('pr-summary').innerHTML =
+    '<div class="pr-metric"><div class="pr-mk">Orders</div><div class="pr-mv">'+rows.length+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Calls</div><div class="pr-mv call">'+calls+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Puts</div><div class="pr-mv gold">'+puts+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Call Price</div><div class="pr-mv call">$'+basketEsc(payload.callPrice || S.basketCallPrice)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Put Price</div><div class="pr-mv gold">$'+basketEsc(payload.putPrice || S.basketPutPrice)+'</div></div>';
+
+  ge('panic-retry-slot').innerHTML =
+    '<div class="pr-retry-box">Review only — no orders sent yet.<span class="muted">Click Fire Basket to send one-contract DAY STO orders.</span></div>';
+
+  ge('pr-body').innerHTML = rows.map(function(r){
+    var typ = basketTypeFull(r.type);
+    var cls = typ === 'CALL' ? 'good' : 'warn';
+    return '<tr>'+
+      '<td>'+basketEsc(r.acct)+'</td>'+
+      '<td class="sym">'+basketEsc(typ+' '+(r.strike||'')+' @ $'+r.price)+'</td>'+
+      '<td>1</td>'+
+      '<td>—</td>'+
+      '<td class="'+cls+'">READY</td>'+
+      '<td>—</td><td>—</td><td>—</td><td>0</td><td>1</td>'+
+    '</tr>';
+  }).join('');
+
+  var ok = ge('pr-ok'), abort = ge('pr-abort'), cont = ge('pr-continue');
+  var rf = ge('pr-repeat-filled'), rs = ge('pr-repeat-same');
+
+  if(rf) rf.classList.add('pr-hidden');
+  if(rs) rs.classList.add('pr-hidden');
+
+  abort.classList.remove('pr-hidden');
+  abort.textContent = 'Cancel';
+  abort.disabled = false;
+  abort.onclick = closeBasketModal;
+
+  cont.classList.add('pr-hidden');
+
+  ok.classList.remove('pr-hidden');
+  ok.disabled = false;
+  ok.textContent = 'Fire Basket';
+  ok.onclick = basketFireCurrent;
+
+  m.classList.add('on');
+}
+
+function showBasketRunning(payload){
+  var m = ge('panic-result-modal');
+  if(!m) return;
+
+  ge('pr-title').textContent = (payload.ticker || S.ticker) + ' · STO Basket';
+  ge('pr-status').className = 'pr-status warn';
+  ge('pr-status').textContent = 'RUNNING';
+  ge('pr-summary').innerHTML =
+    '<div class="pr-metric"><div class="pr-mk">Orders</div><div class="pr-mv">'+((payload.rows||[]).length)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Submitted</div><div class="pr-mv">—</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Filled</div><div class="pr-mv">—</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Cancelled</div><div class="pr-mv">—</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Still Open</div><div class="pr-mv gold">Running</div></div>';
+  ge('panic-retry-slot').innerHTML = '';
+  ge('pr-body').innerHTML = '<tr><td colspan="10" class="warn">STO Basket running — do not refresh this page.</td></tr>';
+
+  var ok = ge('pr-ok'), abort = ge('pr-abort'), cont = ge('pr-continue');
+  var rf = ge('pr-repeat-filled'), rs = ge('pr-repeat-same');
+
+  if(rf) rf.classList.add('pr-hidden');
+  if(rs) rs.classList.add('pr-hidden');
+  if(abort) abort.classList.add('pr-hidden');
+  if(cont) cont.classList.add('pr-hidden');
+  if(ok){ ok.classList.remove('pr-hidden'); ok.textContent='Running'; ok.disabled=true; }
+
+  m.classList.add('on');
+}
+
+function basketFireCurrent(){
+  var payload = S.basketPendingPayload;
+  if(!payload || !payload.rows || !payload.rows.length){
+    alert('No basket payload ready.');
+    return;
+  }
+
+  haptic();
+  S.basketLastPayload = JSON.parse(JSON.stringify(payload));
+  showBasketRunning(payload);
+
+  fetch(BACKEND+'?action=basketSto&payload='+encodeURIComponent(JSON.stringify(payload))+'&_='+Date.now())
+    .then(function(r){ return r.text(); })
+    .then(function(raw){
+      var res;
+      try { res = JSON.parse(raw); }
+      catch(parseErr){
+        res = { success:false, error:'Backend returned non-JSON response: '+parseErr.message, rows:[] };
+      }
+      showBasketResult(res);
+    })
+    .catch(function(err){
+      showBasketResult({ success:false, error:err.message || String(err), rows:[] });
+    });
+}
+
+function showBasketResult(res){
+  resetPanicModalActions();
+
+  res = res || {};
+  S.basketLastResult = res;
+
+  var rows = res.rows || [];
+  var stillOpen = Number(res.stillOpenOrders || 0);
+  var manualReview = Number(res.manualReviewOrders || 0);
+  var hardFailed = Number(res.hardFailedOrders || 0);
+  var isClean = !!res.success && stillOpen === 0 && manualReview === 0 && hardFailed === 0;
+
+  ge('pr-title').textContent = (res.ticker || S.ticker || '—') + ' · STO Basket';
+  ge('pr-status').className = 'pr-status '+(isClean ? 'ok' : (stillOpen > 0 || hardFailed > 0 ? 'bad' : 'warn'));
+  ge('pr-status').textContent = isClean ? 'CLEAN' : (res.continueNeeded ? '429 RESUME' : (stillOpen > 0 ? 'OPEN ORDERS' : 'CHECK'));
+
+  ge('pr-summary').innerHTML =
+    '<div class="pr-metric"><div class="pr-mk">Submitted</div><div class="pr-mv">'+basketEsc(res.submitted || 0)+'/'+basketEsc(res.queuedOrders || rows.length)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Filled</div><div class="pr-mv call">'+basketEsc(res.filledContracts || 0)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Cancelled</div><div class="pr-mv gold">'+basketEsc(res.cancelledContracts || 0)+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Still Open</div><div class="pr-mv '+(stillOpen>0?'red':'call')+'">'+stillOpen+'</div></div>'+
+    '<div class="pr-metric"><div class="pr-mk">Deferred</div><div class="pr-mv '+(res.continueNeeded?'gold':'')+'">'+basketEsc(res.deferredSubmitCount || 0)+'</div></div>';
+
+  if(res.continueNeeded){
+    ge('panic-retry-slot').innerHTML =
+      '<div class="pr-retry-box" id="basket-retry-box">'+
+        'Schwab submit throttle hit. Accepted orders were cleaned up.'+
+        '<span class="muted">Continue is enabled only after the timer and only if Still Open = 0 / Manual Review = 0.</span>'+
+        '<span class="muted" id="basket-retry-timer">60 sec</span>'+
+      '</div>';
+  } else {
+    ge('panic-retry-slot').innerHTML = res.error ? '<div class="pr-retry-box">'+basketEsc(res.error)+'</div>' : '';
+  }
+
+  if(rows.length === 0){
+    ge('pr-body').innerHTML = '<tr><td colspan="10" class="warn">'+basketEsc(res.error || 'No rows returned')+'</td></tr>';
+  } else {
+    ge('pr-body').innerHTML = rows.map(function(r){
+      var finalStatus = String(r.finalStatus || '');
+      var finalClass =
+        finalStatus === 'FILLED' ? 'good' :
+        (finalStatus === 'CANCELED' || finalStatus === 'CANCELLED' || finalStatus === 'SUBMIT_429_DEFERRED') ? 'warn' :
+        (Number(r.remainingQty || 0) > 0 ? 'bad' : '');
+
+      var submitClass = String(r.submitStatus || '').indexOf('FAILED') >= 0 ? 'bad' : 'good';
+      var typ = basketTypeFull(r.type);
+      var symText = (typ ? typ+' ' : '') + (r.strike || '') + ' @ $' + (r.price || '') + ' · ' + (r.symbol || '');
+
+      return '<tr>'+
+        '<td>'+basketEsc(r.acctLabel || r.acct || '')+'</td>'+
+        '<td class="sym">'+basketEsc(symText)+'</td>'+
+        '<td>'+basketEsc(r.qty || 1)+'</td>'+
+        '<td>'+basketEsc(r.orderId || '—')+'</td>'+
+        '<td class="'+submitClass+'">'+basketEsc(r.submitStatus || r.submitHttp || '')+'</td>'+
+        '<td>'+basketEsc(r.preCancelStatus || '—')+'</td>'+
+        '<td>'+basketEsc(r.cancelStatus || r.cancelHttp || '—')+'</td>'+
+        '<td class="'+finalClass+'">'+basketEsc(finalStatus || '—')+'</td>'+
+        '<td class="good">'+basketEsc(r.filledQty || 0)+'</td>'+
+        '<td class="'+(Number(r.remainingQty||0)>0?'bad':'')+'">'+basketEsc(r.remainingQty || 0)+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  var ok = ge('pr-ok'), abort = ge('pr-abort'), cont = ge('pr-continue');
+  var rf = ge('pr-repeat-filled'), rs = ge('pr-repeat-same');
+
+  if(res.continueNeeded){
+    if(rf) rf.classList.add('pr-hidden');
+    if(rs) rs.classList.add('pr-hidden');
+
+    ok.classList.add('pr-hidden');
+
+    abort.classList.remove('pr-hidden');
+    abort.textContent = 'Abort';
+    abort.disabled = false;
+    abort.onclick = abortBasketStoResume;
+
+    cont.classList.remove('pr-hidden');
+    cont.textContent = 'Continue Next Round';
+    cont.disabled = true;
+    cont.onclick = continueBasketStoNextRound;
+
+    startBasketRetryCountdown(res.retryAfterMs || 60000, stillOpen === 0 && manualReview === 0);
+  } else {
+    S.basketResumeCanContinue = false;
+
+    abort.classList.add('pr-hidden');
+    cont.classList.add('pr-hidden');
+
+    ok.classList.remove('pr-hidden');
+    ok.textContent = 'OK';
+    ok.disabled = false;
+    ok.onclick = closeBasketModal;
+
+    if(rf){
+      rf.classList.remove('pr-hidden');
+      rf.disabled = rows.filter(function(r){ return Number(r.filledQty || 0) > 0; }).length === 0;
+    }
+    if(rs){
+      rs.classList.remove('pr-hidden');
+      rs.disabled = !S.basketLastPayload || !S.basketLastPayload.rows || !S.basketLastPayload.rows.length;
+    }
+  }
+
+  ge('panic-result-modal').classList.add('on');
+}
+
+function startBasketRetryCountdown(ms, canContinue){
+  if(S.basketRetryTimerId){
+    clearInterval(S.basketRetryTimerId);
+    S.basketRetryTimerId = null;
+  }
+
+  S.basketResumeCanContinue = !!canContinue;
+
+  var box = ge('basket-retry-box');
+  var timer = ge('basket-retry-timer');
+  var cont = ge('pr-continue');
+
+  if(cont){
+    cont.disabled = true;
+    cont.textContent = 'Wait...';
+  }
+
+  var remaining = Math.max(0, Math.ceil((Number(ms) || 60000) / 1000));
+
+  function paint(){
+    if(remaining <= 0){
+      clearInterval(S.basketRetryTimerId);
+      S.basketRetryTimerId = null;
+      if(box) box.classList.add('pr-retry-ready');
+
+      if(S.basketResumeCanContinue){
+        if(timer) timer.textContent = 'Ready — click Continue Next Round.';
+        if(cont){
+          cont.disabled = false;
+          cont.textContent = 'Continue Next Round';
+        }
+      } else {
+        if(timer) timer.textContent = 'Do not continue — open/manual-review orders exist.';
+        if(cont){
+          cont.disabled = true;
+          cont.textContent = 'Continue Blocked';
+        }
+      }
+      return;
+    }
+
+    if(timer) timer.textContent = remaining + ' sec';
+    remaining--;
+  }
+
+  paint();
+  S.basketRetryTimerId = setInterval(paint, 1000);
+}
+
+function abortBasketStoResume(){
+  var res = S.basketLastResult || {};
+  var key = res.resumeKey || '';
+  var basketKey = res.basketKey || (S.basketLastPayload && S.basketLastPayload.basketId) || '';
+
+  if(!key && !basketKey){
+    closeBasketModal();
+    return;
+  }
+
+  if(!confirm('Abort saved STO Basket queue? Later basket run will start fresh.')) return;
+
+  var abort = ge('pr-abort'), cont = ge('pr-continue');
+  if(abort){ abort.disabled = true; abort.textContent = 'Aborting...'; }
+  if(cont) cont.disabled = true;
+
+  fetch(BACKEND+'?action=abortBasketStoResume&basketKey='+encodeURIComponent(basketKey)+'&resumeKey='+encodeURIComponent(key)+'&_='+Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.success){
+        alert('Abort failed: '+((d && d.error) || 'unknown'));
+        if(abort){ abort.disabled = false; abort.textContent = 'Abort'; }
+        return;
+      }
+      S.basketResumeCanContinue = false;
+      closeBasketModal();
+      toast('Saved STO Basket queue aborted', 3000);
+    })
+    .catch(function(err){
+      alert('Abort error: '+(err.message || String(err)));
+      if(abort){ abort.disabled = false; abort.textContent = 'Abort'; }
+    });
+}
+
+function continueBasketStoNextRound(){
+  if(!S.basketLastPayload){
+    alert('No saved basket context found.');
+    return;
+  }
+  if(!S.basketResumeCanContinue){
+    alert('Continue is blocked until timer is ready and Still Open is 0.');
+    return;
+  }
+
+  S.basketPendingPayload = JSON.parse(JSON.stringify(S.basketLastPayload));
+  basketFireCurrent();
+}
+
+function basketRepeatFilledOnly(){
+  var res = S.basketLastResult || {};
+  var rows = (res.rows || []).filter(function(r){ return Number(r.filledQty || 0) > 0; });
+
+  if(!rows.length){
+    alert('No filled rows to repeat.');
+    return;
+  }
+
+  var repeatRows = rows.map(function(r){
+    return {
+      acct: r.acct,
+      symbol: r.symbol,
+      type: r.type,
+      strike: r.strike,
+      expiry: r.expiry,
+      price: r.price
+    };
+  });
+
+  var payload = buildBasketPayloadFromContracts([], repeatRows, 'BST_REPEAT_FILLED_' + Date.now());
+  reviewBasket(payload);
+}
+
+function basketRepeatSame(){
+  if(!S.basketLastPayload || !S.basketLastPayload.rows || !S.basketLastPayload.rows.length){
+    alert('No prior basket to repeat.');
+    return;
+  }
+
+  var payload = JSON.parse(JSON.stringify(S.basketLastPayload));
+  payload.basketId = 'BST_REPEAT_SAME_' + Date.now();
+  reviewBasket(payload);
+}
+
+function closeBasketModal(){
+  if(S.basketRetryTimerId){
+    clearInterval(S.basketRetryTimerId);
+    S.basketRetryTimerId = null;
+  }
+  var m = ge('panic-result-modal');
+  if(m) m.classList.remove('on');
+  resetPanicModalActions();
+}
+
  let panicRetryTimerId = null;
 let panicLastRun = null;
 let panicResumeCanContinue = false;
@@ -666,6 +1353,7 @@ let panicResumeCanContinue = false;
 }
 
 function showPanicRunning(ticker, price, sliceMode){
+  resetPanicModalActions();
   var m = ge('panic-result-modal');
   if(!m) return;
 
@@ -705,6 +1393,7 @@ function showPanicRunning(ticker, price, sliceMode){
 }
 
 function showPanicResult(res){
+  resetPanicModalActions();
   var m = ge('panic-result-modal');
   if(!m) return;
 
@@ -1442,14 +2131,22 @@ function renderRow(o,type){
   var deltaVal = Number(o.delta || 0).toFixed(2);
   var oiVal = o.oi != null ? o.oi : o.openInterest;
 
-  return '<tr>'+
+  var isSelected = !!(S.basketSelected && S.basketSelected[basketSymbolKey(o.symbol)]);
+  var trCls = isSelected ? ' class="basket-row-selected '+cl+'"' : '';
+  var btnCls = 'sto '+cl+(isSelected ? ' sel' : '');
+  var btnText = S.basketMode ? (isSelected ? '✓' : '+') : defPrice.toFixed(2);
+  var btnAction = S.basketMode
+    ? 'basketToggleSymbol(\''+cl+'\',\''+sKey+'\')'
+    : 'openOrderSheet(\''+cl+'\',\''+sKey+'\')';
+
+  return '<tr'+trCls+'>'+
     '<td style="font-weight:700;color:var(--'+(cl==='c'?'call':'put')+')">$'+fmtStrike(o.strike)+'</td>'+
     '<td style="color:var(--text2)">'+fmtPct(o.pctAway)+'</td>'+
     '<td style="color:var(--text3)">'+deltaVal+'</td>'+
     '<td>'+bidCell+'</td>'+
     '<td style="color:var(--gold);font-weight:800">'+fmtP(o.mid)+'</td>'+
     '<td>'+askCell+'</td>'+
-    '<td><button class="sto '+cl+'" onclick="openOrderSheet(\''+cl+'\',\''+sKey+'\')">'+defPrice.toFixed(2)+'</button></td>'+
+    '<td><button class="'+btnCls+'" onclick="'+btnAction+'">'+btnText+'</button></td>'+
     '<td style="color:var(--text3);font-size:10px">'+fmtOI(oiVal)+'</td>'+
   '</tr>';
 }
@@ -1609,6 +2306,7 @@ document.querySelectorAll('.sbtn').forEach(function(b){ b.classList.remove('ob',
 ge('a1-tog').className='acct-tog '+(S.en1?'on':''); ge('a1-block').className='acct-block '+(S.en1?'':'disabled');
 ge('a2-tog').className='acct-tog '+(S.en2?'on':''); ge('a2-block').className='acct-block '+(S.en2?'':'disabled');
 updateRatioPreview();
+paintBasketControls();
 
 window.onload=function(){ doFetch(true); S.pollTimer=setInterval(function(){ doFetch(false); },15000); };
 </script>

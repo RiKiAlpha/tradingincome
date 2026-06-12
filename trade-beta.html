@@ -2269,18 +2269,38 @@ function doFire(){
     ge('rt').textContent='Trade Dispatched'; ge('rt').style.color='var(--call)';
     ge('rsub').textContent=S.activeContract.symbol+' @ $'+S.price.toFixed(2);
     
-    var html='';
-    var accts=[{id:'5260',q:S.qtyA1,lbl:'Account 1'},{id:'4987',q:S.qtyA2,lbl:'Account 2'}];
+        var html='';
+    var accts=[
+      {id:'5260',q:S.qtyA1,lbl:'Account 1',alt:'A1'},
+      {id:'4987',q:S.qtyA2,lbl:'Account 2',alt:'A2'}
+    ];
     accts.forEach(function(acct){
       if(acct.q<=0)return;
-      var res=d.results?d.results[acct.id]:null;
+
+      var res = d.results
+        ? (d.results[acct.id] || d.results[acct.lbl] || d.results[acct.alt])
+        : null;
+
       html+='<div class="rcard"><div class="rcl">'+acct.lbl+' ('+acct.q+' Con)</div><div class="rcs">';
-      if(res&&res.orderId){
-        html+='<div class="rfil">\u2713 Live Order</div>';
-        html+='<button class="sto p" style="padding:2px 6px;font-size:8px;margin-top:4px;" id="cbtn-'+acct.id+'" onclick="cancelSpecific(\''+acct.id+'\',\''+res.orderId+'\')">Cancel</button>';
+
+      if(res){
+        var filled = Number(res.filled || 0);
+        var cancelled = Number(res.cancelled || 0);
+        var rejected = Number(res.rejected || 0);
+
+        if(rejected > 0){
+          html+='<div class="rrej">Rejected: '+rejected+'</div>';
+        } else if(cancelled > 0){
+          html+='<div class="rfil" style="color:var(--gold)">Auto-cancelled: '+cancelled+'</div>';
+        } else {
+          html+='<div class="rfil">✓ Filled/accepted: '+filled+'</div>';
+        }
+
+        html+='<div style="font-size:8px;color:var(--text3);margin-top:3px;">Filled '+filled+' · Cancelled '+cancelled+' · Rejected '+rejected+'</div>';
       } else {
-        html+='<div class="rrej">Failed Execution</div><div style="font-size:8px;color:var(--text3)">'+(res&&res.error||'Unknown response exception')+'</div>';
+        html+='<div class="rrej">Result Missing</div><div style="font-size:8px;color:var(--text3)">No result returned for '+acct.lbl+'</div>';
       }
+
       html+='</div></div>';
     });
     ge('rcards').innerHTML=html;

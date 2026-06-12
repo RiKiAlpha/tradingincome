@@ -1161,7 +1161,7 @@ function showBasketResult(res){
     ok.classList.remove('pr-hidden');
     ok.textContent = 'OK';
     ok.disabled = false;
-    ok.onclick = closeBasketModal;
+    ok.onclick = closeBasketResultAndClear;
 
     if(rf){
       rf.classList.remove('pr-hidden');
@@ -1316,6 +1316,18 @@ function closeBasketModal(){
   var m = ge('panic-result-modal');
   if(m) m.classList.remove('on');
   resetPanicModalActions();
+}
+
+function closeBasketResultAndClear(){
+  closeBasketModal();
+
+  S.basketSelected = {};
+  S.basketPendingPayload = null;
+
+  paintBasketControls();
+  renderChain();
+
+  toast('Basket cleared', 1600);
 }
 
  let panicRetryTimerId = null;

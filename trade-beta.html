@@ -1043,7 +1043,15 @@ function basketFireCurrent(){
   S.basketLastPayload = JSON.parse(JSON.stringify(payload));
   showBasketRunning(payload);
 
-  fetch(BACKEND+'?action=basketSto&payload='+encodeURIComponent(JSON.stringify(payload))+'&_='+Date.now())
+   var postBody = new URLSearchParams();
+  postBody.set('action', 'basketSto');
+  postBody.set('payload', JSON.stringify(payload));
+  postBody.set('_', String(Date.now()));
+
+  fetch(BACKEND, {
+    method: 'POST',
+    body: postBody
+  })
     .then(function(r){ return r.text(); })
     .then(function(raw){
       var res;
@@ -2252,7 +2260,7 @@ function doStage(){
 
 function doFire(){
   haptic(); clearInterval(S.cdTimer); setState('firing');
-  var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&q1='+S.qtyA1+'&q2='+S.qtyA2;
+    var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2;
   fetch(BACKEND+'?action=placeOrder'+params).then(function(r){return r.json();}).then(function(d){
     if(d.error){ showErr(d.error); return; }
     ge('rt').textContent='Trade Dispatched'; ge('rt').style.color='var(--call)';

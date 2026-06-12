@@ -2287,16 +2287,22 @@ function doFire(){
         var filled = Number(res.filled || 0);
         var cancelled = Number(res.cancelled || 0);
         var rejected = Number(res.rejected || 0);
+        var open = Number(res.open || 0);
+        var manualReview = Number(res.manualReview || 0);
 
-        if(rejected > 0){
+        if(open > 0 || manualReview > 0){
+          html+='<div class="rrej">Check Schwab: '+open+' open · '+manualReview+' review</div>';
+        } else if(rejected > 0){
           html+='<div class="rrej">Rejected: '+rejected+'</div>';
         } else if(cancelled > 0){
           html+='<div class="rfil" style="color:var(--gold)">Auto-cancelled: '+cancelled+'</div>';
+        } else if(filled > 0){
+          html+='<div class="rfil">✓ Filled: '+filled+'</div>';
         } else {
-          html+='<div class="rfil">✓ Filled/accepted: '+filled+'</div>';
+          html+='<div class="rfil" style="color:var(--text3)">No open orders</div>';
         }
 
-        html+='<div style="font-size:8px;color:var(--text3);margin-top:3px;">Filled '+filled+' · Cancelled '+cancelled+' · Rejected '+rejected+'</div>';
+        html+='<div style="font-size:8px;color:var(--text3);margin-top:3px;">Filled '+filled+' · Cancelled '+cancelled+' · Rejected '+rejected+' · Open '+open+' · Review '+manualReview+'</div>';
       } else {
         html+='<div class="rrej">Result Missing</div><div style="font-size:8px;color:var(--text3)">No result returned for '+acct.lbl+'</div>';
       }

@@ -364,20 +364,18 @@ Fallback: restore this Apps Script deployment version if future UI patches break
       box-shadow:0 -24px 70px rgba(0,0,0,.55);
     }
     .handle{background:rgba(61,156,255,.30);}
-    /* RiKi fintech pills: Stage Order + Confirm/Send */
+    /* RiKi calm pills: Stage Order + Confirm/Send — match Basket button language */
     #sh button,
     #sh .stgbtn,
     #sh .cfbtn,
     #sh button.stgbtn,
     #sh button.cfbtn{
       border-radius:999px!important;
-      border:1px solid rgba(255,255,255,.10)!important;
-      background:
-        radial-gradient(circle at top left,rgba(61,156,255,.18),transparent 34%),
-        linear-gradient(135deg,rgba(13,21,31,.96),rgba(7,12,18,.96))!important;
-      color:var(--text)!important;
-      box-shadow:0 12px 30px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.06)!important;
-      transition:transform .12s ease,opacity .12s ease,box-shadow .12s ease;
+      border:1px solid rgba(255,255,255,.08)!important;
+      background:var(--bg3)!important;
+      color:var(--text2)!important;
+      box-shadow:none!important;
+      transition:transform .12s ease,opacity .12s ease,background .12s ease,border-color .12s ease;
       -webkit-appearance:none!important;
       appearance:none!important;
     }
@@ -386,61 +384,34 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     #sh .stgbtn:active,
     #sh .cfbtn:active{
       transform:scale(.985);
-      opacity:.88;
+      opacity:.86;
     }
 
     #sh .stgbtn,
-    #sh button.stgbtn{
-      font-weight:900!important;
-      letter-spacing:.08em!important;
-      text-transform:uppercase!important;
-    }
-
-    #sh .stgbtn.c,
-    #sh button.stgbtn.c{
-      background:
-        radial-gradient(circle at top left,rgba(0,212,166,.32),transparent 36%),
-        linear-gradient(135deg,rgba(0,212,166,.95),rgba(61,156,255,.74))!important;
-      color:#031510!important;
-      border-color:rgba(0,212,166,.42)!important;
-      box-shadow:0 0 24px rgba(0,212,166,.14),0 14px 34px rgba(0,0,0,.34)!important;
-    }
-
-    #sh .stgbtn.p,
-    #sh button.stgbtn.p{
-      background:
-        radial-gradient(circle at top left,rgba(244,197,66,.32),transparent 36%),
-        linear-gradient(135deg,rgba(240,140,48,.96),rgba(244,197,66,.72))!important;
-      color:#190b02!important;
-      border-color:rgba(240,140,48,.45)!important;
-      box-shadow:0 0 24px rgba(240,140,48,.14),0 14px 34px rgba(0,0,0,.34)!important;
-    }
-
+    #sh button.stgbtn,
     #sh .cfbtn,
     #sh button.cfbtn{
-      font-weight:950!important;
+      font-weight:900!important;
       letter-spacing:.06em!important;
       text-transform:uppercase!important;
     }
 
+    #sh .stgbtn.c,
+    #sh button.stgbtn.c,
     #sh .cfbtn.c,
     #sh button.cfbtn.c{
-      background:
-        radial-gradient(circle at top left,rgba(0,212,166,.22),transparent 36%),
-        linear-gradient(135deg,rgba(0,212,166,.20),rgba(61,156,255,.14))!important;
+      border-color:rgba(0,212,166,.32)!important;
+      background:rgba(0,212,166,.08)!important;
       color:var(--call)!important;
-      border-color:rgba(0,212,166,.50)!important;
-      box-shadow:0 0 26px rgba(0,212,166,.12),0 14px 34px rgba(0,0,0,.34)!important;
     }
 
+    #sh .stgbtn.p,
+    #sh button.stgbtn.p,
     #sh .cfbtn.p,
     #sh button.cfbtn.p{
-      background:
-        radial-gradient(circle at top left,rgba(240,140,48,.22),transparent 36%),
-        linear-gradient(135deg,rgba(240,140,48,.20),rgba(244,197,66,.12))!important;
+      border-color:rgba(240,140,48,.32)!important;
+      background:rgba(240,140,48,.08)!important;
       color:var(--put)!important;
-      border-color:rgba(240,140,48,.50)!important;
-      box-shadow:0 0 26px rgba(240,140,48,.12),0 14px 34px rgba(0,0,0,.34)!important;
     }
     .bkbtn,.donebtn{
       border-radius:999px!important;

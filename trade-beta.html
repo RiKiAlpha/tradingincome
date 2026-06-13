@@ -2208,7 +2208,21 @@ function doFetch(firstTime){
         setTimeout(function(){ fresh.className = 'chain-fresh ready'; },600);
       }
 
-      ge('updated-lbl').textContent = 'Updated: '+new Date(d.updated || Date.now()).toLocaleString();
+      var upd = ge('updated-lbl');
+if(upd){
+  upd.textContent = 'Updated: ' + new Date(d.updated || Date.now()).toLocaleString();
+
+  var pill = ge('mobile-basket-pill');
+  if(!pill){
+    pill = document.createElement('span');
+    pill.id = 'mobile-basket-pill';
+    pill.className = 'mobile-basket-pill';
+  }
+
+  upd.appendChild(document.createTextNode(' '));
+  upd.appendChild(pill);
+  updateMobileBasketPill();
+}
 
       console.log('[RiKi] doFetch: about to clear #tw and call renderChain');
       var tw = ge('tw'); if(tw) tw.className = '';

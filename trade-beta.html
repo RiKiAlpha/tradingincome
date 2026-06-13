@@ -424,8 +424,9 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     /* Smooth compact collapse — desktop + mobile
        Collapse ONLY buying power + order ratio/multiplier.
        Keep expiry, range, All, Basket controls, Panic row, and chain header visible. */
-    #app .bp-hdr,
-    #app .ratio-card{
+#app .bp-hdr,
+#app .ratio-card,
+#app .ctrl-panic-row{
       transition:
         opacity .20s ease,
         max-height .22s ease,
@@ -436,8 +437,9 @@ Fallback: restore this Apps Script deployment version if future UI patches break
       will-change:opacity,max-height,transform;
     }
 
-    #app.mobile-compact .bp-hdr,
-    #app.mobile-compact .ratio-card{
+#app.mobile-compact .bp-hdr,
+#app.mobile-compact .ratio-card,
+#app.mobile-compact.basket-on .ctrl-panic-row{
       opacity:0;
       max-height:0;
       margin:0!important;
@@ -1006,6 +1008,12 @@ function paintBasketControls(){
   var putInp = ge('basket-put-price');
 
   var selected = Object.keys(S.basketSelected || {}).length;
+
+  var app = ge('app');
+  if(app){
+    if(S.basketMode) app.classList.add('basket-on');
+    else app.classList.remove('basket-on');
+  }
 
   if(btn){
     btn.className = 'basket-mode-btn ' + (S.basketMode ? 'on' : '');

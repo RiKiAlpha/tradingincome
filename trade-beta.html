@@ -356,14 +356,12 @@ Fallback: restore this Apps Script deployment version if future UI patches break
       box-shadow:0 0 10px rgba(61,156,255,.08);
     }
 
-    #sh{
-      background:
-        radial-gradient(circle at top left,rgba(61,156,255,.10),transparent 34%),
-        linear-gradient(180deg,rgba(18,26,34,.98),rgba(6,10,16,.98));
-      border-top:1px solid rgba(61,156,255,.18);
-      box-shadow:0 -24px 70px rgba(0,0,0,.55);
-    }
-    .handle{background:rgba(61,156,255,.30);}
+#sh{
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  box-shadow:none;
+}
+    .handle{background:var(--border);}
     /* RiKi calm pills: Stage Order + Confirm/Send — match Basket button language */
     #sh button,
     #sh .stgbtn,

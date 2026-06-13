@@ -326,6 +326,111 @@
     .cfbtn.c{border-color:var(--call);background:rgba(0,212,166,.1);color:var(--call);}
     .cfbtn.p{border-color:var(--put);background:rgba(240,140,48,.1);color:var(--put);}
     .cfbtn:active{opacity:.8;}
+
+    /* RiKi V1 mobile compact + fintech order sheet polish */
+    .mobile-basket-pill{
+      display:none;
+      font-family:var(--mono);
+      font-size:8px;
+      font-weight:900;
+      letter-spacing:.04em;
+      color:var(--blue);
+      background:rgba(61,156,255,.10);
+      border:1px solid rgba(61,156,255,.28);
+      border-radius:999px;
+      padding:3px 7px;
+      white-space:nowrap;
+      box-shadow:0 0 10px rgba(61,156,255,.08);
+    }
+
+    #sh{
+      background:
+        radial-gradient(circle at top left,rgba(61,156,255,.10),transparent 34%),
+        linear-gradient(180deg,rgba(18,26,34,.98),rgba(6,10,16,.98));
+      border-top:1px solid rgba(61,156,255,.18);
+      box-shadow:0 -24px 70px rgba(0,0,0,.55);
+    }
+    .handle{background:rgba(61,156,255,.30);}
+    .stgbtn,.cfbtn{
+      border-radius:999px!important;
+      border:1px solid transparent!important;
+      box-shadow:0 12px 30px rgba(0,0,0,.26);
+      transition:transform .12s ease,opacity .12s ease,box-shadow .12s ease;
+    }
+    .stgbtn.c{
+      background:linear-gradient(135deg,rgba(0,212,166,.95),rgba(61,156,255,.72))!important;
+      color:#031510!important;
+      border-color:rgba(0,212,166,.35)!important;
+    }
+    .stgbtn.p{
+      background:linear-gradient(135deg,rgba(240,140,48,.95),rgba(244,197,66,.70))!important;
+      color:#190b02!important;
+      border-color:rgba(240,140,48,.35)!important;
+    }
+    .cfbtn.c{
+      background:linear-gradient(135deg,rgba(0,212,166,.18),rgba(61,156,255,.12))!important;
+      color:var(--call)!important;
+      border-color:rgba(0,212,166,.45)!important;
+      box-shadow:0 0 24px rgba(0,212,166,.10),0 12px 30px rgba(0,0,0,.26);
+    }
+    .cfbtn.p{
+      background:linear-gradient(135deg,rgba(240,140,48,.18),rgba(244,197,66,.10))!important;
+      color:var(--put)!important;
+      border-color:rgba(240,140,48,.45)!important;
+      box-shadow:0 0 24px rgba(240,140,48,.10),0 12px 30px rgba(0,0,0,.26);
+    }
+    .bkbtn,.donebtn{
+      border-radius:999px!important;
+      background:rgba(255,255,255,.025)!important;
+      border:1px solid rgba(255,255,255,.08)!important;
+      color:var(--text2)!important;
+    }
+    .sumbox,.bpcol,.rcard{
+      background:rgba(18,26,34,.86)!important;
+      border:1px solid rgba(255,255,255,.065)!important;
+    }
+
+    @media(max-width:720px){
+      #app.mobile-compact #hdr{
+        padding:6px 10px 0;
+        border-bottom:1px solid rgba(255,255,255,.04);
+        background:rgba(6,10,16,.96);
+      }
+      #app.mobile-compact .hdr-top{
+        margin-bottom:3px;
+      }
+      #app.mobile-compact .hdr-right,
+      #app.mobile-compact #spot-price,
+      #app.mobile-compact #chg-dollar,
+      #app.mobile-compact #chg-pct,
+      #app.mobile-compact .bp-hdr,
+      #app.mobile-compact .ratio-card,
+      #app.mobile-compact .exp-tabs,
+      #app.mobile-compact #ctrl{
+        display:none!important;
+      }
+      #app.mobile-compact #updated-lbl{
+        display:flex;
+        align-items:center;
+        gap:6px;
+        margin-bottom:5px;
+        font-size:8px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      #app.mobile-compact .mobile-basket-pill{
+        display:inline-flex;
+        align-items:center;
+        margin-left:6px;
+      }
+      #app.mobile-compact .ticker-badge{
+        height:22px;
+        padding:2px 7px;
+        font-size:10px;
+      }
+    }
+
     .firewrap{padding:40px 0;text-align:center;}
     @keyframes spinr{to{transform:rotate(360deg);}}
     .fspin{animation:spinr .8s linear infinite;transform-box:fill-box;transform-origin:center;}
@@ -370,7 +475,7 @@
         </div>
       </div>
     </div>
-    <div id="updated-lbl">Loading…</div>
+    <div id="updated-lbl">Loading… <span id="mobile-basket-pill" class="mobile-basket-pill">Basket 0 · Orders 0</span></div>
     <div class="bp-hdr">
       <div class="bp-hdr-col"><div class="bp-hdr-lbl">A1 Buying Power</div><div class="bp-hdr-val" id="hdr-bp1">—</div></div>
       <div class="bp-hdr-col"><div class="bp-hdr-lbl">A2 Buying Power</div><div class="bp-hdr-val" id="hdr-bp2">—</div></div>
@@ -691,6 +796,94 @@ function _closeTicker(){
   inp.className='ticker-inp'; badge.classList.remove('hidden'); badge.textContent=S.ticker;
 }
 function calcQty(base,enabled){ if(!enabled)return 0; return Math.max(1,Math.ceil(base*S.mult)); }
+function postBackendForm(action, fields){
+  var body = new URLSearchParams();
+  body.set('action', action);
+  Object.keys(fields || {}).forEach(function(k){
+    body.set(k, String(fields[k]));
+  });
+  body.set('_', String(Date.now()));
+
+  return fetch(BACKEND, {
+    method:'POST',
+    body:body
+  });
+}
+
+function panicFetchRun_(run){
+  return postBackendForm('panicBtc', {
+    ticker: run.ticker,
+    price: run.price,
+    slice: run.slice ? '1' : '0'
+  });
+}
+
+function panicFetchAbort_(run){
+  return postBackendForm('abortPanicResume', {
+    ticker: run.ticker,
+    price: run.price,
+    slice: run.slice ? '1' : '0'
+  });
+}
+function basketOrderCount_(){
+  var selected = S && S.basketSelected ? Object.keys(S.basketSelected).length : 0;
+  var accts = (S && S.en1 ? 1 : 0) + (S && S.en2 ? 1 : 0);
+  return selected * Math.max(0, accts);
+}
+
+function updateMobileBasketPill(){
+  var p = ge('mobile-basket-pill');
+  if(!p) return;
+  var selected = S && S.basketSelected ? Object.keys(S.basketSelected).length : 0;
+  p.textContent = 'Basket ' + selected + ' · Orders ' + basketOrderCount_();
+}
+
+function setMobileCompact(on){
+  var app = ge('app');
+  if(!app) return;
+  if(on) app.classList.add('mobile-compact');
+  else app.classList.remove('mobile-compact');
+  updateMobileBasketPill();
+}
+
+function installMobileCompactScroll(){
+  var sc = ge('cs');
+  if(!sc || sc._rikiCompactInstalled) return;
+  sc._rikiCompactInstalled = true;
+
+  var lastY = 0;
+  var ticking = false;
+
+  sc.addEventListener('scroll', function(){
+    if(ticking) return;
+    ticking = true;
+
+    requestAnimationFrame(function(){
+      var y = sc.scrollTop || 0;
+      var dy = y - lastY;
+      var mobile = window.matchMedia && window.matchMedia('(max-width:720px)').matches;
+      var modalOpen = (ge('panic-result-modal') && ge('panic-result-modal').classList.contains('on')) ||
+                      (ge('sh') && ge('sh').classList.contains('open'));
+
+      if(!mobile || modalOpen || y < 18){
+        setMobileCompact(false);
+      } else if(dy > 4 && y > 70){
+        setMobileCompact(true);
+      } else if(dy < -6){
+        setMobileCompact(false);
+      }
+
+      lastY = y;
+      ticking = false;
+    });
+  }, { passive:true });
+
+  window.addEventListener('resize', function(){
+    if(!(window.matchMedia && window.matchMedia('(max-width:720px)').matches)){
+      setMobileCompact(false);
+    }
+  });
+}
 
 // ── STO Basket frontend engine ────────────────────────────────────────────────
 function basketEsc(v){
@@ -745,6 +938,7 @@ function paintBasketControls(){
   if(review) review.disabled = selected === 0;
   if(callInp && document.activeElement !== callInp) callInp.value = Number(S.basketCallPrice || 0.05).toFixed(2);
   if(putInp && document.activeElement !== putInp) putInp.value = Number(S.basketPutPrice || 0.03).toFixed(2);
+  updateMobileBasketPill();
 }
 
 function toggleBasketMode(){
@@ -1575,14 +1769,7 @@ function abortPanicResume() {
   }
   if (cont) cont.disabled = true;
 
-  fetch(
-    BACKEND +
-    '?action=abortPanicResume' +
-    '&ticker=' + encodeURIComponent(panicLastRun.ticker) +
-    '&price=' + encodeURIComponent(panicLastRun.price) +
-    '&slice=' + (panicLastRun.slice ? '1' : '0') +
-    '&_=' + Date.now()
-  )
+  panicFetchAbort_(panicLastRun)
   .then(function(r){ return r.json(); })
   .then(function(res){
     if (!res || !res.success) {
@@ -1640,14 +1827,7 @@ function continuePanicNextRound() {
 
   showPanicRunning(panicLastRun.ticker, parseFloat(panicLastRun.price), panicLastRun.slice);
 
-  fetch(
-    BACKEND +
-    '?action=panicBtc' +
-    '&ticker=' + encodeURIComponent(panicLastRun.ticker) +
-    '&price=' + encodeURIComponent(panicLastRun.price) +
-    '&slice=' + (panicLastRun.slice ? '1' : '0') +
-    '&_=' + Date.now()
-  )
+    panicFetchRun_(panicLastRun)
   .then(function(r){ return r.text(); })
   .then(function(raw){
     if (btn) {
@@ -1683,7 +1863,7 @@ function continuePanicNextRound() {
       success: false,
       ticker: panicLastRun.ticker,
       price: panicLastRun.price,
-      error: err.message || String(err),
+      error: "Mobile/network response lost after Panic request. Check Schwab/ToS open orders before retrying. Detail: " + (err.message || String(err)),
       rows: []
     });
   });
@@ -1733,16 +1913,8 @@ function triggerPanicClose() {
     btn.style.opacity = '1';
   }
 
-  fetch(
-    BACKEND +
-    '?action=panicBtc' +
-    '&ticker=' + encodeURIComponent(S.ticker) +
-    '&price=' + encodeURIComponent(limitPrice.toFixed(2)) +
-    '&slice=' + (sliceChecked ? '1' : '0')
-  )
-  .then(function(r) {
-    return r.text();
-  })
+  panicFetchRun_(panicLastRun)
+  .then(function(r){ return r.text(); })
   .then(function(raw) {
     resetBtn();
 
@@ -1768,7 +1940,7 @@ function triggerPanicClose() {
       success: false,
       ticker: S.ticker,
       price: limitPrice.toFixed(2),
-      error: err.message || String(err),
+      error: "Mobile/network response lost after Panic request. Check Schwab/ToS open orders before retrying. Detail: " + (err.message || String(err)),
       rows: []
     });
   });
@@ -2357,7 +2529,13 @@ ge('a2-tog').className='acct-tog '+(S.en2?'on':''); ge('a2-block').className='ac
 updateRatioPreview();
 paintBasketControls();
 
-window.onload=function(){ doFetch(true); S.pollTimer=setInterval(function(){ doFetch(false); },15000); };
+window.onload=function(){
+  paintBasketControls();
+  updateMobileBasketPill();
+  installMobileCompactScroll();
+  doFetch(true);
+  S.pollTimer=setInterval(function(){ doFetch(false); },15000);
+};
 </script>
 </body>
 </html>

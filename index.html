@@ -518,7 +518,53 @@ function toggleNickelCloser(expiry){
     })
     .catch(function(e){ toast('Error: '+errMsg(e)); });
 }
+// ── Emergency RiKi unlock ─────────────────────────────────────────────────────
+// Restores NICKEL_CLOSER_STATUS=ON only. No order/cancel/position action.
+function doManualUnlockRikiEmergency(btn){
+  haptic();
 
+  var ok = confirm(
+    'Emergency unlock only.\n\n' +
+    'Use this only if BTC/Panic got stuck and dashboard refresh is blocked.\n\n' +
+    'This sets NICKEL_CLOSER_STATUS=ON. It does NOT cancel orders or check Schwab.\n\n' +
+    'Continue?'
+  );
+  if(!ok) return;
+
+  btn = btn || ge('manual-unlock-btn');
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = 'Unlocking...';
+    btn.style.opacity = '0.7';
+  }
+
+  fetch(BACKEND + '?action=manualUnlockRikiEmergency&_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.success){
+        toast('✓ Manual unlock complete — Nickel Closer ON', 3500);
+        if(btn){
+          btn.textContent = 'Unlocked';
+          btn.style.opacity = '1';
+        }
+      } else {
+        toast('Unlock failed: ' + ((d && d.error) || 'unknown'), 5000);
+        if(btn){
+          btn.disabled = false;
+          btn.textContent = 'Manual Unlock';
+          btn.style.opacity = '1';
+        }
+      }
+    })
+    .catch(function(e){
+      toast('Unlock error: ' + errMsg(e), 5000);
+      if(btn){
+        btn.disabled = false;
+        btn.textContent = 'Manual Unlock';
+        btn.style.opacity = '1';
+      }
+    });
+}
 // ── Cancel All Orders ─────────────────────────────────────────────────────────
 function doCancelAll(){
   haptic();
@@ -915,6 +961,18 @@ function renderSettings(d){
     });
     nc.appendChild(ncCard);
   }
+    // ── Emergency manual unlock button ─────────────────────────────────────────
+  var unlockCard = document.createElement('div');
+  unlockCard.className = 'scard';
+  unlockCard.innerHTML =
+    '<div class="srow">' +
+      '<div>' +
+        '<div class="slbl" style="color:var(--red)">Emergency RiKi Unlock</div>' +
+        '<div class="ssub">Use only if BTC/Panic is stuck and refreshDashboard is blocked</div>' +
+      '</div>' +
+      '<button class="abtn red" id="manual-unlock-btn" onclick="doManualUnlockRikiEmergency(this)">Manual Unlock</button>' +
+    '</div>';
+  nc.appendChild(unlockCard);
 
   // ── Face ID lock toggle ───────────────────────────────────────────────────
     // ── Face ID lock toggle ───────────────────────────────────────────────────

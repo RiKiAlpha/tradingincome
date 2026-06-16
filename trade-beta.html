@@ -88,13 +88,22 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     .mbtn.on{border-color:rgba(61,156,255,.5);background:rgba(61,156,255,.12);color:var(--blue);}
     .minp{width:44px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;text-align:center;outline:none;}
     .minp:focus{border-color:rgba(61,156,255,.4);}
-    .exp-tabs{display:flex;gap:5px;margin-bottom:8px;}
-    .exp-tab{flex:1;padding:6px 4px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);text-align:center;cursor:pointer;touch-action:manipulation;}
+    .expiry-strip-wrap{display:flex;align-items:center;gap:5px;margin-bottom:6px;}
+    .expiry-scroll-btn{width:24px;height:30px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--mono);font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;flex-shrink:0;}
+    .expiry-scroll-btn:active{opacity:.65;}
+    .exp-tabs{flex:1;display:flex;gap:5px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;padding-bottom:1px;}
+    .exp-tabs::-webkit-scrollbar{display:none;}
+    .exp-tab{flex:0 0 auto;min-width:76px;padding:6px 7px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);text-align:center;cursor:pointer;touch-action:manipulation;}
     .etl{font-size:8px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;}
     .etd{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);margin-top:1px;}
     .exp-tab.on{border-color:rgba(0,212,166,.35);background:rgba(0,212,166,.07);}
     .exp-tab.on .etl{color:var(--call);}
     .exp-tab.on .etd{color:var(--text);}
+    .manual-expiry-wrap{display:flex;align-items:center;gap:5px;margin-bottom:8px;}
+    .manual-expiry-lbl{font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+    .manual-expiry-input{height:24px;flex:1;min-width:0;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:10px;font-weight:800;text-align:center;outline:none;}
+    .manual-expiry-input:focus{border-color:rgba(61,156,255,.45);}
+    .manual-expiry-add-btn{height:24px;padding:0 9px;border-radius:6px;border:1px solid rgba(61,156,255,.32);background:rgba(61,156,255,.08);color:var(--blue);font-family:var(--sans);font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
     #ctrl{flex-shrink:0;padding:0 14px 8px;}
     .ctrl-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
     .ctrl-panic-row{display:flex;align-items:center;justify-content:space-between;background:rgba(229,83,83,0.04);border:1px dashed rgba(229,83,83,0.25);border-radius:8px;padding:6px 10px;}
@@ -605,10 +614,15 @@ Fallback: restore this Apps Script deployment version if future UI patches break
         </div>
       </div>
     </div>
-    <div class="exp-tabs">
-      <div class="exp-tab" data-i="0" onclick="setExpiry(0)"><div class="etl">This Wk</div><div class="etd" id="ed0">—</div></div>
-      <div class="exp-tab" data-i="1" onclick="setExpiry(1)"><div class="etl">Next Wk</div><div class="etd" id="ed1">—</div></div>
-      <div class="exp-tab" data-i="2" onclick="setExpiry(2)"><div class="etl">Wk+2</div><div class="etd" id="ed2">—</div></div>
+    <div class="expiry-strip-wrap">
+      <button class="expiry-scroll-btn" type="button" onclick="scrollExpiryTabs(-1)">‹</button>
+      <div class="exp-tabs" id="exp-tabs-scroll"></div>
+      <button class="expiry-scroll-btn" type="button" onclick="scrollExpiryTabs(1)">›</button>
+    </div>
+    <div class="manual-expiry-wrap">
+      <span class="manual-expiry-lbl">Manual expiry</span>
+      <input id="manual-expiry-input" class="manual-expiry-input" type="text" inputmode="numeric" placeholder="YYYY-MM-DD">
+      <button class="manual-expiry-add-btn" type="button" onclick="addManualExpiryTab()">Add</button>
     </div>
   </div>
   <div id="ctrl">
@@ -864,11 +878,21 @@ function editTicker(){
 function commitTicker(){
   var inp=ge('tkr-inp'),v=(inp.value||'').trim().toUpperCase();
   if(v&&v!==S.ticker){
-    S.ticker=v; saveAll();
-    ge('tkr-badge').textContent=v;
-    ge('tkr-badge').classList.remove('ready'); ge('tkr-badge').classList.add('loading');
-    ge('spot-price').textContent='Loading'; ge('chg-pct').textContent=''; ge('chg-dollar').textContent='';
-    markChainLoading('Loading '+v+' chain\u2026');
+    S.ticker = v;
+    S.expiryIdx = 0;
+    S.activeExpiry = '';
+    S.expiryDates = null;
+    S.data = null;
+    saveAll();
+
+    updateExpTabs();
+    ge('tkr-badge').textContent = v;
+    ge('tkr-badge').classList.remove('ready');
+    ge('tkr-badge').classList.add('loading');
+    ge('spot-price').textContent = 'Loading';
+    ge('chg-pct').textContent = '';
+    ge('chg-dollar').textContent = '';
+    markChainLoading('Discovering '+v+' expiries…');
     doFetch(true);
   }
   _closeTicker();
@@ -2071,28 +2095,110 @@ function getSelectedExpiry(){
   return S.activeExpiry || '';
 }
 
+function expiryTabLabel_(iso){
+  iso = String(iso || '').trim();
+  var m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m) return { top:'EXP', bottom:iso || '—' };
+
+  var d = new Date(iso + 'T12:00:00');
+  var dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+  return { top:dow, bottom:m[2] + '/' + m[3] };
+}
+
+function scrollExpiryTabs(direction){
+  var strip = ge('exp-tabs-scroll');
+  if(!strip) return;
+  strip.scrollBy({ left: (direction || 1) * 220, behavior: 'smooth' });
+}
+
 function updateExpTabs(){
-  document.querySelectorAll('.exp-tab').forEach(function(t,i){
-    if(i === S.expiryIdx) t.classList.add('on');
-    else t.classList.remove('on');
+  var strip = ge('exp-tabs-scroll') || document.querySelector('.exp-tabs');
+  if(!strip) return;
+
+  var dates = Array.isArray(S.expiryDates) ? S.expiryDates.slice() : [];
+
+  if(S.activeExpiry && dates.indexOf(S.activeExpiry) < 0){
+    dates.push(S.activeExpiry);
+    dates.sort();
+    S.expiryDates = dates;
+  }
+
+  if(dates.length === 0){
+    strip.innerHTML = '<div class="exp-tab on"><div class="etl">EXP</div><div class="etd">—</div></div>';
+    return;
+  }
+
+  if(S.expiryIdx < 0 || S.expiryIdx >= dates.length) S.expiryIdx = 0;
+  if(!S.activeExpiry) S.activeExpiry = dates[S.expiryIdx];
+
+  var html = '';
+  dates.forEach(function(exp, i){
+    var lbl = expiryTabLabel_(exp);
+    html +=
+      '<div class="exp-tab' + (i === S.expiryIdx ? ' on' : '') + '" ' +
+        'data-i="' + i + '" data-expiry="' + exp + '" onclick="setExpiry(' + i + ')">' +
+        '<div class="etl">' + lbl.top + '</div>' +
+        '<div class="etd">' + lbl.bottom + '</div>' +
+      '</div>';
   });
 
-  if(Array.isArray(S.expiryDates)){
-    for(var i=0;i<3;i++){
-      var el = ge('ed'+i);
-      if(el && S.expiryDates[i]) el.textContent = S.expiryDates[i].substring(5);
-    }
+  strip.innerHTML = html;
+
+  var active = strip.querySelector('.exp-tab.on');
+  if(active && active.scrollIntoView){
+    try { active.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' }); } catch(e) {}
   }
 }
+
 function setExpiry(idx){
   haptic();
+
+  idx = parseInt(idx, 10) || 0;
+  if(!Array.isArray(S.expiryDates) || !S.expiryDates[idx]){
+    toast('Expiry not available', 1800);
+    return;
+  }
+
   S.expiryIdx = idx;
-  S.activeExpiry = getSelectedExpiry();
+  S.activeExpiry = S.expiryDates[idx];
 
   saveAll();
   updateExpTabs();
   markChainLoading('Loading '+(S.activeExpiry || 'selected expiry')+' chain...');
   doFetch(true);
+}
+
+function addManualExpiryTab(){
+  haptic();
+
+  var inp = ge('manual-expiry-input');
+  if(!inp) return;
+
+  var v = String(inp.value || '').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){
+    toast('Use YYYY-MM-DD format', 2600);
+    inp.focus();
+    return;
+  }
+
+  var d = new Date(v + 'T12:00:00');
+  if(isNaN(d.getTime())){
+    toast('Invalid expiry date', 2600);
+    inp.focus();
+    return;
+  }
+
+  if(!Array.isArray(S.expiryDates)) S.expiryDates = [];
+
+  var idx = S.expiryDates.indexOf(v);
+  if(idx < 0){
+    S.expiryDates.push(v);
+    S.expiryDates.sort();
+    idx = S.expiryDates.indexOf(v);
+  }
+
+  inp.value = '';
+  setExpiry(idx);
 }
 function setFilter(f){
   haptic(); S.filter=f;

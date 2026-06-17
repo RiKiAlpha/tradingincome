@@ -1017,7 +1017,8 @@ function renderSettings(d){
     });
     nc.appendChild(ncCard);
   }
-    // ── refreshDashboard pause/resume — UrlFetch quota guard ───────────────────
+  // ── refreshDashboard pause/resume — UrlFetch quota guard ───────────────────
+  // Use explicit Pause / Resume buttons so stale UI cache cannot invert the action.
   var refreshPaused = !!d.refreshDashboardPaused;
   var pauseCard = document.createElement('div');
   pauseCard.className = 'scard';
@@ -1032,10 +1033,10 @@ function renderSettings(d){
             : 'Active — accounting refresh can call Schwab') +
         '</div>' +
       '</div>' +
-      '<button class="abtn ' + (refreshPaused ? '' : 'red') + '" ' +
-        'onclick="toggleRefreshDashboardPause(' + (!refreshPaused) + ', this)">' +
-        (refreshPaused ? 'Resume' : 'Pause') +
-      '</button>' +
+      '<div style="display:flex;gap:6px;align-items:center;">' +
+        '<button class="abtn red" onclick="toggleRefreshDashboardPause(true, this)">Pause</button>' +
+        '<button class="abtn" onclick="toggleRefreshDashboardPause(false, this)">Resume</button>' +
+      '</div>' +
     '</div>';
   nc.appendChild(pauseCard);
     // ── Emergency manual unlock button ─────────────────────────────────────────

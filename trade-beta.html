@@ -177,7 +177,7 @@ Fallback: restore this Apps Script deployment version if future UI patches break
 .basket-mini-btn{height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--sans);font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
 .basket-mini-btn.call{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
 .basket-mini-btn.put{border-color:rgba(240,140,48,.32);background:rgba(240,140,48,.08);color:var(--put);}
-.basket-mini-btn:disabled{opacity:.35;cursor:not-allowed;}
+.basket-mini-btn:disabled{opacity:.35;cursor:not-allowed;}.churner-analyze-btn{height:26px;padding:0 9px;border-radius:6px;border:1px solid rgba(61,156,255,.38);background:rgba(61,156,255,.10);color:var(--blue);font-family:var(--sans);font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;}.churner-analyze-btn:active{opacity:.7;}.ch-modal{position:fixed;inset:0;z-index:9998;background:rgba(6,10,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:14px;}.ch-modal.on{display:flex;}.ch-card{width:min(960px,100%);max-height:90vh;background:var(--bg2);border:1px solid rgba(61,156,255,.22);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden;}.ch-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(61,156,255,.12),rgba(255,255,255,.015));}.ch-kicker{font-size:9px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);margin-bottom:4px;}.ch-title{font-family:var(--mono);font-size:14px;font-weight:900;color:var(--text);}.ch-sub{font-size:10px;color:var(--text2);margin-top:3px;}.ch-x{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:16px;font-weight:900;cursor:pointer;}.ch-body{padding:12px 14px;overflow:auto;-webkit-overflow-scrolling:touch;}.ch-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px;}.ch-field{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px;}.ch-lbl{font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}.ch-inp,.ch-sel{width:100%;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:800;text-align:center;outline:none;}.ch-inp:focus,.ch-sel:focus{border-color:rgba(61,156,255,.45);}.ch-note{font-size:10px;color:var(--text3);line-height:1.4;margin:4px 0 10px;}.ch-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 10px;}.ch-metric{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px;}.ch-mk{font-size:8px;font-weight:900;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;}.ch-mv{font-family:var(--mono);font-size:13px;font-weight:900;color:var(--text);margin-top:3px;}.ch-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:10px;max-height:42vh;}.ch-table{width:100%;border-collapse:collapse;min-width:660px;}.ch-table th{position:sticky;top:0;background:var(--bg2);z-index:1;border-bottom:1px solid var(--border);padding:7px 8px;text-align:left;font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);}.ch-table td{border-bottom:1px solid var(--border2);padding:6px 8px;font-family:var(--mono);font-size:10px;color:var(--text2);white-space:nowrap;}.ch-table td.good{color:var(--call);font-weight:900;}.ch-table td.call{color:var(--call);font-weight:900;}.ch-table td.put{color:var(--put);font-weight:900;}.ch-actions{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--border);background:var(--bg2);}.ch-btn{height:32px;padding:0 13px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}.ch-btn.run{border-color:rgba(61,156,255,.38);background:rgba(61,156,255,.10);color:var(--blue);}.ch-btn.build{border-color:rgba(0,212,166,.38);background:rgba(0,212,166,.10);color:var(--call);}.ch-btn:disabled{opacity:.35;cursor:not-allowed;}@media(max-width:720px){.ch-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.ch-summary{grid-template-columns:repeat(2,minmax(0,1fr));}.ch-card{max-height:92vh;}.ch-body{padding:10px;}.ch-actions{justify-content:stretch}.ch-btn{flex:1;}}
 .basket-panel{display:none;margin-bottom:6px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px;gap:7px;}
 .basket-panel.on{display:flex;flex-direction:column;}
 .basket-line{display:flex;align-items:center;gap:5px;}
@@ -641,12 +641,7 @@ Fallback: restore this Apps Script deployment version if future UI patches break
       <div class="chain-fresh loading" id="chain-fresh"><span class="cf-sym">MSTR</span><span class="cf-time">...</span></div>
       <div class="xbtn" id="xbtn" onclick="toggleExpand()">All</div>
     </div>
-    <div class="ctrl-basket-row">
-      <button id="basket-mode-btn" class="basket-mode-btn" onclick="toggleBasketMode()">Basket OFF</button>
-      <div id="basket-count" class="basket-count">0 selected</div>
-      <button id="basket-review-btn" class="basket-mini-btn call" onclick="reviewBasket()" disabled>Review</button>
-      <button class="basket-mini-btn" onclick="basketClear(true)">Clear</button>
-    </div>
+<div class="ctrl-basket-row">      <button id="basket-mode-btn" class="basket-mode-btn" onclick="toggleBasketMode()">Basket OFF</button>      <div id="basket-count" class="basket-count">0 selected</div>      <button class="churner-analyze-btn" onclick="openChurnerAnalyze()">Analyze Current Expiry</button>      <button id="basket-review-btn" class="basket-mini-btn call" onclick="reviewBasket()" disabled>Review</button>      <button class="basket-mini-btn" onclick="basketClear(true)">Clear</button>    </div>
     <div id="basket-panel" class="basket-panel">
       <div class="basket-line">
         <span class="basket-lbl">Prices</span>
@@ -830,7 +825,54 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     </div>
   </div>
 </div>
-<script>
+<div id="churner-modal" class="ch-modal">
+  <div class="ch-card">
+    <div class="ch-head">
+      <div>
+        <div class="ch-kicker">Churner Selector</div>
+        <div class="ch-title">Analyze Current Expiry</div>
+        <div class="ch-sub" id="ch-sub">Loaded chain only · no Schwab fetch · no auto-submit</div>
+      </div>
+      <button class="ch-x" onclick="closeChurnerAnalyze()">×</button>
+    </div>
+
+    <div class="ch-body">
+      <div class="ch-grid">
+        <div class="ch-field"><div class="ch-lbl">Minimum Ask</div><input id="ch-min-ask" class="ch-inp" type="number" step="0.01" value="0.20"></div>
+        <div class="ch-field"><div class="ch-lbl">Same-day % Away</div><input id="ch-same-pct" class="ch-inp" type="number" step="1" value="20"></div>
+        <div class="ch-field"><div class="ch-lbl">Next-day % Away</div><input id="ch-next-pct" class="ch-inp" type="number" step="1" value="30"></div>
+        <div class="ch-field"><div class="ch-lbl">2+ Day % Away</div><input id="ch-multi-pct" class="ch-inp" type="number" step="1" value="40"></div>
+        <div class="ch-field"><div class="ch-lbl">Max DTE</div><input id="ch-max-dte" class="ch-inp" type="number" step="1" value="14"></div>
+        <div class="ch-field"><div class="ch-lbl">Max Strikes</div><input id="ch-max-strikes" class="ch-inp" type="number" step="1" value="20"></div>
+        <div class="ch-field"><div class="ch-lbl">Side</div><select id="ch-side" class="ch-sel"><option value="BOTH">Both</option><option value="CALL">Calls</option><option value="PUT">Puts</option></select></div>
+        <div class="ch-field"><div class="ch-lbl">Mode</div><input class="ch-inp" type="text" value="Filter Only" readonly></div>
+      </div>
+
+      <div class="ch-note">V1 scans only the currently loaded expiry chain in this browser. It applies your filters, builds the existing Basket for review, and never submits orders. Basket call/put price boxes still control actual STO prices.</div>
+      <div class="ch-summary" id="ch-summary"></div>
+
+      <div class="ch-table-wrap">
+        <table class="ch-table">
+          <thead>
+            <tr>
+              <th>Side</th><th>Strike</th><th>Bid</th><th>Ask</th><th>Distance</th><th>DTE</th><th>Status</th><th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="ch-body">
+            <tr><td colspan="8">Click Run Analysis.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="ch-actions">
+      <button class="ch-btn run" onclick="runChurnerAnalysis()">Run Analysis</button>
+      <button class="ch-btn build" id="ch-build-btn" onclick="buildChurnerBasket()" disabled>Build Basket</button>
+      <button class="ch-btn" onclick="closeChurnerAnalyze()">Close</button>
+    </div>
+  </div>
+</div>
+  <script>
 var BACKEND = 'https://script.google.com/macros/s/AKfycbyyQNcKlw62ou6utwshwNdtwY-c0F_UafcCPVc9Fhst7KjRRpKoTaADHcy0HLS0Q9g/exec';
 var S = {
   ticker: localStorage.getItem('tr_ticker') || 'MSTR',
@@ -853,9 +895,7 @@ var S = {
   basketPendingPayload:null,
   basketLastPayload:null,
   basketLastResult:null,
-  basketResumeCanContinue:false,
-  basketRetryTimerId:null
-};
+  basketResumeCanContinue:false,  basketRetryTimerId:null,  churnerAnalysis:null,  activeSpot:0};
 function ge(id){ return document.getElementById(id); }
 function haptic(){ try{ if(navigator.vibrate&&navigator.userActivation&&navigator.userActivation.hasBeenActive)navigator.vibrate(6); }catch(e){} }
 function fmtM(n){ n=parseFloat(n)||0; return (n<0?'\u2212$':'$')+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
@@ -883,6 +923,7 @@ function commitTicker(){
     S.activeExpiry = '';
     S.expiryDates = null;
     S.data = null;
+    S.activeSpot = 0;
     saveAll();
 
     updateExpTabs();
@@ -1172,7 +1213,265 @@ function basketSelectPctRange(){
   renderChain();
   toast('Added % range: '+added+' contract'+(added===1?'':'s'), 2200);
 }
+// ==========================================================
+// ====== CHURNER ANALYZE CURRENT EXPIRY V1 ==================
+// ==========================================================
+// Frontend-only selector. No Schwab fetch. No submit.
+// Uses currently loaded chain only and builds existing Basket selection.
 
+function churnerNum_(id, fallback){
+  var el = ge(id);
+  var n = parseFloat(el && el.value);
+  return isNaN(n) ? fallback : n;
+}
+
+function churnerInt_(id, fallback){
+  var el = ge(id);
+  var n = parseInt(el && el.value, 10);
+  return isNaN(n) ? fallback : n;
+}
+
+function churnerGetParams_(){
+  return {
+    minimumAsk: churnerNum_('ch-min-ask', 0.20),
+    sameDayMinAwayPct: churnerNum_('ch-same-pct', 20),
+    nextDayMinAwayPct: churnerNum_('ch-next-pct', 30),
+    multiDayMinAwayPct: churnerNum_('ch-multi-pct', 40),
+    maxDTE: churnerInt_('ch-max-dte', 14),
+    maxStrikes: churnerInt_('ch-max-strikes', 20),
+    sideMode: String((ge('ch-side') && ge('ch-side').value) || 'BOTH').toUpperCase()
+  };
+}
+
+function churnerDte_(expiry){
+  if(!expiry) return 999;
+  var p = String(expiry).split('-');
+  if(p.length !== 3) return 999;
+  var now = new Date();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var exp = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+  return Math.max(0, Math.round((exp.getTime() - today.getTime()) / 86400000));
+}
+
+function churnerCutoff_(dte, p){
+  if(dte === 0) return p.sameDayMinAwayPct;
+  if(dte === 1) return p.nextDayMinAwayPct;
+  return p.multiDayMinAwayPct;
+}
+
+function churnerSpotFromDom_(){
+  var raw = ge('spot-price') ? ge('spot-price').textContent : '';
+  var n = parseFloat(String(raw || '').replace(/[^0-9.\-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+function openChurnerAnalyze(){
+  haptic();
+  var exp = getSelectedExpiry();
+  var chain = getBasketChainData();
+  if(!exp || !chain || !chain.data){
+    toast('Load one expiry chain first', 2600);
+    return;
+  }
+
+  S.churnerAnalysis = null;
+  if(ge('ch-build-btn')) ge('ch-build-btn').disabled = true;
+  if(ge('ch-summary')) ge('ch-summary').innerHTML = '';
+  if(ge('ch-body')) ge('ch-body').innerHTML = '<tr><td colspan="8">Click Run Analysis.</td></tr>';
+  if(ge('ch-sub')) ge('ch-sub').textContent = S.ticker+' · '+exp+' · loaded chain only · no auto-submit';
+
+  ge('churner-modal').classList.add('on');
+}
+
+function closeChurnerAnalyze(){
+  var m = ge('churner-modal');
+  if(m) m.classList.remove('on');
+}
+
+function runChurnerAnalysis(){
+  haptic();
+
+  var exp = getSelectedExpiry();
+  var chain = getBasketChainData();
+  if(!exp || !chain || !chain.data){
+    alert('No current expiry chain loaded.');
+    return;
+  }
+
+  var p = churnerGetParams_();
+  var dte = churnerDte_(exp);
+  var cutoff = churnerCutoff_(dte, p);
+  var spot = Number(S.activeSpot || 0) || churnerSpotFromDom_();
+  var now = Date.now();
+
+  var rawCalls = chain.data.calls || [];
+  var rawPuts = chain.data.puts || [];
+  var scannedCalls = rawCalls.length;
+  var scannedPuts = rawPuts.length;
+
+  var ready = [];
+  var skipped = {
+    dte:0, ask:0, distance:0, side:0, missing:0
+  };
+
+  function scan(arr, side){
+    (arr || []).forEach(function(o){
+      var ask = Number(o.ask || 0);
+      var bid = Number(o.bid || 0);
+      var strike = Number(o.strike || 0);
+
+      if(!o || !o.symbol || !strike || !ask){
+        skipped.missing++;
+        return;
+      }
+
+      if(p.sideMode === 'CALL' && side !== 'CALL'){ skipped.side++; return; }
+      if(p.sideMode === 'PUT'  && side !== 'PUT'){ skipped.side++; return; }
+
+      if(dte > p.maxDTE){ skipped.dte++; return; }
+      if(ask < p.minimumAsk){ skipped.ask++; return; }
+
+      var distancePct;
+      if(spot > 0){
+        distancePct = side === 'CALL'
+          ? ((strike - spot) / spot) * 100
+          : ((spot - strike) / spot) * 100;
+      } else {
+        distancePct = Math.abs(Number(o.pctAway || 0));
+      }
+
+      if(!(distancePct > 0) || distancePct < cutoff){
+        skipped.distance++;
+        return;
+      }
+
+      var c = {
+        side: side,
+        strike: strike,
+        bid: bid,
+        ask: ask,
+        distancePct: distancePct,
+        dte: dte,
+        expiry: o.expiry || exp,
+        symbol: o.symbol,
+        raw: o,
+        status: 'Ready',
+        reason: 'Ready'
+      };
+
+      ready.push(c);
+    });
+  }
+
+  scan(rawCalls, 'CALL');
+  scan(rawPuts, 'PUT');
+
+  ready.sort(function(a,b){
+    if(b.distancePct !== a.distancePct) return b.distancePct - a.distancePct;
+    if(a.side !== b.side) return a.side === 'CALL' ? -1 : 1;
+    return a.strike - b.strike;
+  });
+
+  if(p.maxStrikes > 0 && ready.length > p.maxStrikes){
+    ready = ready.slice(0, p.maxStrikes);
+  }
+
+  var callsReady = ready.filter(function(c){ return c.side === 'CALL'; }).length;
+  var putsReady  = ready.filter(function(c){ return c.side === 'PUT'; }).length;
+
+  S.churnerAnalysis = {
+    ticker: S.ticker,
+    expiry: exp,
+    dte: dte,
+    spot: spot,
+    cutoff: cutoff,
+    params: p,
+    ready: ready,
+    callsReady: callsReady,
+    putsReady: putsReady,
+    scannedCalls: scannedCalls,
+    scannedPuts: scannedPuts,
+    skipped: skipped
+  };
+
+  renderChurnerAnalysis_();
+}
+
+function renderChurnerAnalysis_(){
+  var a = S.churnerAnalysis;
+  if(!a) return;
+
+  var sum = ge('ch-summary');
+  if(sum){
+    sum.innerHTML =
+      '<div class="ch-metric"><div class="ch-mk">Ticker / Expiry</div><div class="ch-mv">'+basketEsc(a.ticker)+' '+basketEsc(a.expiry)+'</div></div>'+
+      '<div class="ch-metric"><div class="ch-mk">DTE / Cutoff</div><div class="ch-mv">'+a.dte+' / '+a.cutoff.toFixed(0)+'%</div></div>'+
+      '<div class="ch-metric"><div class="ch-mk">Spot / Min Ask</div><div class="ch-mv">$'+Number(a.spot||0).toFixed(2)+' / $'+Number(a.params.minimumAsk||0).toFixed(2)+'</div></div>'+
+      '<div class="ch-metric"><div class="ch-mk">Ready C/P</div><div class="ch-mv">'+a.ready.length+' · '+a.callsReady+'/'+a.putsReady+'</div></div>';
+  }
+
+  var body = ge('ch-body');
+  if(!body) return;
+
+  if(!a.ready.length){
+    body.innerHTML =
+      '<tr><td colspan="8">No Ready candidates. Scanned C/P: '+a.scannedCalls+'/'+a.scannedPuts+
+      ' · Ask skips '+a.skipped.ask+
+      ' · Distance skips '+a.skipped.distance+
+      ' · DTE skips '+a.skipped.dte+
+      ' · Side skips '+a.skipped.side+
+      '</td></tr>';
+    if(ge('ch-build-btn')) ge('ch-build-btn').disabled = true;
+    return;
+  }
+
+  body.innerHTML = a.ready.map(function(c){
+    return '<tr>'+
+      '<td class="'+(c.side==='CALL'?'call':'put')+'">'+basketEsc(c.side)+'</td>'+
+      '<td>$'+fmtStrike(c.strike)+'</td>'+
+      '<td>'+fmtP(c.bid)+'</td>'+
+      '<td>'+fmtP(c.ask)+'</td>'+
+      '<td>'+Number(c.distancePct||0).toFixed(1)+'%</td>'+
+      '<td>'+c.dte+'</td>'+
+      '<td class="good">Ready</td>'+
+      '<td>'+basketEsc(c.reason)+'</td>'+
+    '</tr>';
+  }).join('');
+
+  if(ge('ch-build-btn')) ge('ch-build-btn').disabled = false;
+}
+
+function buildChurnerBasket(){
+  haptic();
+
+  var a = S.churnerAnalysis;
+  if(!a || !Array.isArray(a.ready) || !a.ready.length){
+    alert('Run analysis first. No Ready candidates to build.');
+    return;
+  }
+
+  if(!S.basketMode) S.basketMode = true;
+
+  var before = Object.keys(S.basketSelected || {}).length;
+  var added = 0;
+
+  a.ready.forEach(function(c){
+    var ok = basketAddContract(c.raw, c.side === 'PUT' ? 'p' : 'c');
+    if(ok) added++;
+  });
+  paintBasketControls();
+  renderChain();
+
+  var after = Object.keys(S.basketSelected || {}).length;
+  toast('Churner built Basket: '+after+' selected for review', 2600);
+
+  if(ge('ch-build-btn')) ge('ch-build-btn').disabled = true;
+  if(ge('ch-summary')){
+    ge('ch-summary').innerHTML +=
+      '<div class="ch-metric"><div class="ch-mk">Basket Built</div><div class="ch-mv">'+after+' selected</div></div>'+
+      '<div class="ch-metric"><div class="ch-mk">Applied</div><div class="ch-mv">'+added+' candidates</div></div>';
+  }
+}
 function basketSelectedList(){
   return Object.keys(S.basketSelected || {}).map(function(k){ return S.basketSelected[k]; });
 }
@@ -2363,9 +2662,7 @@ function doFetch(firstTime){
         setTimeout(function(){ r.className = ''; }, 500);
       }
 
-      var spot = Number(d.spot || d.spotPrice || 0);
-      if(spot){
-        ge('spot-price').textContent = '$'+spot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+        var spot = Number(d.spot || d.spotPrice || 0);      S.activeSpot = spot || S.activeSpot || 0;      if(spot){        ge('spot-price').textContent = '$'+spot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
       }
 
       var nc = Number(d.netChange || 0);

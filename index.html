@@ -463,7 +463,8 @@ function updateModeUI(){
 function loadChurnerTicker(ticker){
   ticker = String(ticker || '').trim().toUpperCase();
   localStorage.setItem('riki_churner_focus_ticker', ticker);
-  fetch(BACKEND + '?action=churnerAnalytics&ticker=' + encodeURIComponent(ticker) + '&focus=' + (ticker ? '1' : '0') + '&_=' + Date.now())
+  var churnerStart = localStorage.getItem('riki_churner_start_date') || '2026-06-01';
+  fetch(BACKEND + '?action=churnerAnalytics&ticker=' + encodeURIComponent(ticker) + '&focus=' + (ticker ? '1' : '0') + '&start=' + encodeURIComponent(churnerStart) + '&_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(!DATA) DATA = {};
@@ -823,7 +824,7 @@ function renderChurnerDash(d){
   banner.className='churner-banner';
   banner.innerHTML =
     '<div><div class="churner-title">Churner Analytics</div>' +
-      '<div class="churner-sub">TxCache transaction netAmount only · no Schwab ping</div></div>' +
+      '<div class="churner-sub">TxCache only · no Schwab ping · from '+((chData() && chData().churnerStartDate) || localStorage.getItem('riki_churner_start_date') || '2026-06-01')+'</div></div>' +
     '<div style="display:flex;gap:6px;align-items:center;">' +
       '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER">' +
       '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +

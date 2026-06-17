@@ -15,6 +15,7 @@
 :root {
   --blue:#0077b6; --blue-dim:rgba(0,119,182,0.55);
   --orange:#e07a2f; --green:#00b894; --gold:#f4c542; --red:#e55353;
+  --churner:#7c5cff; --churner2:#22d3ee; --churnerGlow:rgba(124,92,255,.22);
   --bg:#0a0a0f; --bg2:#111118; --bg3:#18181f; --bg4:#1e1e28;
   --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.04);
   --text:#f0f0f5; --text2:rgba(240,240,245,0.55); --text3:rgba(240,240,245,0.3);
@@ -95,6 +96,29 @@ html.pwa #tabs-wrap{padding-bottom:0px;}
 .tab.on svg{color:#00b894;}
 .tlabel{font-size:10px;font-weight:700;color:rgba(240,240,245,0.7);text-transform:uppercase;}
 .tab.on .tlabel{color:#00b894;}
+  .mode-pill{border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:999px;padding:5px 9px;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+.mode-pill.churner{border-color:rgba(124,92,255,.45);background:rgba(124,92,255,.12);color:var(--churner2);box-shadow:0 0 14px var(--churnerGlow);}
+body.churner-mode .tab::after{background:var(--churner);}
+body.churner-mode .tab.on svg{color:var(--churner2)!important;}
+body.churner-mode .tab.on .tlabel{color:var(--churner2)!important;}
+.churner-banner{margin:14px 16px 0;padding:12px 14px;border-radius:13px;border:1px solid rgba(124,92,255,.35);background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(34,211,238,.06));display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.churner-title{font-size:12px;font-weight:900;color:var(--churner2);letter-spacing:.08em;text-transform:uppercase;}
+.churner-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+.churner-input{height:28px;width:78px;border-radius:8px;border:1px solid rgba(124,92,255,.38);background:var(--bg3);color:var(--text);font-size:11px;font-weight:900;text-align:center;text-transform:uppercase;outline:none;}
+.churner-mini-btn{height:28px;border-radius:8px;border:1px solid rgba(34,211,238,.38);background:rgba(34,211,238,.08);color:var(--churner2);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:0 10px;cursor:pointer;}
+.churner-kpi{margin:14px 16px 0;background:var(--bg2);border:1px solid rgba(124,92,255,.22);border-radius:16px;padding:18px;}
+.churner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.churner-k{padding:12px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);}
+.churner-kl{font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;}
+.churner-kv{font-size:20px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums;}
+.churner-exp-card{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;}
+.churner-exp-card.hot{border-color:rgba(124,92,255,.35);box-shadow:0 0 18px rgba(124,92,255,.08);}
+.churner-exp-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.churner-exp-title{font-size:15px;font-weight:900;}
+.churner-exp-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+.churner-bank{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums;text-align:right;}
+.churner-line{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--text2);padding:5px 0;border-top:1px solid var(--border2);}
+.churner-line b{color:var(--text);font-weight:800;}
 .tbar{display:-webkit-flex;display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:3px;}
 .tbtn{-webkit-flex:1;flex:1;padding:5px 0;text-align:center;font-size:16px;font-weight:700;
   border-radius:8px;color:var(--text3);cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
@@ -254,6 +278,7 @@ body.overlaying #tabs-wrap{display:none !important;}
       </svg>
     </div>
     <div id="hright">
+      <button id="mode-pill" class="mode-pill" onclick="setAppMode(isChurnerMode() ? 'legacy' : 'churner')">Legacy</button>
       <div style="display:flex;align-items:center;gap:4px;"><div class="sdot" id="sdot"></div><span id="utime">Loading&hellip;</span></div>
       <div id="rbtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
@@ -278,6 +303,7 @@ body.overlaying #tabs-wrap{display:none !important;}
 <div id="ph">
   <div id="ph-top">
     <div class="tbar">
+      <div class="tbtn" id="bd">Daily</div>
       <div class="tbtn on" id="bw">Weekly</div>
       <div class="tbtn" id="bm">Monthly</div>
     </div>
@@ -414,6 +440,39 @@ function errMsg(e){
 }
 if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){ document.documentElement.classList.add('pwa'); }
 var DATA=null, activeTab='d', histMode='weeks';
+var appMode = localStorage.getItem('riki_app_mode') || 'legacy';
+function isChurnerMode(){ return appMode === 'churner'; }
+function setAppMode(mode){
+  haptic();
+  appMode = mode === 'churner' ? 'churner' : 'legacy';
+  localStorage.setItem('riki_app_mode', appMode);
+  if(appMode === 'churner' && histMode === 'weeks') histMode = 'daily';
+  if(DATA){ renderAll(DATA); }
+  if(appMode === 'churner' && (!DATA || !DATA.churner)){
+    loadChurnerTicker('');
+  }
+}
+function updateModeUI(){
+  document.body.classList.toggle('churner-mode', isChurnerMode());
+  var p=ge('mode-pill');
+  if(p){
+    p.textContent = isChurnerMode() ? 'Churner' : 'Legacy';
+    p.className = 'mode-pill' + (isChurnerMode() ? ' churner' : '');
+  }
+}
+function loadChurnerTicker(ticker){
+  ticker = String(ticker || '').trim().toUpperCase();
+  fetch(BACKEND + '?action=churnerAnalytics&ticker=' + encodeURIComponent(ticker) + '&_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!DATA) DATA = {};
+      DATA.churner = j;
+      renderAll(DATA);
+      saveCache(DATA);
+      toast('Churner updated from TxCache', 2200);
+    })
+    .catch(function(e){ toast('Churner load error: '+errMsg(e), 4000); });
+}
 var TAB_IDS={d:'pd',p:'pp',h:'ph',s:'ps'};
 function switchTab(key){
   if(activeTab===key)return;
@@ -423,7 +482,14 @@ function switchTab(key){
   var nxt=ge(TAB_IDS[key]);if(nxt)nxt.classList.add('on');
   var btn=ge('t-'+key);if(btn)btn.classList.add('on');
 }
-function switchHist(mode){ haptic();histMode=mode;ge('bw').className='tbtn'+(mode==='weeks'?' on':'');ge('bm').className='tbtn'+(mode==='monthly'?' on':'');renderHist(); }
+function switchHist(mode){
+  haptic();
+  histMode = mode;
+  if(ge('bd')) ge('bd').className='tbtn'+(mode==='daily'?' on':'');
+  if(ge('bw')) ge('bw').className='tbtn'+(mode==='weeks'?' on':'');
+  if(ge('bm')) ge('bm').className='tbtn'+(mode==='monthly'?' on':'');
+  renderHist();
+}
 function toggleTheme(dark){
   if(dark){ document.documentElement.removeAttribute('data-theme');ge('meta-theme').content='#0a0a0f'; }
   else { document.documentElement.setAttribute('data-theme','light');ge('meta-theme').content='#f2f2f7'; }
@@ -714,8 +780,17 @@ function doClearTally(btn){
     .catch(function(e){toast('Error: '+errMsg(e));btn.disabled=false;btn.textContent='Clear';});
 }
 
-function renderAll(d){ DATA=d;renderHeader(d);renderDash(d);renderPositions(d);renderHist();renderSettings(d); }
+function renderAll(d){
+  DATA=d;
+  updateModeUI();
+  renderHeader(d);
+  renderDash(d);
+  renderPositions(d);
+  renderHist();
+  renderSettings(d);
+}
 function renderHeader(d){
+  updateModeUI();
   var el=ge('utime');
   if(el){ var raw=String(d.updated||'\u2014');el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,'').replace(/^Updated:\s*/i,'').trim(); }
   var dot=ge('sdot');
@@ -734,7 +809,84 @@ function renderHeader(d){
     staleWarn.style.display='none';
   }
 }
+function chData(){
+  return (DATA && DATA.churner) ? DATA.churner : null;
+}
+
+function renderChurnerDash(d){
+  var c = chData();
+  var dw=ge('dw'), dc=ge('dc'), dcp=ge('dcp');
+  dw.innerHTML=''; dc.innerHTML=''; dcp.innerHTML='';
+
+  var banner=document.createElement('div');
+  banner.className='churner-banner';
+  banner.innerHTML =
+    '<div><div class="churner-title">Churner Analytics</div>' +
+      '<div class="churner-sub">TxCache transaction netAmount only · no Schwab ping</div></div>' +
+    '<div style="display:flex;gap:6px;align-items:center;">' +
+      '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER">' +
+      '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +
+    '</div>';
+  dw.appendChild(banner);
+
+  if(!c || c.success === false){
+    var err=document.createElement('div');
+    err.className='warn urg';
+    err.textContent='Churner data unavailable: '+((c && c.error) || 'open Settings or run Churner endpoint after deploy');
+    dw.appendChild(err);
+    return;
+  }
+
+  var s=c.summary||{};
+  var k=document.createElement('div');
+  k.className='churner-kpi';
+  k.innerHTML =
+    '<div class="churner-grid">' +
+      '<div class="churner-k"><div class="churner-kl">Opened Today</div><div class="churner-kv">'+(s.openedToday||0)+'</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Closed Today</div><div class="churner-kv">'+(s.closedToday||0)+'</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Still Open</div><div class="churner-kv">'+(s.stillOpen||0)+'</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Banked Today</div><div class="churner-kv '+cc(s.bankedToday)+'">'+fmtS(s.bankedToday||0)+'</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Banked Week</div><div class="churner-kv '+cc(s.bankedWeek)+'">'+fmtS(s.bankedWeek||0)+'</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Banked Month</div><div class="churner-kv '+cc(s.bankedMonth)+'">'+fmtS(s.bankedMonth||0)+'</div></div>' +
+    '</div>' +
+    '<div class="churner-line" style="margin-top:12px;"><span>Exact banked overall</span><b class="'+cc(s.bankedOverall)+'">'+fmtS(s.bankedOverall||0)+'</b></div>' +
+    '<div class="churner-line"><span>Tickers</span><b>'+(c.tickers||[]).join(', ')+'</b></div>';
+  dc.appendChild(k);
+
+  var expRows=(c.expiryRows||[]).slice().sort(function(a,b){
+    if(a.expiry!==b.expiry) return a.expiry<b.expiry?-1:1;
+    return String(a.ticker).localeCompare(String(b.ticker));
+  });
+
+  if(!expRows.length){
+    var empty=document.createElement('div');
+    empty.className='churner-exp-card';
+    empty.innerHTML='<div class="churner-exp-title">No churner transactions found</div><div class="churner-exp-sub">TxCache has no AVGO/MSTR/MU short-premium rows yet.</div>';
+    dcp.appendChild(empty);
+    return;
+  }
+
+  expRows.slice(0,8).forEach(function(r){
+    var card=document.createElement('div');
+    card.className='churner-exp-card hot';
+    card.innerHTML =
+      '<div class="churner-exp-head">' +
+        '<div><div class="churner-exp-title">'+r.ticker+' · '+r.expiry+'</div>' +
+        '<div class="churner-exp-sub">Exact banked by expiry from TxCache netAmount</div></div>' +
+        '<div class="churner-bank '+cc(r.banked)+'">'+fmtS(r.banked||0)+'</div>' +
+      '</div>' +
+      '<div class="churner-line"><span>Opened today / Closed today</span><b>'+(r.openedToday||0)+' / '+(r.closedToday||0)+'</b></div>' +
+      '<div class="churner-line"><span>Total opened / Total closed</span><b>'+(r.totalOpened||0)+' / '+(r.totalClosed||0)+'</b></div>' +
+      '<div class="churner-line"><span>Still open</span><b>'+(r.stillOpen||0)+'</b></div>' +
+      '<div class="churner-line"><span>A1 banked</span><b class="'+cc(r.a1Banked)+'">'+fmtS(r.a1Banked||0)+'</b></div>' +
+      '<div class="churner-line"><span>A2 banked</span><b class="'+cc(r.a2Banked)+'">'+fmtS(r.a2Banked||0)+'</b></div>' +
+      '<div class="churner-line"><span>A1 opened / closed / open</span><b>'+(r.a1Opened||0)+' / '+(r.a1Closed||0)+' / '+(r.a1Open||0)+'</b></div>' +
+      '<div class="churner-line"><span>A2 opened / closed / open</span><b>'+(r.a2Opened||0)+' / '+(r.a2Closed||0)+' / '+(r.a2Open||0)+'</b></div>';
+    dcp.appendChild(card);
+  });
+}
 function renderDash(d){
+  if(isChurnerMode()) { renderChurnerDash(d); return; }
   var dw=ge('dw');dw.innerHTML='';
   var w=d.warnings||{};
   function warnMsg(raw,isHoliday){
@@ -904,7 +1056,28 @@ function renderDash(d){
 }
 var posSort={col:'exp',dir:1};
 function posSortBy(col){ if(posSort.col===col){posSort.dir*=-1;}else{posSort.col=col;posSort.dir=col==='net'?-1:1;} renderPositions(DATA||MOCK); }
+function renderChurnerPositions(d){
+  var c=chData();
+  ge('pth').innerHTML='<tr><th>Acct</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Open</th></tr>';
+  var tb=ge('ptb');tb.innerHTML='';
+  if(!c || !(c.positions||[]).length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No open churner positions</td></tr>';
+    return;
+  }
+  (c.positions||[]).forEach(function(p){
+    var isPut=String(p.side||'').toUpperCase()==='PUT';
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><span class="atag '+(p.account==='A1'?'pa1':'pa2')+'">'+p.account+'</span></td>'+
+      '<td>'+p.ticker+'</td>'+
+      '<td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td>'+
+      '<td>$'+Math.round(money(p.strike))+'</td>'+
+      '<td>'+p.expiry+'</td>'+
+      '<td>'+p.openQty+'</td>';
+    tb.appendChild(tr);
+  });
+}
 function renderPositions(d){
+  if(isChurnerMode()) { renderChurnerPositions(d); return; }
   var rows=d.invRows||[];
   var arw=function(col){var a=posSort.col===col?(posSort.dir===1?'\u2191':'\u2193'):'\u2195';var color=posSort.col===col?'color:var(--blue);':'color:var(--text3);';return '<span style="'+color+'font-size:11px;margin-left:3px;">'+a+'</span>';};
   ge('pth').innerHTML='<tr><th>Acct</th><th onclick="posSortBy(\'type\')" style="cursor:pointer">Type'+arw('type')+'</th><th>Strike</th><th onclick="posSortBy(\'exp\')" style="cursor:pointer">Expiry'+arw('exp')+'</th><th>Qty</th><th onclick="posSortBy(\'net\')" style="cursor:pointer">Net'+arw('net')+'</th></tr>';
@@ -933,7 +1106,46 @@ function renderPositions(d){
     tb.appendChild(tr);
   });
 }
+function renderChurnerHist(){
+  var c=chData();
+  var el=ge('hc'); el.innerHTML='';
+  if(!c){
+    el.innerHTML='<div class="empty">No Churner data</div>';
+    return;
+  }
+
+  var rows = histMode === 'daily'
+    ? (c.historyDaily || [])
+    : histMode === 'monthly'
+      ? (c.historyMonthly || [])
+      : (c.historyWeekly || []);
+
+  var title = histMode === 'daily' ? 'Date' : histMode === 'monthly' ? 'Month' : 'Week Ending';
+
+  var t=document.createElement('table');
+  t.innerHTML='<thead><tr><th style="text-align:left">'+title+'</th><th>Ticker</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th></tr></thead>';
+  var tb=document.createElement('tbody');
+
+  if(!rows.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No churner history yet</td></tr>';
+  } else {
+    rows.forEach(function(r){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td style="text-align:left">'+(r.period||'—')+'</td>'+
+        '<td>'+r.ticker+'</td>'+
+        '<td>'+(r.opened||0)+'</td>'+
+        '<td>'+(r.closed||0)+'</td>'+
+        '<td>'+(r.open||0)+'</td>'+
+        '<td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  t.appendChild(tb);
+  el.appendChild(t);
+}
 function renderHist(){
+  if(isChurnerMode()) { renderChurnerHist(); return; }
   var d=DATA||MOCK;var el=ge('hc');el.innerHTML='';
   if(histMode==='weeks'){
     var rows=d.allClosed||[];
@@ -979,9 +1191,29 @@ function renderSettings(d){
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
   var td=ge('tdays');if(td)td.textContent=daysStr;
 
-  // ── Nickel Closer toggles ─────────────────────────────────────────────────
+  // ── App mode toggle: Legacy / Churner ─────────────────────────────────────
   var nc = ge('nc-section');
   nc.innerHTML = '';
+
+  var modeCard = document.createElement('div');
+  modeCard.className = 'scard';
+  modeCard.style.borderColor = isChurnerMode() ? 'rgba(124,92,255,.35)' : 'var(--border)';
+  modeCard.innerHTML =
+    '<div class="srow">' +
+      '<div>' +
+        '<div class="slbl" style="color:'+(isChurnerMode()?'var(--churner2)':'var(--text)')+'">View Mode</div>' +
+        '<div class="ssub">' + (isChurnerMode()
+          ? 'Churner mode — TxCache exact banked gains by expiry/day'
+          : 'Legacy mode — current accounting dashboard') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;">' +
+        '<button class="abtn '+(!isChurnerMode()?'':'')+'" onclick="setAppMode(\'legacy\')">Legacy</button>' +
+        '<button class="abtn '+(isChurnerMode()?'':'')+'" style="'+(isChurnerMode()?'border-color:rgba(34,211,238,.4);color:var(--churner2);':'')+'" onclick="setAppMode(\'churner\')">Churner</button>' +
+      '</div>' +
+    '</div>';
+  nc.appendChild(modeCard);
+
+  // ── Nickel Closer toggles ─────────────────────────────────────────────────
   var archRows = d.archRows || [];
   var ncDisabled = d.nickelCloserDisabled || [];
   var weeks = [];
@@ -1132,6 +1364,7 @@ var MOCK={
 };
 ['d','p','h','s'].forEach(function(k){ var el=ge('t-'+k);el.onclick=function(){switchTab(k);};el.ontouchend=function(e){e.preventDefault();switchTab(k);}; });
 ge('rbtn').onclick=doRefresh;
+if(ge('bd')) ge('bd').onclick=function(){switchHist('daily');};
 ge('bw').onclick=function(){switchHist('weeks');};
 ge('bm').onclick=function(){switchHist('monthly');};
 ge('auth-btn').onclick=doAuth;

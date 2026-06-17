@@ -15,7 +15,7 @@
 :root {
   --blue:#0077b6; --blue-dim:rgba(0,119,182,0.55);
   --orange:#e07a2f; --green:#00b894; --gold:#f4c542; --red:#e55353;
-  --churner:#7c5cff; --churner2:#22d3ee; --churnerGlow:rgba(124,92,255,.22);
+  --churner:var(--blue); --churner2:#3d9cff; --churnerGlow:rgba(0,119,182,.18);
   --bg:#0a0a0f; --bg2:#111118; --bg3:#18181f; --bg4:#1e1e28;
   --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.04);
   --text:#f0f0f5; --text2:rgba(240,240,245,0.55); --text3:rgba(240,240,245,0.3);
@@ -97,22 +97,22 @@ html.pwa #tabs-wrap{padding-bottom:0px;}
 .tlabel{font-size:10px;font-weight:700;color:rgba(240,240,245,0.7);text-transform:uppercase;}
 .tab.on .tlabel{color:#00b894;}
   .mode-pill{border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:999px;padding:5px 9px;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
-.mode-pill.churner{border-color:rgba(124,92,255,.45);background:rgba(124,92,255,.12);color:var(--churner2);box-shadow:0 0 14px var(--churnerGlow);}
-body.churner-mode .tab::after{background:var(--churner);}
+.mode-pill.churner{border-color:rgba(61,156,255,.45);background:rgba(61,156,255,.10);color:var(--churner2);}
+body.churner-mode .tab::after{background:var(--churner2);}
 body.churner-mode .tab.on svg{color:var(--churner2)!important;}
 body.churner-mode .tab.on .tlabel{color:var(--churner2)!important;}
-.churner-banner{margin:14px 16px 0;padding:12px 14px;border-radius:13px;border:1px solid rgba(124,92,255,.35);background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(34,211,238,.06));display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.churner-banner{margin:14px 16px 0;padding:12px 14px;border-radius:13px;border:1px solid rgba(61,156,255,.35);background:linear-gradient(135deg,rgba(0,119,182,.14),rgba(61,156,255,.06));display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .churner-title{font-size:12px;font-weight:900;color:var(--churner2);letter-spacing:.08em;text-transform:uppercase;}
 .churner-sub{font-size:10px;color:var(--text2);margin-top:2px;}
-.churner-input{height:28px;width:78px;border-radius:8px;border:1px solid rgba(124,92,255,.38);background:var(--bg3);color:var(--text);font-size:11px;font-weight:900;text-align:center;text-transform:uppercase;outline:none;}
-.churner-mini-btn{height:28px;border-radius:8px;border:1px solid rgba(34,211,238,.38);background:rgba(34,211,238,.08);color:var(--churner2);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:0 10px;cursor:pointer;}
-.churner-kpi{margin:14px 16px 0;background:var(--bg2);border:1px solid rgba(124,92,255,.22);border-radius:16px;padding:18px;}
+.churner-input{height:28px;width:78px;border-radius:8px;border:1px solid rgba(61,156,255,.38);background:var(--bg3);color:var(--text);font-size:11px;font-weight:900;text-align:center;text-transform:uppercase;outline:none;}
+.churner-mini-btn{height:28px;border-radius:8px;border:1px solid rgba(61,156,255,.38);background:rgba(61,156,255,.08);color:var(--churner2);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:0 10px;cursor:pointer;}
+.churner-kpi{margin:14px 16px 0;background:var(--bg2);border:1px solid rgba(61,156,255,.22);border-radius:16px;padding:18px;}
 .churner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .churner-k{padding:12px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);}
 .churner-kl{font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;}
 .churner-kv{font-size:20px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums;}
 .churner-exp-card{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;}
-.churner-exp-card.hot{border-color:rgba(124,92,255,.35);box-shadow:0 0 18px rgba(124,92,255,.08);}
+.churner-exp-card.hot{border-color:rgba(61,156,255,.35);}
 .churner-exp-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
 .churner-exp-title{font-size:15px;font-weight:900;}
 .churner-exp-sub{font-size:10px;color:var(--text2);margin-top:2px;}

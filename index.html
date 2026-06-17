@@ -853,8 +853,23 @@ function renderChurnerDash(d){
     '<div class="churner-line"><span>Tickers</span><b>'+(c.tickers||[]).join(', ')+'</b></div>';
   dc.appendChild(k);
 
+  var todayIso = new Date().toISOString().substring(0,10);
+
   var expRows=(c.expiryRows||[]).slice().sort(function(a,b){
-    if(a.expiry!==b.expiry) return a.expiry<b.expiry?-1:1;
+    var aOpen = Number(a.stillOpen || 0) > 0 ? 1 : 0;
+    var bOpen = Number(b.stillOpen || 0) > 0 ? 1 : 0;
+    if(aOpen !== bOpen) return bOpen - aOpen;
+
+    var aFuture = String(a.expiry || '') >= todayIso ? 1 : 0;
+    var bFuture = String(b.expiry || '') >= todayIso ? 1 : 0;
+    if(aFuture !== bFuture) return bFuture - aFuture;
+
+    if(aFuture && bFuture){
+      if(a.expiry !== b.expiry) return a.expiry < b.expiry ? -1 : 1;
+    } else {
+      if(a.expiry !== b.expiry) return a.expiry > b.expiry ? -1 : 1;
+    }
+
     return String(a.ticker).localeCompare(String(b.ticker));
   });
 

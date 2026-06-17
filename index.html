@@ -846,9 +846,8 @@ function renderChurnerDash(d){
     '<div class="churner-grid">' +
       '<div class="churner-k"><div class="churner-kl">Opened Today</div><div class="churner-kv">'+(s.openedToday||0)+'</div></div>' +
       '<div class="churner-k"><div class="churner-kl">Closed Today</div><div class="churner-kv">'+(s.closedToday||0)+'</div></div>' +
-      '<div class="churner-k"><div class="churner-kl">Still Open</div><div class="churner-kv">'+(s.stillOpen||0)+'</div></div>' +
-      '<div class="churner-k"><div class="churner-kl">Banked Today</div><div class="churner-kv '+cc(s.bankedToday)+'">'+fmtS(s.bankedToday||0)+'</div></div>' +
-      '<div class="churner-k"><div class="churner-kl">Banked Week</div><div class="churner-kv '+cc(s.bankedWeek)+'">'+fmtS(s.bankedWeek||0)+'</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Still Open</div><div class="churner-kv">'+(s.stillOpen||0)+'</div><div style="font-size:10px;color:var(--text2);margin-top:4px;">Potential @ 3c: <b class="'+cc(s.potentialAt3c)+'">'+fmtS(s.potentialAt3c||0)+'</b></div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Banked Today</div><div class="churner-kv '+cc(s.bankedToday)+'">'+fmtS(s.bankedToday||0)+'</div><div style="font-size:10px;color:var(--text2);margin-top:4px;">Total: <b class="'+cc(s.totalTodayAt3c)+'">'+fmtS(s.totalTodayAt3c||0)+'</b></div></div>' +      '<div class="churner-k"><div class="churner-kl">Banked Week</div><div class="churner-kv '+cc(s.bankedWeek)+'">'+fmtS(s.bankedWeek||0)+'</div></div>' +
       '<div class="churner-k"><div class="churner-kl">Banked Month</div><div class="churner-kv '+cc(s.bankedMonth)+'">'+fmtS(s.bankedMonth||0)+'</div></div>' +
     '</div>' +
     '<div class="churner-line" style="margin-top:12px;"><span>Exact banked overall</span><b class="'+cc(s.bankedOverall)+'">'+fmtS(s.bankedOverall||0)+'</b></div>' +
@@ -898,9 +897,9 @@ function renderChurnerDash(d){
       '</div>' +
       '<div class="churner-line"><span>Opened today / Closed today</span><b>'+(r.openedToday||0)+' / '+(r.closedToday||0)+'</b></div>' +
       '<div class="churner-line"><span>Total opened / Total closed</span><b>'+(r.totalOpened||0)+' / '+(r.totalClosed||0)+'</b></div>' +
-      '<div class="churner-line"><span>Still open</span><b>'+(r.stillOpen||0)+'</b></div>' +
-      '<div class="churner-line"><span>A1 banked</span><b class="'+cc(r.a1Banked)+'">'+fmtS(r.a1Banked||0)+'</b></div>' +
-      '<div class="churner-line"><span>A2 banked</span><b class="'+cc(r.a2Banked)+'">'+fmtS(r.a2Banked||0)+'</b></div>' +
+      '<div class="churner-line"><span>Still open</span><b>'+(r.stillOpen||0)+' <span style="font-size:10px;color:var(--text3)">(Pot @3c '+fmtS(r.potentialAt3c||0)+')</span></b></div>' +
+      '<div class="churner-line"><span>A1 banked / potential</span><b class="'+cc(r.a1Banked)+'">'+fmtS(r.a1Banked||0)+' / <span class="'+cc(r.a1PotentialAt3c)+'">'+fmtS(r.a1PotentialAt3c||0)+'</span></b></div>' +
+      '<div class="churner-line"><span>A2 banked / potential</span><b class="'+cc(r.a2Banked)+'">'+fmtS(r.a2Banked||0)+' / <span class="'+cc(r.a2PotentialAt3c)+'">'+fmtS(r.a2PotentialAt3c||0)+'</span></b></div>' +
       '<div class="churner-line"><span>A1 opened / closed / open</span><b>'+(r.a1Opened||0)+' / '+(r.a1Closed||0)+' / '+(r.a1Open||0)+'</b></div>' +
       '<div class="churner-line"><span>A2 opened / closed / open</span><b>'+(r.a2Opened||0)+' / '+(r.a2Closed||0)+' / '+(r.a2Open||0)+'</b></div>';
     dcp.appendChild(card);
@@ -1079,7 +1078,7 @@ var posSort={col:'exp',dir:1};
 function posSortBy(col){ if(posSort.col===col){posSort.dir*=-1;}else{posSort.col=col;posSort.dir=col==='net'?-1:1;} renderPositions(DATA||MOCK); }
 function renderChurnerPositions(d){
   var c=chData();
-  ge('pth').innerHTML='<tr><th>Acct</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Open</th></tr>';
+  ge('pth').innerHTML='<tr><th>Acct</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Open</th><th>Pot @3c</th></tr>';
   var tb=ge('ptb');tb.innerHTML='';
   if(!c || !(c.positions||[]).length){
     tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No open churner positions</td></tr>';
@@ -1093,7 +1092,8 @@ function renderChurnerPositions(d){
       '<td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td>'+
       '<td>$'+Math.round(money(p.strike))+'</td>'+
       '<td>'+p.expiry+'</td>'+
-      '<td>'+p.openQty+'</td>';
+      '<td>'+p.openQty+'</td>'+
+      '<td class="'+cc(p.potentialAt3c)+'">'+fmtS(p.potentialAt3c||0)+'</td>';
     tb.appendChild(tr);
   });
 }

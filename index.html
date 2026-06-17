@@ -486,12 +486,26 @@ function flashLogo(){
 }
 function doRefresh(){
   haptic();
+
+  if(DATA && DATA.refreshDashboardPaused){
+    toast('refreshDashboard is paused — resume in Settings first', 3500);
+    return;
+  }
+
   showOverlay();
   fetch(BACKEND + '?action=refresh')
     .then(function(r){ return r.json(); })
     .then(function(fresh){
       hideOverlay();
       if(fresh.tokenExpired){ showTokenExpired(); return; }
+
+      if(fresh.refreshSkipped || fresh.refreshDashboardPaused){
+        renderAll(fresh);
+        saveCache(fresh);
+        toast(fresh.refreshMessage || 'refreshDashboard is paused', 4000);
+        return;
+      }
+
       renderAll(fresh);
       saveCache(fresh);
       flashLogo();
@@ -499,9 +513,51 @@ function doRefresh(){
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
 }
 function doAuth(){
-  haptic();toast('Authenticating\u2026');
+  haptic();toast('Authenticating…');
   fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
 }
+
+function toggleRefreshDashboardPause(pause, btn){
+  haptic();
+
+  var msg = pause
+    ? 'Pause refreshDashboard now?\n\nThis stops scheduled/manual accounting refreshes from calling Schwab and helps preserve UrlFetch quota.\n\nTrading page/order buttons are not changed.'
+    : 'Resume refreshDashboard now?\n\nOnly resume when you are ready for RiKi accounting refreshes to call Schwab again.';
+
+  if(!confirm(msg)) return;
+
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = pause ? 'Pausing…' : 'Resuming…';
+    btn.style.opacity = '0.7';
+  }
+
+  fetch(BACKEND + '?action=toggleRefreshDashboardPause&pause=' + (pause ? '1' : '0') + '&_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.success){
+        if(DATA) DATA.refreshDashboardPaused = !!d.refreshDashboardPaused;
+        renderSettings(DATA || {});
+        toast(d.refreshDashboardPaused ? '⏸ refreshDashboard paused' : '▶ refreshDashboard resumed', 3500);
+      } else {
+        toast('Pause toggle failed: ' + ((d && d.error) || 'unknown'), 5000);
+        if(btn){
+          btn.disabled = false;
+          btn.textContent = pause ? 'Pause' : 'Resume';
+          btn.style.opacity = '1';
+        }
+      }
+    })
+    .catch(function(e){
+      toast('Pause toggle error: ' + errMsg(e), 5000);
+      if(btn){
+        btn.disabled = false;
+        btn.textContent = pause ? 'Pause' : 'Resume';
+        btn.style.opacity = '1';
+      }
+    });
+}
+
 function toggleNickelCloser(expiry){
   haptic();
   fetch(BACKEND + '?action=toggleNickelCloser&expiry=' + encodeURIComponent(expiry))
@@ -961,6 +1017,27 @@ function renderSettings(d){
     });
     nc.appendChild(ncCard);
   }
+    // ── refreshDashboard pause/resume — UrlFetch quota guard ───────────────────
+  var refreshPaused = !!d.refreshDashboardPaused;
+  var pauseCard = document.createElement('div');
+  pauseCard.className = 'scard';
+  pauseCard.style.borderColor = refreshPaused ? 'rgba(244,197,66,.32)' : 'var(--border)';
+  pauseCard.innerHTML =
+    '<div class="srow">' +
+      '<div>' +
+        '<div class="slbl" style="color:' + (refreshPaused ? 'var(--gold)' : 'var(--text)') + '">refreshDashboard</div>' +
+        '<div class="ssub">' +
+          (refreshPaused
+            ? 'Paused — scheduled/manual Schwab accounting refreshes are blocked'
+            : 'Active — accounting refresh can call Schwab') +
+        '</div>' +
+      '</div>' +
+      '<button class="abtn ' + (refreshPaused ? '' : 'red') + '" ' +
+        'onclick="toggleRefreshDashboardPause(' + (!refreshPaused) + ', this)">' +
+        (refreshPaused ? 'Resume' : 'Pause') +
+      '</button>' +
+    '</div>';
+  nc.appendChild(pauseCard);
     // ── Emergency manual unlock button ─────────────────────────────────────────
   var unlockCard = document.createElement('div');
   unlockCard.className = 'scard';

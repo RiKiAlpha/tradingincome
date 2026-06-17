@@ -462,7 +462,8 @@ function updateModeUI(){
 }
 function loadChurnerTicker(ticker){
   ticker = String(ticker || '').trim().toUpperCase();
-  fetch(BACKEND + '?action=churnerAnalytics&ticker=' + encodeURIComponent(ticker) + '&_=' + Date.now())
+  localStorage.setItem('riki_churner_focus_ticker', ticker);
+  fetch(BACKEND + '?action=churnerAnalytics&ticker=' + encodeURIComponent(ticker) + '&focus=' + (ticker ? '1' : '0') + '&_=' + Date.now())
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(!DATA) DATA = {};
@@ -855,7 +856,11 @@ function renderChurnerDash(d){
 
   var todayIso = new Date().toISOString().substring(0,10);
 
-  var expRows=(c.expiryRows||[]).slice().sort(function(a,b){
+  var focusTicker = (localStorage.getItem('riki_churner_focus_ticker') || '').trim().toUpperCase();
+
+  var expRows=(c.expiryRows||[]).slice().filter(function(r){
+    return !focusTicker || String(r.ticker || '').toUpperCase() === focusTicker;
+  }).sort(function(a,b){
     var aOpen = Number(a.stillOpen || 0) > 0 ? 1 : 0;
     var bOpen = Number(b.stillOpen || 0) > 0 ? 1 : 0;
     if(aOpen !== bOpen) return bOpen - aOpen;
@@ -1148,10 +1153,11 @@ function renderChurnerHist(){
       var tr=document.createElement('tr');
       tr.innerHTML='<td style="text-align:left">'+(r.period||'—')+'</td>'+
         '<td>'+r.ticker+'</td>'+
-        '<td>'+(r.opened||0)+'</td>'+
-        '<td>'+(r.closed||0)+'</td>'+
-        '<td>'+(r.open||0)+'</td>'+
-        '<td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td>';
+        '<td>'+(r.opened||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Opened||0)+'/'+(r.a2Opened||0)+')</span></td>'+
+        '<td>'+(r.closed||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Closed||0)+'/'+(r.a2Closed||0)+')</span></td>'+
+        '<td>'+(r.open||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Open||0)+'/'+(r.a2Open||0)+')</span></td>'+
+        '<td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+
+          fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>';
       tb.appendChild(tr);
     });
   }

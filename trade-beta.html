@@ -112,6 +112,11 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     .panic-btn:disabled{opacity:0.4;pointer-events:none;}
     .panic-lbl{font-size:9px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px;}
     .panic-cb{accent-color:var(--red);width:13px;height:13px;cursor:pointer;}
+        /* GLOBAL_LOW_FETCH_FIRE_ONLY_MODE_V1 */
+    .low-fetch-row{display:flex;align-items:center;justify-content:space-between;background:rgba(250,196,74,0.045);border:1px dashed rgba(250,196,74,0.30);border-radius:8px;padding:6px 10px;margin-top:6px;}
+    .low-fetch-lbl{font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:7px;}
+    .low-fetch-sub{font-size:8px;font-weight:700;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .low-fetch-cb{accent-color:var(--gold);width:14px;height:14px;cursor:pointer;}
     .pr-modal{position:fixed;inset:0;z-index:9999;background:rgba(6,10,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:14px;}
 .pr-modal.on{display:flex;}
 .pr-card{width:min(980px,100%);max-height:90vh;background:var(--bg2);border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden;}
@@ -676,9 +681,18 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     <div class="ctrl-panic-row">
       <label class="panic-lbl">
         <input type="checkbox" id="panic-slice-cb" class="panic-cb">
-        1-Contract Leg Slicing
+        Slice 1 contract/order
       </label>
       <button id="panic-close-btn" class="panic-btn" onclick="triggerPanicClose()">⚡ BTC All Shorts</button>
+    </div>
+
+    <!-- GLOBAL_LOW_FETCH_FIRE_ONLY_MODE_V1 -->
+    <div class="low-fetch-row">
+      <label class="low-fetch-lbl">
+        <input type="checkbox" id="low-fetch-cb" class="low-fetch-cb" onchange="toggleLowFetchMode()">
+        Low Fetch Mode
+      </label>
+      <div id="low-fetch-sub" class="low-fetch-sub">Normal: check/cancel/verify</div>
     </div>
   </div>
   <div class="hdiv"></div>
@@ -895,7 +909,8 @@ var S = {
   basketPendingPayload:null,
   basketLastPayload:null,
   basketLastResult:null,
-  basketResumeCanContinue:false,  basketRetryTimerId:null,  churnerAnalysis:null,  activeSpot:0};
+  basketResumeCanContinue:false,  basketRetryTimerId:null,  churnerAnalysis:null,  activeSpot:0,
+  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1'};
 function ge(id){ return document.getElementById(id); }
 function haptic(){ try{ if(navigator.vibrate&&navigator.userActivation&&navigator.userActivation.hasBeenActive)navigator.vibrate(6); }catch(e){} }
 function fmtM(n){ n=parseFloat(n)||0; return (n<0?'\u2212$':'$')+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
@@ -904,6 +919,37 @@ function fmtPct(n){ n=parseFloat(n)||0; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
 function fmtOI(n){ n=parseInt(n)||0; return n>=1000?(n/1000).toFixed(1)+'k':String(n); }
 function fmtStrike(n){ return n%1===0?n.toFixed(0):n.toFixed(2); }
 function toast(msg,ms){ var t=ge('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},ms||2200); }
+    // GLOBAL_LOW_FETCH_FIRE_ONLY_MODE_V1
+function paintLowFetchMode(){
+  var cb = ge('low-fetch-cb');
+  var sub = ge('low-fetch-sub');
+  if(cb) cb.checked = !!S.lowFetchMode;
+  if(sub){
+    sub.textContent = S.lowFetchMode
+      ? 'ON: fire only — no check/cancel/verify'
+      : 'Normal: check/cancel/verify';
+    sub.style.color = S.lowFetchMode ? 'var(--gold)' : 'var(--text3)';
+  }
+}
+function toggleLowFetchMode(){
+  haptic();
+  var cb = ge('low-fetch-cb');
+  S.lowFetchMode = !!(cb && cb.checked);
+  localStorage.setItem('tr_low_fetch_mode', S.lowFetchMode ? '1' : '0');
+  paintLowFetchMode();
+
+  if(S.lowFetchMode){
+    alert(
+      'LOW FETCH MODE ON\n\n' +
+      'RiKi will submit Basket/Panic orders only.\n\n' +
+      'It will NOT check status, cancel unfilled orders, or verify fills.\n\n' +
+      'Manage unfilled orders manually in TOS/Schwab.'
+    );
+    toast('Low Fetch ON: fire only', 2600);
+  } else {
+    toast('Low Fetch OFF: normal check/cancel/verify', 2600);
+  }
+}
 function savePref(k,v){ localStorage.setItem(k,String(v)); }
 function saveAll(){
   savePref('tr_ticker',S.ticker); savePref('tr_exp',S.expiryIdx); savePref('tr_filter',S.filter);
@@ -962,7 +1008,8 @@ function panicFetchRun_(run){
   return postBackendForm('panicBtc', {
     ticker: run.ticker,
     price: run.price,
-    slice: run.slice ? '1' : '0'
+    slice: run.slice ? '1' : '0',
+    lowFetchMode: S.lowFetchMode ? '1' : '0'
   });
 }
 
@@ -1621,7 +1668,11 @@ function showBasketRunning(payload){
     '<div class="pr-metric"><div class="pr-mk">Cancelled</div><div class="pr-mv">—</div></div>'+
     '<div class="pr-metric"><div class="pr-mk">Still Open</div><div class="pr-mv gold">Running</div></div>';
   ge('panic-retry-slot').innerHTML = '';
-  ge('pr-body').innerHTML = '<tr><td colspan="10" class="warn">STO Basket running — do not refresh this page.</td></tr>';
+  ge('pr-body').innerHTML = '<tr><td colspan="10" class="warn">'+
+    (S.lowFetchMode
+      ? 'STO Basket firing in LOW FETCH MODE — submit only, no check/cancel/verify.'
+      : 'STO Basket running — do not refresh this page.')+
+    '</td></tr>';
 
   var ok = ge('pr-ok'), abort = ge('pr-abort'), cont = ge('pr-continue');
   var rf = ge('pr-repeat-filled'), rs = ge('pr-repeat-same');
@@ -1642,10 +1693,13 @@ function basketFireCurrent(){
     return;
   }
 
-  haptic();
+    haptic();
+
+  // GLOBAL_LOW_FETCH_FIRE_ONLY_MODE_V1
+  payload.lowFetchMode = !!S.lowFetchMode;
+
   S.basketLastPayload = JSON.parse(JSON.stringify(payload));
   showBasketRunning(payload);
-
    var postBody = new URLSearchParams();
   postBody.set('action', 'basketSto');
   postBody.set('payload', JSON.stringify(payload));
@@ -1679,6 +1733,98 @@ function showBasketResult(res){
   var stillOpen = Number(res.stillOpenOrders || 0);
   var manualReview = Number(res.manualReviewOrders || 0);
   var hardFailed = Number(res.hardFailedOrders || 0);
+
+  // GLOBAL_LOW_FETCH_FIRE_ONLY_MODE_V1
+  if(res.lowFetchMode){
+    var submitFailedCt = Number(res.failed || 0);
+    var statusUnknown = Number(res.statusUnknownOrders || res.submitted || 0);
+    var lowOk = !!res.success && submitFailedCt === 0;
+
+    ge('pr-title').textContent = (res.ticker || S.ticker || '—') + ' · STO Basket';
+    ge('pr-status').className = 'pr-status ' + (lowOk ? 'warn' : 'bad');
+    ge('pr-status').textContent = res.continueNeeded ? '429 RESUME' : 'SUBMITTED ONLY';
+
+    ge('pr-summary').innerHTML =
+      '<div class="pr-metric"><div class="pr-mk">Submitted</div><div class="pr-mv">'+basketEsc(res.submitted || 0)+'/'+basketEsc(res.queuedOrders || rows.length)+'</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Status</div><div class="pr-mv gold">'+basketEsc(statusUnknown)+'</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Auto Cancel</div><div class="pr-mv gold">SKIP</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Verify</div><div class="pr-mv gold">SKIP</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Deferred</div><div class="pr-mv '+(res.continueNeeded?'gold':'')+'">'+basketEsc(res.deferredSubmitCount || 0)+'</div></div>';
+
+    if(res.continueNeeded){
+      ge('panic-retry-slot').innerHTML =
+        '<div class="pr-retry-box" id="basket-retry-box">'+
+          'LOW FETCH MODE: Schwab submit throttle hit. Submitted orders were NOT checked or cancelled.'+
+          '<span class="muted">Manage submitted orders in TOS/Schwab. Continue only submits the deferred queue.</span>'+
+          '<span class="muted" id="basket-retry-timer">60 sec</span>'+
+        '</div>';
+    } else {
+      ge('panic-retry-slot').innerHTML =
+        '<div class="pr-retry-box">LOW FETCH MODE: submitted only. Fill/cancel status unknown. Manage unfilled orders in TOS/Schwab.</div>';
+    }
+
+    if(rows.length === 0){
+      ge('pr-body').innerHTML = '<tr><td colspan="10" class="warn">'+basketEsc(res.error || 'No rows returned')+'</td></tr>';
+    } else {
+      ge('pr-body').innerHTML = rows.map(function(r){
+        var typ = basketTypeFull(r.type);
+        var symText = (typ ? typ+' ' : '') + (r.strike || '') + ' @ $' + (r.price || '') + ' · ' + (r.symbol || '');
+        var submitClass = String(r.submitStatus || '').indexOf('FAILED') >= 0 ? 'bad' : 'good';
+        var finalText = r.finalStatus || (String(r.submitStatus||'').indexOf('ACCEPTED') === 0 ? 'SUBMITTED_UNCHECKED' : '—');
+        var errHtml = r.error
+          ? '<div style="font-size:8px;color:var(--red);margin-top:2px;max-width:360px;white-space:normal;">'+basketEsc(r.error)+'</div>'
+          : '';
+        return '<tr>'+
+          '<td>'+basketEsc(r.acctLabel || r.acct || '')+'</td>'+
+          '<td class="sym">'+basketEsc(symText)+errHtml+'</td>'+
+          '<td>'+basketEsc(r.qty || 1)+'</td>'+
+          '<td>'+basketEsc(r.orderId || '—')+'</td>'+
+          '<td class="'+submitClass+'">'+basketEsc(r.submitStatus || r.submitHttp || '')+'</td>'+
+          '<td>SKIP</td>'+
+          '<td>SKIP</td>'+
+          '<td class="warn">'+basketEsc(finalText)+'</td>'+
+          '<td class="warn">?</td>'+
+          '<td class="warn">?</td>'+
+        '</tr>';
+      }).join('');
+    }
+
+    var ok = ge('pr-ok'), abort = ge('pr-abort'), cont = ge('pr-continue');
+    var rf = ge('pr-repeat-filled'), rs = ge('pr-repeat-same');
+
+    if(res.continueNeeded){
+      if(rf) rf.classList.add('pr-hidden');
+      if(rs) rs.classList.add('pr-hidden');
+      ok.classList.add('pr-hidden');
+      abort.classList.remove('pr-hidden');
+      abort.textContent = 'Abort';
+      abort.disabled = false;
+      abort.onclick = abortBasketStoResume;
+      cont.classList.remove('pr-hidden');
+      cont.textContent = 'Continue Next Round';
+      cont.disabled = true;
+      cont.onclick = continueBasketStoNextRound;
+      startBasketRetryCountdown(res.retryAfterMs || 60000, true);
+    } else {
+      S.basketResumeCanContinue = false;
+      abort.classList.add('pr-hidden');
+      cont.classList.add('pr-hidden');
+      ok.classList.remove('pr-hidden');
+      ok.textContent = 'OK';
+      ok.disabled = false;
+      ok.onclick = closeBasketResultAndClear;
+
+      if(rf) rf.classList.add('pr-hidden'); // fill status unknown in Low Fetch
+      if(rs){
+        rs.classList.remove('pr-hidden');
+        rs.disabled = !S.basketLastPayload || !S.basketLastPayload.rows || !S.basketLastPayload.rows.length;
+      }
+    }
+
+    ge('panic-result-modal').classList.add('on');
+    return;
+  }
+
   var isClean = !!res.success && stillOpen === 0 && manualReview === 0 && hardFailed === 0;
 
   ge('pr-title').textContent = (res.ticker || S.ticker || '—') + ' · STO Basket';
@@ -1995,7 +2141,11 @@ function showPanicRunning(ticker, price, sliceMode){
     '<div class="pr-metric"><div class="pr-mk">Still Open</div><div class="pr-mv gold">Running</div></div>';
 
   ge('pr-body').innerHTML =
-    '<tr><td colspan="10" class="warn">Panic BTC running — do not refresh this page.</td></tr>';
+    '<tr><td colspan="10" class="warn">'+
+    (S.lowFetchMode
+      ? 'Panic BTC firing in LOW FETCH MODE — submit only, no check/cancel/verify.'
+      : 'Panic BTC running — do not refresh this page.')+
+    '</td></tr>';
 
   var retrySlot = ge('panic-retry-slot');
   if(retrySlot) retrySlot.innerHTML = '';
@@ -2028,6 +2178,76 @@ function showPanicResult(res){
   var failed = Number(res.failed || 0) + Number(res.cancelFailed || 0);
   var stillOpen = Number(res.stillOpenOrders || 0);
   var manualReview = Number(res.manualReviewOrders || 0);
+
+  // GLOBAL_LOW_FETCH_FIRE_ONLY_MODE_V1
+  if(res.lowFetchMode){
+    var statusUnknown = Number(res.statusUnknownOrders || res.submitted || 0);
+    var lowOk = !!res.success && Number(res.failed || 0) === 0;
+
+    ge('pr-title').textContent =
+      (res.ticker || S.ticker || '—')+
+      (res.price ? ' @ $'+res.price : '')+
+      ' · '+(res.sliceMode || 'PANIC');
+
+    ge('pr-status').className = 'pr-status ' + (lowOk ? 'warn' : 'bad');
+    ge('pr-status').textContent = res.continueNeeded ? '429 RESUME' : 'SUBMITTED ONLY';
+
+    ge('pr-summary').innerHTML =
+      '<div class="pr-metric"><div class="pr-mk">Submitted</div><div class="pr-mv">'+panicEsc(res.submitted || 0)+'</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Status</div><div class="pr-mv gold">'+panicEsc(statusUnknown)+'</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Auto Cancel</div><div class="pr-mv gold">SKIP</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Verify</div><div class="pr-mv gold">SKIP</div></div>'+
+      '<div class="pr-metric"><div class="pr-mk">Failed</div><div class="pr-mv '+(Number(res.failed||0)>0?'red':'call')+'">'+panicEsc(res.failed || 0)+'</div></div>';
+
+    var retrySlot = ge('panic-retry-slot');
+    if(retrySlot){
+      if(res && res.continueNeeded){
+        retrySlot.innerHTML =
+          '<div id="panic-retry-box" class="pr-retry-box">'+
+            'LOW FETCH MODE: submit throttle detected. Submitted orders were NOT checked or cancelled.'+
+            '<span class="muted">Deferred orders: <b>'+panicEsc(res.deferredSubmitCount || 0)+'</b></span>'+
+            '<span class="muted">Manage submitted orders in TOS/Schwab. Continue only submits the deferred queue.</span>'+
+            '<span class="muted">Wait: <b id="panic-retry-timer">60 sec</b></span>'+
+          '</div>';
+      } else {
+        retrySlot.innerHTML =
+          '<div class="pr-retry-box">LOW FETCH MODE: submitted only. Fill/cancel status unknown. Manage unfilled orders in TOS/Schwab.</div>';
+      }
+    }
+
+    if(res.error && rows.length === 0){
+      ge('pr-body').innerHTML =
+        '<tr><td colspan="10" class="bad">'+panicEsc(res.error)+'</td></tr>';
+    } else if(rows.length === 0){
+      ge('pr-body').innerHTML =
+        '<tr><td colspan="10" class="warn">'+panicEsc(res.summary || 'No rows returned')+'</td></tr>';
+    } else {
+      ge('pr-body').innerHTML = rows.map(function(r){
+        return '<tr>'+
+          '<td>'+panicEsc(r.acctLabel || r.acct || '')+'</td>'+
+          '<td class="sym">'+panicEsc(r.symbol || '')+'</td>'+
+          '<td>'+panicEsc(r.qty || 0)+'</td>'+
+          '<td>'+panicEsc(r.orderId || '—')+'</td>'+
+          '<td class="'+(String(r.submitStatus||'').indexOf('FAILED')>=0?'bad':'good')+'">'+panicEsc(r.submitStatus || r.submitHttp || '')+'</td>'+
+          '<td>SKIP</td>'+
+          '<td>SKIP</td>'+
+          '<td class="warn">'+panicEsc(r.finalStatus || 'SUBMITTED_UNCHECKED')+'</td>'+
+          '<td class="warn">?</td>'+
+          '<td class="warn">?</td>'+
+        '</tr>';
+      }).join('');
+    }
+
+    m.classList.add('on');
+    if(res && res.continueNeeded){
+      setPanicActionMode('resume');
+      startPanicRetryCountdown(res.retryAfterMs || 60000, true);
+    } else {
+      panicResumeCanContinue = false;
+      setPanicActionMode('normal');
+    }
+    return;
+  }
 
   var isClean = !!res.success && failed === 0 && stillOpen === 0 && manualReview === 0;
 
@@ -3031,9 +3251,10 @@ ge('a1-tog').className='acct-tog '+(S.en1?'on':''); ge('a1-block').className='ac
 ge('a2-tog').className='acct-tog '+(S.en2?'on':''); ge('a2-block').className='acct-block '+(S.en2?'':'disabled');
 updateRatioPreview();
 paintBasketControls();
-
+paintLowFetchMode();
 window.onload=function(){
   paintBasketControls();
+  paintLowFetchMode();
   updateMobileBasketPill();
   installMobileCompactScroll();
   doFetch(true);

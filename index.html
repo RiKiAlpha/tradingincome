@@ -462,18 +462,57 @@ function updateModeUI(){
 }
 function loadChurnerTicker(ticker){
   ticker = String(ticker || '').trim().toUpperCase();
-  localStorage.setItem('riki_churner_focus_ticker', ticker);
+  if(ticker){
+    localStorage.setItem('riki_churner_focus_ticker', ticker);
+  } else {
+    localStorage.removeItem('riki_churner_focus_ticker');
+  }
+
   var churnerStart = localStorage.getItem('riki_churner_start_date') || '2026-06-01';
-  fetch(BACKEND + '?action=churnerAnalytics&ticker=' + encodeURIComponent(ticker) + '&focus=' + (ticker ? '1' : '0') + '&start=' + encodeURIComponent(churnerStart) + '&_=' + Date.now())
+
+  var asOfEl = ge('churner-asof-input');
+  var asOfDate = asOfEl ? String(asOfEl.value || '').trim() : (localStorage.getItem('riki_churner_asof_date') || '');
+
+  if(asOfDate){
+    localStorage.setItem('riki_churner_asof_date', asOfDate);
+  } else {
+    localStorage.removeItem('riki_churner_asof_date');
+  }
+
+  var url = BACKEND +
+    '?action=churnerAnalytics' +
+    '&ticker=' + encodeURIComponent(ticker) +
+    '&focus=' + (ticker ? '1' : '0') +
+    '&start=' + encodeURIComponent(churnerStart) +
+    '&asOf=' + encodeURIComponent(asOfDate) +
+    '&_=' + Date.now();
+
+  fetch(url)
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(!DATA) DATA = {};
       DATA.churner = j;
       renderAll(DATA);
       saveCache(DATA);
-      toast('Churner updated from TxCache', 2200);
+      toast(asOfDate ? ('Churner as-of '+asOfDate) : 'Churner updated from TxCache', 2200);
     })
     .catch(function(e){ toast('Churner load error: '+errMsg(e), 4000); });
+}
+
+function clearChurnerAsOf(){
+  localStorage.removeItem('riki_churner_asof_date');
+  var el = ge('churner-asof-input');
+  if(el) el.value = '';
+  loadChurnerTicker(localStorage.getItem('riki_churner_focus_ticker') || '');
+}
+
+function loadChurnerAllTickers(){
+  localStorage.removeItem('riki_churner_focus_ticker');
+
+  var tickerEl = ge('churner-ticker-input');
+  if(tickerEl) tickerEl.value = '';
+
+  loadChurnerTicker('');
 }
 var TAB_IDS={d:'pd',p:'pp',h:'ph',s:'ps'};
 function switchTab(key){
@@ -822,12 +861,22 @@ function renderChurnerDash(d){
 
   var banner=document.createElement('div');
   banner.className='churner-banner';
+
+  var chAsOf = (chData() && chData().asOfDate) || localStorage.getItem('riki_churner_asof_date') || '';
+  var chFocusTicker = localStorage.getItem('riki_churner_focus_ticker') || '';
+
   banner.innerHTML =
     '<div><div class="churner-title">Churner Analytics</div>' +
-      '<div class="churner-sub">TxCache only · no Schwab ping · from '+((chData() && chData().churnerStartDate) || localStorage.getItem('riki_churner_start_date') || '2026-06-01')+'</div></div>' +
-    '<div style="display:flex;gap:6px;align-items:center;">' +
-      '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER">' +
+      '<div class="churner-sub">TxCache only · no Schwab ping · from '+((chData() && chData().churnerStartDate) || localStorage.getItem('riki_churner_start_date') || '2026-06-01')+
+        (chAsOf ? ' · as of '+chAsOf : ' · live today')+
+        (chFocusTicker ? ' · '+chFocusTicker : ' · all tickers')+
+      '</div></div>' +
+    '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +
+      '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER" value="'+chFocusTicker+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(this.value);}">' +
+      '<input id="churner-asof-input" class="churner-input" style="width:112px;font-size:10px;" type="date" value="'+chAsOf+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(ge(\'churner-ticker-input\').value);}">' +
       '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +
+      '<button class="churner-mini-btn" onclick="loadChurnerAllTickers()">All</button>' +
+      '<button class="churner-mini-btn" onclick="clearChurnerAsOf()">Today</button>' +
     '</div>';
   dw.appendChild(banner);
 
@@ -846,12 +895,21 @@ function renderChurnerDash(d){
     '<div class="churner-grid">' +
       '<div class="churner-k"><div class="churner-kl">Opened Today</div><div class="churner-kv">'+(s.openedToday||0)+'</div></div>' +
       '<div class="churner-k"><div class="churner-kl">Closed Today</div><div class="churner-kv">'+(s.closedToday||0)+'</div></div>' +
-      '<div class="churner-k"><div class="churner-kl">Still Open</div><div class="churner-kv">'+(s.stillOpen||0)+'</div><div style="font-size:10px;color:var(--text2);margin-top:4px;">Potential @ 3c: <b class="'+cc(s.potentialAt3c)+'">'+fmtS(s.potentialAt3c||0)+'</b></div></div>' +
-      '<div class="churner-k"><div class="churner-kl">Banked Today</div><div class="churner-kv '+cc(s.bankedToday)+'">'+fmtS(s.bankedToday||0)+'</div><div style="font-size:10px;color:var(--text2);margin-top:4px;">Total: <b class="'+cc(s.totalTodayAt3c)+'">'+fmtS(s.totalTodayAt3c||0)+'</b></div></div>' +      '<div class="churner-k"><div class="churner-kl">Banked Week</div><div class="churner-kv '+cc(s.bankedWeek)+'">'+fmtS(s.bankedWeek||0)+'</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Still Open</div><div class="churner-kv">'+(s.stillOpen||0)+'</div>' +
+        '<div style="font-size:10px;color:var(--text2);margin-top:4px;">Potential @ 3c: <b class="'+cc(s.potentialAt3c)+'">'+fmtS(s.potentialAt3c||0)+'</b></div>' +
+        '<div style="font-size:10px;color:var(--text3);margin-top:3px;">From today: <b>'+(s.stillOpenFromToday||0)+'</b></div>' +
+        '<div style="font-size:10px;color:var(--text3);margin-top:3px;">From today @3c: <b class="'+cc(s.potentialAt3cFromToday)+'">'+fmtS(s.potentialAt3cFromToday||0)+'</b></div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Banked Today</div><div class="churner-kv '+cc(s.bankedToday)+'">'+fmtS(s.bankedToday||0)+'</div>' +
+        '<div style="font-size:10px;color:var(--text2);margin-top:4px;">Day-trade: <b class="'+cc(s.dayTradeBankedToday)+'">'+fmtS(s.dayTradeBankedToday||0)+'</b> / '+(s.dayTradeContractsToday||0)+' contracts</div>' +
+        '<div style="font-size:10px;color:var(--text3);margin-top:3px;">Older closed: <b class="'+cc(s.olderOpenBankedToday)+'">'+fmtS(s.olderOpenBankedToday||0)+'</b> / '+(s.olderOpenClosedTodayContracts||0)+' contracts</div></div>' +
+      '<div class="churner-k"><div class="churner-kl">Banked Week</div><div class="churner-kv '+cc(s.bankedWeek)+'">'+fmtS(s.bankedWeek||0)+'</div></div>' +
       '<div class="churner-k"><div class="churner-kl">Banked Month</div><div class="churner-kv '+cc(s.bankedMonth)+'">'+fmtS(s.bankedMonth||0)+'</div></div>' +
     '</div>' +
     '<div class="churner-line" style="margin-top:12px;"><span>Exact banked overall</span><b class="'+cc(s.bankedOverall)+'">'+fmtS(s.bankedOverall||0)+'</b></div>' +
-    '<div class="churner-line"><span>Tickers</span><b>'+(c.tickers||[]).join(', ')+'</b></div>';
+    '<div class="churner-line"><span>Tickers</span><b>'+(c.tickers||[]).join(', ')+'</b></div>' +
+    ((s.unmatchedBtcToday||0) > 0
+      ? '<div class="churner-line"><span>FIFO unmatched BTC today</span><b style="color:var(--gold)">'+(s.unmatchedBtcToday||0)+' contracts · check TxCache start window</b></div>'
+      : '');
   dc.appendChild(k);
 
   var todayIso = new Date().toISOString().substring(0,10);

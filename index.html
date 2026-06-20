@@ -911,35 +911,61 @@ function renderChurnerDash(d){
       ? '<div class="churner-line"><span>FIFO unmatched BTC today</span><b style="color:var(--gold)">'+(s.unmatchedBtcToday||0)+' contracts · check TxCache start window</b></div>'
       : '');
   dc.appendChild(k);
+    // CHURNER_DAYTRADE_TICKER_EXPIRY_BREAKDOWN_V1
+  // Compact ticker-level day-trade breakdown, especially useful in All mode.
+  var tdRows = (c.tickerDayTradeRows || []).slice().filter(function(r){
+    return Number(r.dayTradeContractsToday || 0) > 0 ||
+           Math.abs(Number(r.dayTradeBankedToday || 0)) > 0.004 ||
+           Number(r.unmatchedBtcToday || 0) > 0;
+  });
+
+  if(tdRows.length){
+    var tb=document.createElement('div');
+    tb.className='churner-kpi';
+    tb.innerHTML =
+      '<div class="churner-line" style="border-top:none;margin-bottom:8px;"><span>Day-trade by ticker</span><b>'+(tdRows.length)+' ticker'+(tdRows.length===1?'':'s')+'</b></div>' +
+      '<div class="churner-grid">' +
+        tdRows.map(function(r){
+          return '<div class="churner-k">' +
+            '<div class="churner-kl">'+(r.ticker||'—')+'</div>' +
+            '<div class="churner-kv '+cc(r.dayTradeBankedToday)+'">'+fmtS(r.dayTradeBankedToday||0)+'</div>' +
+            '<div style="font-size:10px;color:var(--text2);margin-top:4px;">Day-trade: <b>'+(r.dayTradeContractsToday||0)+'</b> contracts</div>' +
+            '<div style="font-size:10px;color:var(--text3);margin-top:3px;">BTC today: <b>'+(r.closedToday||0)+'</b> · Opened: <b>'+(r.openedToday||0)+'</b></div>' +
+            '<div style="font-size:10px;color:var(--text3);margin-top:3px;">Older closed: <b class="'+cc(r.olderOpenBankedToday)+'">'+fmtS(r.olderOpenBankedToday||0)+'</b> / '+(r.olderOpenClosedTodayContracts||0)+'</div>' +
+            ((r.unmatchedBtcToday||0) > 0 ? '<div style="font-size:10px;color:var(--gold);margin-top:3px;">Unmatched BTC: <b>'+r.unmatchedBtcToday+'</b></div>' : '') +
+          '</div>';
+        }).join('') +
+      '</div>';
+    dc.appendChild(tb);
+  }
 
   var todayIso = new Date().toISOString().substring(0,10);
 
   var focusTicker = (localStorage.getItem('riki_churner_focus_ticker') || '').trim().toUpperCase();
 
   var expRows=(c.expiryRows||[]).slice().filter(function(r){
-    return !focusTicker || String(r.ticker || '').toUpperCase() === focusTicker;
+    if(focusTicker && String(r.ticker || '').toUpperCase() !== focusTicker) return false;
+
+    // CHURNER_DAYTRADE_TICKER_EXPIRY_BREAKDOWN_V1
+    // Lower cards should show only expiries that contributed to day-trade realized dollars.
+    return Number(r.dayTradeContractsToday || 0) > 0 ||
+           Math.abs(Number(r.dayTradeBankedToday || 0)) > 0.004;
   }).sort(function(a,b){
-    var aOpen = Number(a.stillOpen || 0) > 0 ? 1 : 0;
-    var bOpen = Number(b.stillOpen || 0) > 0 ? 1 : 0;
-    if(aOpen !== bOpen) return bOpen - aOpen;
+    var at = String(a.ticker || '');
+    var bt = String(b.ticker || '');
+    if(at !== bt) return at.localeCompare(bt);
 
-    var aFuture = String(a.expiry || '') >= todayIso ? 1 : 0;
-    var bFuture = String(b.expiry || '') >= todayIso ? 1 : 0;
-    if(aFuture !== bFuture) return bFuture - aFuture;
+    var db = Math.abs(Number(b.dayTradeBankedToday || 0));
+    var da = Math.abs(Number(a.dayTradeBankedToday || 0));
+    if(db !== da) return db - da;
 
-    if(aFuture && bFuture){
-      if(a.expiry !== b.expiry) return a.expiry < b.expiry ? -1 : 1;
-    } else {
-      if(a.expiry !== b.expiry) return a.expiry > b.expiry ? -1 : 1;
-    }
-
-    return String(a.ticker).localeCompare(String(b.ticker));
+    return String(a.expiry || '').localeCompare(String(b.expiry || ''));
   });
 
   if(!expRows.length){
     var empty=document.createElement('div');
     empty.className='churner-exp-card';
-    empty.innerHTML='<div class="churner-exp-title">No churner transactions found</div><div class="churner-exp-sub">TxCache has no AVGO/MSTR/MU short-premium rows yet.</div>';
+    empty.innerHTML='<div class="churner-exp-title">No day-trade expiry contributors</div><div class="churner-exp-sub">No expiry produced opened-today-and-closed-today realized gain for this ticker/date.</div>';
     dcp.appendChild(empty);
     return;
   }
@@ -950,16 +976,12 @@ function renderChurnerDash(d){
     card.innerHTML =
       '<div class="churner-exp-head">' +
         '<div><div class="churner-exp-title">'+r.ticker+' · '+r.expiry+'</div>' +
-        '<div class="churner-exp-sub">Exact banked by expiry from TxCache netAmount</div></div>' +
-        '<div class="churner-bank '+cc(r.banked)+'">'+fmtS(r.banked||0)+'</div>' +
+        '<div class="churner-exp-sub">Day-trade contributor only · opened and closed on selected day</div></div>' +
+        '<div class="churner-bank '+cc(r.dayTradeBankedToday)+'">'+fmtS(r.dayTradeBankedToday||0)+'</div>' +
       '</div>' +
-      '<div class="churner-line"><span>Opened today / Closed today</span><b>'+(r.openedToday||0)+' / '+(r.closedToday||0)+'</b></div>' +
-      '<div class="churner-line"><span>Total opened / Total closed</span><b>'+(r.totalOpened||0)+' / '+(r.totalClosed||0)+'</b></div>' +
-      '<div class="churner-line"><span>Still open</span><b>'+(r.stillOpen||0)+' <span style="font-size:10px;color:var(--text3)">(Pot @3c '+fmtS(r.potentialAt3c||0)+')</span></b></div>' +
-      '<div class="churner-line"><span>A1 banked / potential</span><b class="'+cc(r.a1Banked)+'">'+fmtS(r.a1Banked||0)+' / <span class="'+cc(r.a1PotentialAt3c)+'">'+fmtS(r.a1PotentialAt3c||0)+'</span></b></div>' +
-      '<div class="churner-line"><span>A2 banked / potential</span><b class="'+cc(r.a2Banked)+'">'+fmtS(r.a2Banked||0)+' / <span class="'+cc(r.a2PotentialAt3c)+'">'+fmtS(r.a2PotentialAt3c||0)+'</span></b></div>' +
-      '<div class="churner-line"><span>A1 opened / closed / open</span><b>'+(r.a1Opened||0)+' / '+(r.a1Closed||0)+' / '+(r.a1Open||0)+'</b></div>' +
-      '<div class="churner-line"><span>A2 opened / closed / open</span><b>'+(r.a2Opened||0)+' / '+(r.a2Closed||0)+' / '+(r.a2Open||0)+'</b></div>';
+      '<div class="churner-line"><span>Day-trade contracts</span><b>'+(r.dayTradeContractsToday||0)+'</b></div>' +
+      '<div class="churner-line"><span>Opened today / BTC today</span><b>'+(r.openedToday||0)+' / '+(r.closedToday||0)+'</b></div>' +
+      '<div class="churner-line"><span>Day-trade banked</span><b class="'+cc(r.dayTradeBankedToday)+'">'+fmtS(r.dayTradeBankedToday||0)+'</b></div>';
     dcp.appendChild(card);
   });
 }

@@ -964,12 +964,19 @@ function editTicker(){
 function commitTicker(){
   var inp=ge('tkr-inp'),v=(inp.value||'').trim().toUpperCase();
   if(v&&v!==S.ticker){
+    // TRADE_TICKER_STALE_CHAIN_GUARD_V1
+    // Invalidate any in-flight old ticker response before changing visible ticker.
+    S.fetchSeq = (S.fetchSeq || 0) + 1;
+    S.fetching = false;
+
     S.ticker = v;
     S.expiryIdx = 0;
     S.activeExpiry = '';
     S.expiryDates = null;
     S.data = null;
+    S.dataTicker = '';
     S.activeSpot = 0;
+    S._lastMissingFetch = '';
     saveAll();
 
     updateExpTabs();
@@ -979,8 +986,13 @@ function commitTicker(){
     ge('spot-price').textContent = 'Loading';
     ge('chg-pct').textContent = '';
     ge('chg-dollar').textContent = '';
+    ge('market-pill').textContent = '...';
+    ge('market-pill').className = 'closed';
+
     markChainLoading('Discovering '+v+' expiries…');
-    doFetch(true);
+
+    // Force a fresh chain fetch even if an older ticker fetch is still in flight.
+    doFetch(true, { force:true, ticker:v, reason:'ticker-change' });
   }
   _closeTicker();
 }
@@ -2780,16 +2792,36 @@ function toggleExpand(){
     fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
   }
 }
-function doRefresh(){ if(S.fetching)return; haptic(); var r=ge('ring'); r.className=''; void r.offsetWidth; r.className='drain'; doFetch(false); }
+function doRefresh(){
+  if(S.fetching)return;
+  haptic();
+  var r=ge('ring');
+  r.className='';
+  void r.offsetWidth;
+  r.className='drain';
+  doFetch(false, { reason:'manual-refresh' });
+}
 
-function doFetch(firstTime){
-  console.log('[RiKi] doFetch called, firstTime='+firstTime+' S.fetching='+S.fetching);
+function doFetch(firstTime, opts){
+  opts = opts || {};
+  var force = !!opts.force;
 
-  if(S.fetching){
+  var reqTicker = String(opts.ticker || S.ticker || '').trim().toUpperCase();
+  if(!reqTicker){
+    toast('Ticker required', 2500);
+    return;
+  }
+
+  console.log('[RiKi] doFetch called, firstTime='+firstTime+' S.fetching='+S.fetching+' force='+force+' ticker='+reqTicker);
+
+  if(S.fetching && !force){
     console.log('[RiKi] doFetch: already fetching, bailing');
     return;
   }
 
+  // TRADE_TICKER_STALE_CHAIN_GUARD_V1
+  // Force mode is used only for ticker change. It allows the new ticker request
+  // to start while the old request is still in flight. Old response is ignored by fetchSeq.
   S.fetching = true;
   S.fetchSeq = (S.fetchSeq || 0) + 1;
 
@@ -2800,31 +2832,36 @@ function doFetch(firstTime){
   var badge = ge('tkr-badge');
   var fresh = ge('chain-fresh');
 
-  if(badge) badge.className = 'ticker-badge loading';
+  if(badge){
+    badge.textContent = reqTicker;
+    badge.className = 'ticker-badge loading';
+  }
+
   if(fresh){
     fresh.className = 'chain-fresh loading';
-    fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
+    fresh.innerHTML = '<span class="cf-sym">'+reqTicker+'</span><span class="cf-time">...</span>';
   }
 
   var url =
     BACKEND +
     '?action=optionChain' +
-    '&ticker=' + encodeURIComponent(S.ticker) +
+    '&ticker=' + encodeURIComponent(reqTicker) +
     '&expiry=' + encodeURIComponent(S.activeExpiry || '') +
     '&rangeMin=' + encodeURIComponent(S.rangeMin) +
     '&rangeMax=' + encodeURIComponent(S.rangeMax) +
-    '&all=' + (S.expanded ? '1' : '0');
+    '&all=' + (S.expanded ? '1' : '0') +
+    '&_=' + Date.now();
 
-  console.log('[RiKi] doFetch: fetching URL='+url);
+  console.log('[RiKi] doFetch: fetching URL='+url+' seq='+seq+' ticker='+reqTicker);
 
   fetch(url)
     .then(function(r){
-      console.log('[RiKi] doFetch: HTTP status='+r.status+' ok='+r.ok);
+      console.log('[RiKi] doFetch: HTTP status='+r.status+' ok='+r.ok+' seq='+seq+' ticker='+reqTicker);
       return r.text();
     })
     .then(function(raw){
       if(seq !== S.fetchSeq){
-        console.log('[RiKi] doFetch: stale response ignored');
+        console.log('[RiKi] doFetch: stale response ignored seq='+seq+' current='+S.fetchSeq+' reqTicker='+reqTicker+' currentTicker='+S.ticker);
         return;
       }
 
@@ -2839,20 +2876,49 @@ function doFetch(firstTime){
         if(badge) badge.className = 'ticker-badge ready';
         if(fresh) fresh.className = 'chain-fresh ready';
         var tw = ge('tw'); if(tw) tw.className = '';
+        ge('cb').innerHTML = '<tr><td colspan="8" class="es">Parse error loading '+reqTicker+' chain</td></tr>';
         toast('Parse error: '+parseErr.message, 5000);
         return;
       }
 
-      console.log('[RiKi] doFetch: parsed OK. keys='+Object.keys(d).join(','));
+      console.log('[RiKi] doFetch: parsed OK. keys='+Object.keys(d).join(',')+' reqTicker='+reqTicker+' responseTicker='+(d.ticker||''));
+
+      // Hard reject any response that does not belong to the requested/current ticker.
+      var respTicker = String(d.ticker || reqTicker || '').trim().toUpperCase();
+
+      if(respTicker !== reqTicker || String(S.ticker || '').trim().toUpperCase() !== reqTicker){
+        console.warn(
+          '[RiKi] doFetch: ticker mismatch ignored. reqTicker=' + reqTicker +
+          ' respTicker=' + respTicker +
+          ' currentTicker=' + S.ticker
+        );
+
+        S.fetching = false;
+
+        if(String(S.ticker || '').trim().toUpperCase() === reqTicker){
+          S.data = null;
+          S.dataTicker = '';
+          markChainLoading('Retrying '+reqTicker+' chain...');
+          setTimeout(function(){
+            if(String(S.ticker || '').trim().toUpperCase() === reqTicker){
+              doFetch(true, { force:true, ticker:reqTicker, reason:'ticker-mismatch-retry' });
+            }
+          }, 250);
+        }
+
+        return;
+      }
 
       S.fetching = false;
 
       if(d.error){
-        console.warn('[RiKi] doFetch: backend error='+d.error);
+        console.warn('[RiKi] doFetch: backend error='+d.error+' ticker='+reqTicker);
         if(badge) badge.className = 'ticker-badge ready';
         if(fresh) fresh.className = 'chain-fresh ready';
         var twErr = ge('tw'); if(twErr) twErr.className = '';
-        ge('cb').innerHTML = '<tr><td colspan="8" class="es">Backend error: '+d.error+'</td></tr>';
+        S.data = null;
+        S.dataTicker = '';
+        ge('cb').innerHTML = '<tr><td colspan="8" class="es">Backend error loading '+reqTicker+': '+d.error+'</td></tr>';
         toast('Backend error: '+d.error, 5000);
         return;
       }
@@ -2869,12 +2935,14 @@ function doFetch(firstTime){
 
       updateExpTabs();
 
-      if(d.ticker){
-        S.ticker = String(d.ticker).toUpperCase();
-        if(badge) badge.textContent = S.ticker;
-      }
+      // Only now is the response trusted.
+      S.ticker = reqTicker;
+      S.dataTicker = reqTicker;
 
-      if(badge) badge.className = 'ticker-badge ready';
+      if(badge){
+        badge.textContent = reqTicker;
+        badge.className = 'ticker-badge ready';
+      }
 
       var r = ge('ring');
       if(r){
@@ -2882,7 +2950,12 @@ function doFetch(firstTime){
         setTimeout(function(){ r.className = ''; }, 500);
       }
 
-        var spot = Number(d.spot || d.spotPrice || 0);      S.activeSpot = spot || S.activeSpot || 0;      if(spot){        ge('spot-price').textContent = '$'+spot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      var spot = Number(d.spot || d.spotPrice || 0);
+      S.activeSpot = spot || S.activeSpot || 0;
+      if(spot){
+        ge('spot-price').textContent = '$'+spot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      } else {
+        ge('spot-price').textContent = '—';
       }
 
       var nc = Number(d.netChange || 0);
@@ -2913,33 +2986,36 @@ function doFetch(firstTime){
 
       if(fresh){
         fresh.className = 'chain-fresh flash';
-        fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">'+fTime+'</span>';
+        fresh.innerHTML = '<span class="cf-sym">'+reqTicker+'</span><span class="cf-time">'+fTime+'</span>';
         setTimeout(function(){ fresh.className = 'chain-fresh ready'; },600);
       }
 
       var upd = ge('updated-lbl');
-if(upd){
-  upd.textContent = 'Updated: ' + new Date(d.updated || Date.now()).toLocaleString();
+      if(upd){
+        upd.textContent = 'Updated: ' + new Date(d.updated || Date.now()).toLocaleString();
 
-  var pill = ge('mobile-basket-pill');
-  if(!pill){
-    pill = document.createElement('span');
-    pill.id = 'mobile-basket-pill';
-    pill.className = 'mobile-basket-pill';
-  }
+        var pill = ge('mobile-basket-pill');
+        if(!pill){
+          pill = document.createElement('span');
+          pill.id = 'mobile-basket-pill';
+          pill.className = 'mobile-basket-pill';
+        }
 
-  upd.appendChild(document.createTextNode(' '));
-  upd.appendChild(pill);
-  updateMobileBasketPill();
-}
+        upd.appendChild(document.createTextNode(' '));
+        upd.appendChild(pill);
+        updateMobileBasketPill();
+      }
 
-      console.log('[RiKi] doFetch: about to clear #tw and call renderChain');
+      console.log('[RiKi] doFetch: trusted chain loaded ticker='+reqTicker+' expiry='+S.activeExpiry+' seq='+seq);
       var tw = ge('tw'); if(tw) tw.className = '';
       renderChain();
-      console.log('[RiKi] doFetch: renderChain returned OK');
+      console.log('[RiKi] doFetch: renderChain returned OK ticker='+reqTicker);
     })
     .catch(function(e){
-      if(seq !== S.fetchSeq) return;
+      if(seq !== S.fetchSeq){
+        console.log('[RiKi] doFetch: stale catch ignored seq='+seq+' current='+S.fetchSeq+' ticker='+reqTicker);
+        return;
+      }
 
       console.error('[RiKi] doFetch: CATCH error='+e.message, e);
       S.fetching = false;
@@ -2950,14 +3026,29 @@ if(upd){
       var tw = ge('tw');
       if(tw) tw.className = '';
 
+      S.data = null;
+      S.dataTicker = '';
+      ge('cb').innerHTML = '<tr><td colspan="8" class="es">Fetch error loading '+reqTicker+' chain</td></tr>';
+
       toast('Fetch error: '+e.message, 5000);
     });
 }
 function renderChain(){
-  console.log('[RiKi] renderChain: S.data='+!!S.data+' S.expiryDates='+JSON.stringify(S.expiryDates)+' S.expiryIdx='+S.expiryIdx);
+  console.log('[RiKi] renderChain: S.data='+!!S.data+' S.dataTicker='+(S.dataTicker||'')+' S.ticker='+S.ticker+' S.expiryDates='+JSON.stringify(S.expiryDates)+' S.expiryIdx='+S.expiryIdx);
+
+  // TRADE_TICKER_STALE_CHAIN_GUARD_V1
+  // Never render a chain unless it belongs to the currently selected ticker.
+  if(S.data && S.dataTicker && String(S.dataTicker).toUpperCase() !== String(S.ticker || '').toUpperCase()){
+    console.warn('[RiKi] renderChain: stale data blocked dataTicker='+S.dataTicker+' currentTicker='+S.ticker);
+    S.data = null;
+    S.dataTicker = '';
+    markChainLoading('Loading '+S.ticker+' chain...');
+    return;
+  }
 
   if(!S.data){
     console.warn('[RiKi] renderChain: no data, returning');
+    markChainLoading('Loading '+S.ticker+' chain...');
     return;
   }
 
@@ -3071,11 +3162,65 @@ function renderRow(o,type){
 
 function openOrderSheet(type,sKey){
   haptic();
+
+  // TRADE_TICKER_STALE_CHAIN_GUARD_V1
+  // Never open/stage an order sheet from stale chain data.
+  var currentTickerForGuard = String(S.ticker || '').trim().toUpperCase();
+  var dataTickerForGuard = String(S.dataTicker || '').trim().toUpperCase();
+
+  if(S.fetching){
+    toast('Chain still loading for '+currentTickerForGuard+' — wait for fresh data', 3500);
+    console.warn('[RiKi] openOrderSheet blocked while fetching currentTicker='+currentTickerForGuard);
+    return;
+  }
+
+  if(!S.data || !S.expiryDates || !S.expiryDates.length){
+    toast('No fresh chain loaded for '+currentTickerForGuard, 3500);
+    console.warn('[RiKi] openOrderSheet blocked: no chain data currentTicker='+currentTickerForGuard);
+    return;
+  }
+
+  if(dataTickerForGuard && currentTickerForGuard && dataTickerForGuard !== currentTickerForGuard){
+    toast('Blocked stale chain: loaded '+dataTickerForGuard+' but selected '+currentTickerForGuard, 5000);
+    console.warn('[RiKi] openOrderSheet blocked stale dataTicker='+dataTickerForGuard+' currentTicker='+currentTickerForGuard);
+    return;
+  }
+
   var sym=sKey.replace(/_/g,' ');
+  var selectedOptionSymbolForGuard = String(sym || '').trim().toUpperCase();
+
+  if(currentTickerForGuard && selectedOptionSymbolForGuard &&
+     selectedOptionSymbolForGuard.indexOf(currentTickerForGuard) !== 0){
+    toast('Blocked stale chain: '+selectedOptionSymbolForGuard+' is not '+currentTickerForGuard, 5000);
+    console.warn('[RiKi] openOrderSheet blocked stale symbol currentTicker='+currentTickerForGuard+' selectedSymbol='+selectedOptionSymbolForGuard);
+    return;
+  }
+
   var expDate=S.expiryDates[S.expiryIdx];
-  var arr=S.data[expDate][type==='c'?'calls':'puts'];
+
+  if(!expDate || !S.data[expDate]){
+    toast('Chain not ready for '+currentTickerForGuard+' expiry', 3500);
+    console.warn('[RiKi] openOrderSheet blocked missing expiry expDate='+expDate+' ticker='+currentTickerForGuard);
+    return;
+  }
+
+  var arr=S.data[expDate][type==='c'?'calls':'puts'] || [];
   var o=arr.find(function(item){return item.symbol===sym;});
-  if(!o)return;
+
+  if(!o){
+    toast('Contract not found in fresh '+currentTickerForGuard+' chain', 3500);
+    console.warn('[RiKi] openOrderSheet blocked: symbol not found sym='+sym+' ticker='+currentTickerForGuard+' expDate='+expDate);
+    return;
+  }
+
+  var foundSymbolForGuard = String(o.symbol || '').trim().toUpperCase();
+
+  if(currentTickerForGuard && foundSymbolForGuard &&
+     foundSymbolForGuard.indexOf(currentTickerForGuard) !== 0){
+    toast('Blocked stale contract: '+foundSymbolForGuard+' is not '+currentTickerForGuard, 5000);
+    console.warn('[RiKi] openOrderSheet blocked found stale symbol currentTicker='+currentTickerForGuard+' foundSymbol='+foundSymbolForGuard);
+    return;
+  }
   
   S.activeContract=o;
   S.activeType=type;
@@ -3169,8 +3314,46 @@ function doStage(){
 }
 
 function doFire(){
-  haptic(); clearInterval(S.cdTimer); setState('firing');
-    var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2;
+  haptic();
+  clearInterval(S.cdTimer);
+
+  // TRADE_TICKER_STALE_CHAIN_GUARD_V1
+  // Final real-money guard before sending placeOrder.
+  var currentTickerForGuard = String(S.ticker || '').trim().toUpperCase();
+  var activeSymbolForGuard = String((S.activeContract && S.activeContract.symbol) || '').trim().toUpperCase();
+  var dataTickerForGuard = String(S.dataTicker || '').trim().toUpperCase();
+
+  if(!S.activeContract || !activeSymbolForGuard){
+    toast('Blocked: no active contract selected', 5000);
+    console.warn('[RiKi] doFire blocked: missing activeContract');
+    doBack();
+    return;
+  }
+
+  if(S.fetching){
+    toast('Blocked: chain still loading for '+currentTickerForGuard, 5000);
+    console.warn('[RiKi] doFire blocked while fetching ticker='+currentTickerForGuard);
+    doBack();
+    return;
+  }
+
+  if(dataTickerForGuard && currentTickerForGuard && dataTickerForGuard !== currentTickerForGuard){
+    toast('Blocked stale order: loaded '+dataTickerForGuard+' but selected '+currentTickerForGuard, 5000);
+    console.warn('[RiKi] doFire blocked stale dataTicker='+dataTickerForGuard+' currentTicker='+currentTickerForGuard);
+    doBack();
+    return;
+  }
+
+  if(currentTickerForGuard && activeSymbolForGuard.indexOf(currentTickerForGuard) !== 0){
+    toast('Blocked stale order: '+activeSymbolForGuard+' is not '+currentTickerForGuard, 5000);
+    console.warn('[RiKi] doFire blocked stale symbol currentTicker='+currentTickerForGuard+' activeSymbol='+activeSymbolForGuard);
+    doBack();
+    return;
+  }
+
+  setState('firing');
+
+  var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2;
   fetch(BACKEND+'?action=placeOrder'+params).then(function(r){return r.json();}).then(function(d){
     if(d.error){ showErr(d.error); return; }
     ge('rt').textContent='Trade Dispatched'; ge('rt').style.color='var(--call)';

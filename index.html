@@ -101,15 +101,66 @@ html.pwa #tabs-wrap{padding-bottom:0px;}
 .mode-pill{border:1px solid transparent;background:transparent;color:var(--text3);border-radius:999px;padding:5px 9px;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s ease;}
 .mode-pill.legacy{color:var(--text2);}
 .mode-pill.legacy.on{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:var(--text);box-shadow:0 0 0 1px rgba(255,255,255,.025) inset;}
-.mode-pill.churner{color:rgba(34,211,238,.62);}
-.mode-pill.churner.on{border-color:rgba(34,211,238,.55);background:rgba(61,156,255,.15);color:var(--churner2);box-shadow:0 0 18px rgba(61,156,255,.16);}
+/* CHURNER_MODE_POLISH_BLUE_BORDER_DATE_INPUT_V1 */
+.mode-pill.churner{color:rgba(61,156,255,.68);}
+.mode-pill.churner.on{
+  border-color:rgba(61,156,255,.62);
+  background:rgba(61,156,255,.10);
+  color:var(--churner2);
+  box-shadow:none;
+}
 body.churner-mode .tab::after{background:var(--churner2);}
 body.churner-mode .tab.on svg{color:var(--churner2)!important;}
 body.churner-mode .tab.on .tlabel{color:var(--churner2)!important;}
 .churner-banner{margin:14px 16px 0;padding:12px 14px;border-radius:13px;border:1px solid rgba(61,156,255,.35);background:linear-gradient(135deg,rgba(0,119,182,.14),rgba(61,156,255,.06));display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .churner-title{font-size:12px;font-weight:900;color:var(--churner2);letter-spacing:.08em;text-transform:uppercase;}
 .churner-sub{font-size:10px;color:var(--text2);margin-top:2px;}
-.churner-input{height:28px;width:78px;border-radius:8px;border:1px solid rgba(61,156,255,.38);background:var(--bg3);color:var(--text);font-size:11px;font-weight:900;text-align:center;text-transform:uppercase;outline:none;}
+.churner-input{
+  height:28px;
+  width:78px;
+  border-radius:8px;
+  border:1px solid rgba(61,156,255,.34);
+  background:rgba(24,24,31,.92);
+  color:var(--text);
+  font-size:11px;
+  font-weight:850;
+  text-align:center;
+  text-transform:uppercase;
+  outline:none;
+  letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;
+}
+
+.churner-date-input{
+  width:126px!important;
+  height:28px;
+  border-radius:9px;
+  border:1px solid rgba(61,156,255,.32);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),
+    rgba(24,24,31,.94);
+  color:rgba(240,240,245,.88);
+  font-size:10.5px!important;
+  font-weight:800;
+  letter-spacing:.025em;
+  text-transform:none;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+  color-scheme:dark;
+}
+
+.churner-date-input:focus,
+.churner-input:focus{
+  border-color:rgba(61,156,255,.62);
+  background:rgba(30,30,40,.98);
+}
+
+.churner-date-input::-webkit-calendar-picker-indicator{
+  opacity:.55;
+  filter:invert(1);
+  cursor:pointer;
+}
 .churner-mini-btn{height:28px;border-radius:8px;border:1px solid rgba(61,156,255,.38);background:rgba(61,156,255,.08);color:var(--churner2);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:0 10px;cursor:pointer;}
 .churner-kpi{margin:14px 16px 0;background:var(--bg2);border:1px solid rgba(61,156,255,.22);border-radius:16px;padding:18px;}
 .churner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
@@ -921,8 +972,7 @@ function renderChurnerDash(d){
       '</div></div>' +
     '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +
       '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER" value="'+chFocusTicker+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(this.value);}">' +
-      '<input id="churner-asof-input" class="churner-input" style="width:112px;font-size:10px;" type="date" value="'+chAsOf+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(ge(\'churner-ticker-input\').value);}">' +
-      '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +
+'<input id="churner-asof-input" class="churner-input churner-date-input" type="date" value="'+chAsOf+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(ge(\'churner-ticker-input\').value);}">' +      '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +
       '<button class="churner-mini-btn" onclick="loadChurnerAllTickers()">All</button>' +
       '<button class="churner-mini-btn" onclick="clearChurnerAsOf()">Today</button>' +
     '</div>';

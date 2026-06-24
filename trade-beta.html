@@ -50,15 +50,7 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     #market-pill{font-size:9px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:12px;text-transform:uppercase;}
     #market-pill.live{background:rgba(0,212,166,.12);color:var(--call);border:1px solid rgba(0,212,166,.2);}
     #market-pill.closed{background:rgba(221,228,239,.06);color:var(--text3);border:1px solid var(--border);}
-    .ring-wrap{width:24px;height:24px;cursor:pointer;}
-    .ring-wrap svg{width:24px;height:24px;transform:rotate(-90deg);}
-    .ring-bg{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:2.2;}
-    #ring{fill:none;stroke:var(--call);stroke-width:2.2;stroke-linecap:round;stroke-dasharray:56.55 56.55;stroke-dashoffset:0;transition:stroke .3s;}
-    @keyframes drain5{from{stroke-dashoffset:0}to{stroke-dashoffset:56.55}}
-    #ring.drain{animation:drain5 5s linear forwards;}
-    @keyframes rpulse{0%,100%{stroke:var(--call)}50%{stroke:#00ffca;filter:drop-shadow(0 0 5px #00d4a6);}}
-    #ring.pulse{animation:rpulse .4s ease-out forwards;}
-    #ring.stale{stroke:var(--text3);}
+    .quote-mode-toggle{height:24px;min-width:70px;border-radius:999px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;touch-action:manipulation;padding:0 9px;transition:border-color .18s,background .18s,color .18s,opacity .18s;}    .quote-mode-toggle:active{opacity:.72;}    .quote-mode-toggle .qmt-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);box-shadow:none;}    .quote-mode-toggle.sleep{border-color:rgba(61,156,255,.30);background:rgba(61,156,255,.08);color:var(--blue);}    .quote-mode-toggle.sleep .qmt-dot{background:var(--blue);}    .quote-mode-toggle.live{border-color:rgba(0,212,166,.42);background:rgba(0,212,166,.12);color:var(--call);}    .quote-mode-toggle.live .qmt-dot{background:var(--call);box-shadow:0 0 8px rgba(0,212,166,.45);}
     .tkr-left{display:flex;align-items:center;gap:8px;}
     .ticker-badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer;user-select:none;transition:border-color .18s,color .18s,box-shadow .18s,opacity .18s;}
     .ticker-badge.loading{opacity:.42;color:var(--text3);border-color:var(--border);box-shadow:none;}
@@ -695,12 +687,7 @@ Fallback: restore this Apps Script deployment version if future UI patches break
       <div class="hdr-right">
         <div class="beta-tag">TERMINAL</div>
         <div id="market-pill" class="closed">...</div>
-        <div class="ring-wrap" onclick="doRefresh()">
-          <svg viewBox="0 0 24 24">
-            <circle class="ring-bg" cx="12" cy="12" r="9"/>
-            <circle id="ring" cx="12" cy="12" r="9"/>
-          </svg>
-        </div>
+        <button id="quote-mode-toggle" class="quote-mode-toggle sleep" onclick="toggleQuoteMode()" type="button"><span class="qmt-dot"></span><span id="quote-mode-text">SLEEP</span></button>
       </div>
     </div>
     <div id="updated-lbl">Loading… <span id="mobile-basket-pill" class="mobile-basket-pill">Basket 0 · Orders 0</span></div>
@@ -1059,8 +1046,7 @@ var S = {
   basketPendingPayload:null,
   basketLastPayload:null,
   basketLastResult:null,
-  basketResumeCanContinue:false,  basketRetryTimerId:null,  churnerAnalysis:null,  activeSpot:0,
-  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1'};
+  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:20000, lastQuoteFetchAt:0, lastQuoteFetchLabel:''};
 function ge(id){ return document.getElementById(id); }
 function haptic(){ try{ if(navigator.vibrate&&navigator.userActivation&&navigator.userActivation.hasBeenActive)navigator.vibrate(6); }catch(e){} }
 function fmtM(n){ n=parseFloat(n)||0; return (n<0?'\u2212$':'$')+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
@@ -1099,6 +1085,161 @@ function toggleLowFetchMode(){
   } else {
     toast('Low Fetch OFF: normal check/cancel/verify', 2600);
   }
+}
+    // TRADE_QUOTE_MODE_SLEEP_LIVE_V1
+// SLEEP = no automatic chain/quote fetches.
+// LIVE = visible-tab-only chain refresh every S.quotePollMs, auto-sleeps after 60 minutes.
+// This is frontend-only and does not touch order engines.
+
+function quoteTabVisible_(){
+  return document.visibilityState === 'visible';
+}
+
+function stopQuoteLiveTimer_(){
+  if(S.pollTimer){
+    clearInterval(S.pollTimer);
+    S.pollTimer = null;
+  }
+}
+
+function paintQuoteMode(){
+  var btn = ge('quote-mode-toggle');
+  var txt = ge('quote-mode-text');
+  if(!btn) return;
+
+  var live = S.quoteMode === 'LIVE';
+  btn.className = 'quote-mode-toggle ' + (live ? 'live' : 'sleep');
+  if(txt) txt.textContent = live ? 'LIVE' : 'SLEEP';
+
+  btn.title = live
+    ? 'Quotes LIVE: refreshes this visible tab only. Click to sleep.'
+    : 'Quotes SLEEPING: click expiry/date to fetch once, or switch LIVE on.';
+}
+
+function sleepQuotes(reason){
+  S.quoteMode = 'SLEEP';
+  S.quoteLiveStartedAt = 0;
+  stopQuoteLiveTimer_();
+  paintQuoteMode();
+
+  if(!S.data && !S.fetching){
+    paintQuoteSleepingEmpty_();
+  }
+
+  if(reason){
+    toast('Quotes sleeping: ' + reason, 1800);
+  }
+}
+
+function runQuoteLiveTick_(){
+  if(S.quoteMode !== 'LIVE') return;
+
+  if(S.quoteLiveStartedAt && (Date.now() - S.quoteLiveStartedAt) > S.quoteLiveMaxMs){
+    sleepQuotes('60m window ended');
+    return;
+  }
+
+  if(!quoteTabVisible_()) return;
+  if(S.fetching) return;
+
+  doFetch(false, { reason:'quote-live-poll' });
+}
+
+function startQuoteLiveTimer_(){
+  stopQuoteLiveTimer_();
+
+  if(S.quoteMode !== 'LIVE') return;
+
+  S.pollTimer = setInterval(function(){
+    runQuoteLiveTick_();
+  }, S.quotePollMs);
+}
+
+function startQuoteLive(){
+  S.quoteMode = 'LIVE';
+  S.quoteLiveStartedAt = Date.now();
+  paintQuoteMode();
+
+  if(quoteTabVisible_() && !S.fetching){
+    doFetch(false, { reason:'quote-live-on' });
+  }
+
+  startQuoteLiveTimer_();
+  toast('Quotes LIVE: visible tab only', 1800);
+}
+
+function toggleQuoteMode(){
+  haptic();
+
+  if(S.quoteMode === 'LIVE'){
+    sleepQuotes('manual');
+    return;
+  }
+
+  startQuoteLive();
+}
+
+function installQuoteVisibilityGuard_(){
+  document.addEventListener('visibilitychange', function(){
+    if(S.quoteMode !== 'LIVE') return;
+
+    if(quoteTabVisible_()){
+      startQuoteLiveTimer_();
+
+      var age = Date.now() - (S.lastQuoteFetchAt || 0);
+      if(age > S.quotePollMs * 1.5 && !S.fetching){
+        doFetch(false, { reason:'quote-visible-resume' });
+      }
+    } else {
+      stopQuoteLiveTimer_();
+      paintQuoteMode();
+    }
+  });
+}
+
+function markQuoteFetchOk_(ticker, timeLabel){
+  S.lastQuoteFetchAt = Date.now();
+  S.lastQuoteFetchLabel = String(ticker || '') + ' ' + String(timeLabel || '');
+  paintQuoteMode();
+}
+    function paintQuoteSleepingEmpty_(){
+  var tw = ge('tw');
+  if(tw) tw.className = '';
+
+  var cb = ge('cb');
+  if(cb){
+    cb.innerHTML =
+      '<tr><td colspan="8" class="es">' +
+      'Quotes sleeping — click WAKE/expiry date or switch LIVE on.' +
+      '</td></tr>';
+  }
+
+  var fresh = ge('chain-fresh');
+  if(fresh){
+    fresh.className = 'chain-fresh ready';
+    fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">SLEEP</span>';
+  }
+
+  var upd = ge('updated-lbl');
+  if(upd){
+    upd.innerHTML =
+      'Quotes sleeping ' +
+      '<span id="mobile-basket-pill" class="mobile-basket-pill">Basket 0 · Orders 0</span>';
+    updateMobileBasketPill();
+  }
+
+  var badge = ge('tkr-badge');
+  if(badge){
+    badge.textContent = S.ticker;
+    badge.classList.remove('loading');
+    badge.classList.add('ready');
+  }
+}
+
+function wakeQuotes(reason){
+  if(S.fetching) return;
+  markChainLoading('Loading '+S.ticker+' quotes...');
+  doFetch(true, { reason: reason || 'manual-wake' });
 }
 function savePref(k,v){ localStorage.setItem(k,String(v)); }
 function saveAll(){
@@ -2937,11 +3078,15 @@ function updateExpTabs(){
     dates.sort();
     S.expiryDates = dates;
   }
-
   if(dates.length === 0){
-    strip.innerHTML = '<div class="exp-tab on"><div class="etl">EXP</div><div class="etd">—</div></div>';
+    strip.innerHTML =
+      '<div class="exp-tab on" onclick="wakeQuotes(\'expiry-wake-empty\')">' +
+        '<div class="etl">WAKE</div>' +
+        '<div class="etd">LOAD</div>' +
+      '</div>';
     return;
   }
+
 
   if(S.expiryIdx < 0 || S.expiryIdx >= dates.length) S.expiryIdx = 0;
   if(!S.activeExpiry) S.activeExpiry = dates[S.expiryIdx];
@@ -3076,15 +3221,7 @@ function toggleExpand(){
     fresh.innerHTML = '<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
   }
 }
-function doRefresh(){
-  if(S.fetching)return;
-  haptic();
-  var r=ge('ring');
-  r.className='';
-  void r.offsetWidth;
-  r.className='drain';
-  doFetch(false, { reason:'manual-refresh' });
-}
+function doRefresh(){  if(S.fetching)return;  haptic();  var r=ge('ring');  if(r){    r.className='';    void r.offsetWidth;    r.className='drain';  }  doFetch(false, { reason:'manual-refresh' });}
 
 function doFetch(firstTime, opts){
   opts = opts || {};
@@ -3268,13 +3405,7 @@ function doFetch(firstTime, opts){
         fTime = dt.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
       }
 
-      if(fresh){
-        fresh.className = 'chain-fresh flash';
-        fresh.innerHTML = '<span class="cf-sym">'+reqTicker+'</span><span class="cf-time">'+fTime+'</span>';
-        setTimeout(function(){ fresh.className = 'chain-fresh ready'; },600);
-      }
-
-      var upd = ge('updated-lbl');
+      if(fresh){        fresh.className = 'chain-fresh flash';        fresh.innerHTML = '<span class="cf-sym">'+reqTicker+'</span><span class="cf-time">'+fTime+'</span>';        setTimeout(function(){ fresh.className = 'chain-fresh ready'; },600);      }      markQuoteFetchOk_(reqTicker, fTime);      var upd = ge('updated-lbl');
       if(upd){
         upd.textContent = 'Updated: ' + new Date(d.updated || Date.now()).toLocaleString();
 
@@ -3685,7 +3816,11 @@ function doFire(){
     });
     ge('rcards').innerHTML=html;
     setState('results');
-    setTimeout(function(){ doFetch(false); },800);
+        if(S.quoteMode === 'LIVE' && quoteTabVisible_()){
+      setTimeout(function(){
+        if(!S.fetching) doFetch(false, { reason:'post-order-live-refresh' });
+      },800);
+    }
   }).catch(function(e){ showErr(e.message||'Server network execution error'); });
 }
 
@@ -3719,14 +3854,7 @@ ge('a2-tog').className='acct-tog '+(S.en2?'on':''); ge('a2-block').className='ac
 updateRatioPreview();
 paintBasketControls();
 paintLowFetchMode();
-window.onload=function(){
-  paintBasketControls();
-  paintLowFetchMode();
-  updateMobileBasketPill();
-  installMobileCompactScroll();
-  doFetch(true);
-  S.pollTimer=setInterval(function(){ doFetch(false); },15000);
-};
+window.onload=function(){  paintBasketControls();  paintLowFetchMode();  paintQuoteMode();  installQuoteVisibilityGuard_();  updateExpTabs();  updateMobileBasketPill();  installMobileCompactScroll();  sleepQuotes();};
 </script>
 </body>
 </html>

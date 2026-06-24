@@ -1178,8 +1178,14 @@ function panicFetchRun_(run){
 
 function quickBtcSelectedAccounts_(){
   var out = [];
+
+  if(typeof S === 'undefined' || !S){
+    return out;
+  }
+
   if(S.en1) out.push('5260');
   if(S.en2) out.push('4987');
+
   return out;
 }
 

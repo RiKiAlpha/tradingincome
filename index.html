@@ -525,8 +525,12 @@ function setAppMode(mode){
   if(appMode === 'churner' && histMode !== 'daily' && histMode !== 'weeks' && histMode !== 'monthly') histMode = 'daily';
 
   if(DATA){ renderAll(DATA); }
-  if(appMode === 'churner' && (!DATA || !DATA.churner)){
-    loadChurnerTicker('');
+
+  // CHURNER_TODAY_STATE_REFRESH_V1
+  // Always refresh Churner from TxCache when entering Churner mode.
+  // Cached DATA.churner can be yesterday after idle/browser cache.
+  if(appMode === 'churner'){
+    loadChurnerLastState(true);
   }
 }
 
@@ -553,14 +557,18 @@ function loadChurnerTicker(ticker){
 
   var churnerStart = localStorage.getItem('riki_churner_start_date') || '2026-06-01';
 
-  var asOfEl = ge('churner-asof-input');
-  var asOfDate = asOfEl ? String(asOfEl.value || '').trim() : (localStorage.getItem('riki_churner_asof_date') || '');
+    var asOfEl = ge('churner-asof-input');
+  var savedAsOf = churnerSavedAsOf_();
 
-  if(asOfDate){
-    localStorage.setItem('riki_churner_asof_date', asOfDate);
-  } else {
-    localStorage.removeItem('riki_churner_asof_date');
-  }
+  // Prefer explicit date picker value.
+  // If blank, use last saved setting.
+  // If still blank, default to today ET so the dashboard cannot stick to yesterday.
+  var asOfDate = asOfEl ? String(asOfEl.value || '').trim() : savedAsOf;
+  if(!asOfDate) asOfDate = savedAsOf;
+  if(!asOfDate) asOfDate = churnerTodayEt_();
+
+  localStorage.setItem('riki_churner_asof_date', asOfDate);
+  if(asOfEl) asOfEl.value = asOfDate;
 
   var url = BACKEND +
     '?action=churnerAnalytics' +
@@ -575,17 +583,23 @@ function loadChurnerTicker(ticker){
     .then(function(j){
       if(!DATA) DATA = {};
       DATA.churner = j;
+      DATA.churnerLoadedAtEt = j && j.generatedAt ? j.generatedAt : '';
       renderAll(DATA);
       saveCache(DATA);
-      toast(asOfDate ? ('Churner as-of '+asOfDate) : 'Churner updated from TxCache', 2200);
+      toast('Churner as-of '+asOfDate, 2200);
     })
     .catch(function(e){ toast('Churner load error: '+errMsg(e), 4000); });
 }
 
 function clearChurnerAsOf(){
-  localStorage.removeItem('riki_churner_asof_date');
+  var today = churnerTodayEt_();
+  localStorage.setItem('riki_churner_asof_date', today);
+
   var el = ge('churner-asof-input');
-  if(el) el.value = '';
+  if(el) el.value = today;
+
+  if(DATA) DATA.churner = null;
+
   loadChurnerTicker(localStorage.getItem('riki_churner_focus_ticker') || '');
 }
 
@@ -594,6 +608,8 @@ function loadChurnerAllTickers(){
 
   var tickerEl = ge('churner-ticker-input');
   if(tickerEl) tickerEl.value = '';
+
+  if(DATA) DATA.churner = null;
 
   loadChurnerTicker('');
 }
@@ -961,6 +977,55 @@ function renderHeader(d){
     staleWarn.style.display='none';
   }
 }
+  // CHURNER_TODAY_STATE_REFRESH_V1
+// Prevent stale cached DATA.churner from pinning dashboard to yesterday after idle.
+// Last user choice is persisted; entering Churner mode reloads fresh from TxCache.
+
+function churnerTodayEt_(){
+  var d = new Date();
+  var parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone:'America/New_York',
+    year:'numeric',
+    month:'2-digit',
+    day:'2-digit'
+  }).formatToParts(d);
+
+  var out = {};
+  parts.forEach(function(p){ out[p.type] = p.value; });
+  return out.year + '-' + out.month + '-' + out.day;
+}
+
+function churnerSavedTicker_(){
+  return String(localStorage.getItem('riki_churner_focus_ticker') || '').trim().toUpperCase();
+}
+
+function churnerSavedAsOf_(){
+  return String(localStorage.getItem('riki_churner_asof_date') || '').trim();
+}
+
+function churnerResultAsOf_(){
+  return DATA && DATA.churner && DATA.churner.asOfDate ? String(DATA.churner.asOfDate) : '';
+}
+
+function loadChurnerLastState(forceTodayIfBlank){
+  var ticker = churnerSavedTicker_();
+  var asOf = churnerSavedAsOf_();
+
+  if(forceTodayIfBlank && !asOf){
+    asOf = churnerTodayEt_();
+    localStorage.setItem('riki_churner_asof_date', asOf);
+  }
+
+  if(DATA) DATA.churner = null;
+
+  var tickerEl = ge('churner-ticker-input');
+  if(tickerEl) tickerEl.value = ticker;
+
+  var asOfEl = ge('churner-asof-input');
+  if(asOfEl) asOfEl.value = asOf;
+
+  loadChurnerTicker(ticker);
+}
 function chData(){
   return (DATA && DATA.churner) ? DATA.churner : null;
 }
@@ -973,13 +1038,17 @@ function renderChurnerDash(d){
   var banner=document.createElement('div');
   banner.className='churner-banner';
 
-  var chAsOf = (chData() && chData().asOfDate) || localStorage.getItem('riki_churner_asof_date') || '';
-  var chFocusTicker = localStorage.getItem('riki_churner_focus_ticker') || '';
+  // CHURNER_TODAY_STATE_REFRESH_V1
+  // Date picker should reflect saved user state, not stale cached DATA.churner.
+  var chAsOf = churnerSavedAsOf_() || churnerResultAsOf_() || churnerTodayEt_();
+  var chFocusTicker = churnerSavedTicker_();
+  var chGeneratedAt = (chData() && chData().generatedAt) || (DATA && DATA.churnerLoadedAtEt) || '';
 
   banner.innerHTML =
     '<div><div class="churner-title">Churner Analytics</div>' +
       '<div class="churner-sub">TxCache only · no Schwab ping · from '+((chData() && chData().churnerStartDate) || localStorage.getItem('riki_churner_start_date') || '2026-06-01')+
-        (chAsOf ? ' · as of '+chAsOf : ' · live today')+
+        ' · as of '+chAsOf+
+        (chGeneratedAt ? ' · calc '+chGeneratedAt+' ET' : '')+
         (chFocusTicker ? ' · '+chFocusTicker : ' · all tickers')+
       '</div></div>' +
     '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +

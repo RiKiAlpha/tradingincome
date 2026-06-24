@@ -812,7 +812,7 @@ Fallback: restore this Apps Script deployment version if future UI patches break
   <div id="quick-btc-rows" class="quick-btc-rows">
     <div class="quick-btc-row">
       <input class="quick-btc-ticker" placeholder="TICKER" value="">
-      <input class="quick-btc-price" type="number" min="0.01" step="0.01" value="0.03">
+      <input class="quick-btc-price" type="number" min="0.01" step="0.01" value="0.02">
       <button class="quick-btc-x" onclick="quickBtcRemoveRow(this)">×</button>
     </div>
   </div>
@@ -1340,7 +1340,7 @@ function quickBtcAddRow(ticker, price){
   row.className = 'quick-btc-row';
   row.innerHTML =
     '<input class="quick-btc-ticker" placeholder="TICKER" value="'+(ticker || '')+'">' +
-    '<input class="quick-btc-price" type="number" min="0.01" step="0.01" value="'+(price || '0.03')+'">' +
+    '<input class="quick-btc-price" type="number" min="0.01" step="0.01" value="'+(price || '0.02')+'">' +
     '<button class="quick-btc-x" onclick="quickBtcRemoveRow(this)">×</button>';
 
   wrap.appendChild(row);
@@ -1359,7 +1359,7 @@ function quickBtcRemoveRow(btn){
       var t = r.querySelector('.quick-btc-ticker');
       var p = r.querySelector('.quick-btc-price');
       if(t) t.value = '';
-      if(p) p.value = '0.03';
+      if(p) p.value = '0.02';
     }
     return;
   }
@@ -1367,7 +1367,61 @@ function quickBtcRemoveRow(btn){
   var row = btn && btn.closest ? btn.closest('.quick-btc-row') : null;
   if(row && row.parentNode) row.parentNode.removeChild(row);
 }
+// NORMAL_FETCH_FILLED_COUNT_RESULT_FIX_V1
+// Normal STO result card must read both account summary fields and row-level filledQty.
+// Backend may return filled at bucket level or nested under rows[].filledQty.
+function normalResultNum_(v){
+  var n = Number(v);
+  return isNaN(n) ? 0 : n;
+}
 
+function normalResultSumRows_(res, field){
+  if(!res || !Array.isArray(res.rows)) return 0;
+  return res.rows.reduce(function(sum, r){
+    return sum + normalResultNum_(r && r[field]);
+  }, 0);
+}
+
+function normalResultFilled_(res){
+  return normalResultNum_(res && (
+    res.filled != null ? res.filled :
+    res.filledQty != null ? res.filledQty :
+    res.filledContracts != null ? res.filledContracts :
+    normalResultSumRows_(res, 'filledQty')
+  ));
+}
+
+function normalResultRemaining_(res){
+  return normalResultNum_(res && (
+    res.open != null ? res.open :
+    res.remainingQty != null ? res.remainingQty :
+    normalResultSumRows_(res, 'remainingQty')
+  ));
+}
+
+function normalResultCancelled_(res){
+  return normalResultNum_(res && (
+    res.cancelled != null ? res.cancelled :
+    res.cancelledContracts != null ? res.cancelledContracts :
+    0
+  ));
+}
+
+function normalResultRejected_(res){
+  return normalResultNum_(res && (
+    res.rejected != null ? res.rejected :
+    res.failed != null ? res.failed :
+    0
+  ));
+}
+
+function normalResultManualReview_(res){
+  return normalResultNum_(res && (
+    res.manualReview != null ? res.manualReview :
+    res.manualReviewOrders != null ? res.manualReviewOrders :
+    0
+  ));
+}
 function quickBtcReadRows_(){
   var wrap = ge('quick-btc-rows');
   var out = [];
@@ -3771,6 +3825,7 @@ function doFire(){
   var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2;
   fetch(BACKEND+'?action=placeOrder'+params).then(function(r){return r.json();}).then(function(d){
     if(d.error){ showErr(d.error); return; }
+    console.log('[RiKi] NORMAL STO placeOrder result', d);
     ge('rt').textContent='Trade Dispatched'; ge('rt').style.color='var(--call)';
     ge('rsub').textContent=S.activeContract.symbol+' @ $'+S.price.toFixed(2);
     
@@ -3789,11 +3844,11 @@ function doFire(){
       html+='<div class="rcard"><div class="rcl">'+acct.lbl+' ('+acct.q+' Con)</div><div class="rcs">';
 
       if(res){
-        var filled = Number(res.filled || 0);
-        var cancelled = Number(res.cancelled || 0);
-        var rejected = Number(res.rejected || 0);
-        var open = Number(res.open || 0);
-        var manualReview = Number(res.manualReview || 0);
+        var filled = normalResultFilled_(res);
+        var cancelled = normalResultCancelled_(res);
+        var rejected = normalResultRejected_(res);
+        var open = normalResultRemaining_(res);
+        var manualReview = normalResultManualReview_(res);
 
         if(open > 0 || manualReview > 0){
           html+='<div class="rrej">Check Schwab: '+open+' open · '+manualReview+' review</div>';

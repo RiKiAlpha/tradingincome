@@ -1265,7 +1265,7 @@ function panicFetchAbort_(run){
       rows: run.rows || [],
       accounts: run.accounts || '',
       slice: run.slice ? true : false,
-      lowFetchMode: S.lowFetchMode ? true : false
+      lowFetchMode: (typeof S !== 'undefined' && S && S.lowFetchMode) ? true : false
     })
   });
 }

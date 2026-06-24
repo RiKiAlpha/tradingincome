@@ -584,9 +584,16 @@ function loadChurnerTicker(ticker){
   if(!asOfDate) asOfDate = churnerTodayEt_();
 
   localStorage.setItem('riki_churner_asof_date', asOfDate);
-  if(asOfEl) asOfEl.value = asOfDate;
+if(asOfEl) asOfEl.value = asOfDate;
 
-  var url = BACKEND +
+// CHURNER_BOOT_FORCE_REFRESH_V1
+// Clear stale cached Churner before fetching fresh data for selected date/symbol.
+if(DATA){
+  DATA.churner = null;
+  DATA.churnerLoadedAtEt = '';
+}
+
+var url = BACKEND +
     '?action=churnerAnalytics' +
     '&ticker=' + encodeURIComponent(ticker) +
     '&focus=' + (ticker ? '1' : '0') +
@@ -751,6 +758,7 @@ function doRefresh(){
       if(fresh.refreshSkipped || fresh.refreshDashboardPaused){
         renderAll(fresh);
         saveCache(fresh);
+        churnerBootForceRefresh_();
         toast(fresh.refreshMessage || 'refreshDashboard is paused', 4000);
         return;
       }
@@ -758,6 +766,7 @@ function doRefresh(){
       renderAll(fresh);
       saveCache(fresh);
       flashLogo();
+      churnerBootForceRefresh_();
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
 }
@@ -1053,6 +1062,43 @@ function loadChurnerLastState(forceTodayIfBlank){
 
   loadChurnerTicker(ticker);
 }
+  // CHURNER_BOOT_FORCE_REFRESH_V1
+// On first page load, cached DATA.churner can be yesterday/$0.
+// Churner dashboard should always refresh from the saved date/symbol state when booting.
+var _churnerBootTimer = null;
+function churnerBootForceRefresh_(){
+  try{
+    if(appMode !== 'churner') return;
+
+    var asOf = churnerSavedAsOf_();
+    if(!asOf){
+      asOf = churnerTodayEt_();
+      localStorage.setItem('riki_churner_asof_date', asOf);
+    }
+
+    if(DATA){
+      DATA.churner = null;
+      DATA.churnerLoadedAtEt = '';
+    }
+
+    var asOfEl = ge('churner-asof-input');
+    if(asOfEl) asOfEl.value = asOf;
+
+    var tickerEl = ge('churner-ticker-input');
+    if(tickerEl) tickerEl.value = churnerSavedTicker_();
+
+    // CHURNER_BOOT_FORCE_REFRESH_V1_IDLE_FIX
+    // Debounce boot/idle/wake refresh paths so cached + DATA_JSON renders do not
+    // fire duplicate churnerAnalytics calls back-to-back.
+    if(_churnerBootTimer) clearTimeout(_churnerBootTimer);
+    _churnerBootTimer = setTimeout(function(){
+      _churnerBootTimer = null;
+      loadChurnerLastState(true);
+    }, 80);
+  }catch(e){
+    console.warn('[RiKi] churnerBootForceRefresh_ skipped', e);
+  }
+}
 function chData(){
   return (DATA && DATA.churner) ? DATA.churner : null;
 }
@@ -1069,7 +1115,10 @@ function renderChurnerDash(d){
   // Date picker should reflect saved user state, not stale cached DATA.churner.
   var chAsOf = churnerSavedAsOf_() || churnerResultAsOf_() || churnerTodayEt_();
   var chFocusTicker = churnerSavedTicker_();
-  var chGeneratedAt = (chData() && chData().generatedAt) || (DATA && DATA.churnerLoadedAtEt) || '';
+  // CHURNER_BOOT_FORCE_REFRESH_V1
+// Use only the Churner analytics generatedAt timestamp.
+// Do not fall back to stale dashboard/cache timestamps.
+var chGeneratedAt = (chData() && chData().generatedAt) ? String(chData().generatedAt) : '';
 
   banner.innerHTML =
     '<div><div class="churner-title">Churner Analytics</div>' +
@@ -1791,7 +1840,14 @@ function startLoadingData(){
   var _cached=null;
   try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
 
-  if(_cached){ renderAll(_cached); }
+  if(_cached){
+    renderAll(_cached);
+
+    // CHURNER_BOOT_FORCE_REFRESH_V1
+    // Cached DATA can contain yesterday/$0 Churner. If opening in Churner mode,
+    // immediately replace it with fresh TxCache analytics for saved date/symbol.
+    churnerBootForceRefresh_();
+  }
 
   fetch(DATA_JSON + '?_=' + Date.now())
     .then(function(r){ return r.json(); })
@@ -1806,6 +1862,11 @@ function startLoadingData(){
         saveCache(d);
         _lastFetch = Date.now();
         if(_cached && newMs > curMs) flashLogo();
+
+        // CHURNER_BOOT_FORCE_REFRESH_V1
+        // Fresh DATA_JSON may also carry stale dashboard Churner. Force Churner mode
+        // to reload from churnerAnalytics instead of trusting cached DATA.churner.
+        churnerBootForceRefresh_();
       }
     }).catch(function(){});
 }
@@ -1839,6 +1900,11 @@ setInterval(function(){
       var curMs = Number((DATA && DATA._savedMs) || 0);
       if(newMs <= curMs) return;
       renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
+
+      // CHURNER_BOOT_FORCE_REFRESH_V1_IDLE_FIX
+      // CDN DATA_JSON can carry stale Churner after idle. If user is in Churner mode,
+      // immediately reload fresh churnerAnalytics instead of showing stale cached values.
+      churnerBootForceRefresh_();
     }).catch(function(){});
 }, 5 * 60 * 1000);
 
@@ -1856,6 +1922,10 @@ if(Date.now() - _lastFetch < 60000) return;
       var curMs = Number((DATA && DATA._savedMs) || 0);
       if(newMs <= curMs) return;
       renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
+
+      // CHURNER_BOOT_FORCE_REFRESH_V1_IDLE_FIX
+      // When tab wakes, DATA_JSON may be stale for Churner. Force fresh TxCache analytics.
+      churnerBootForceRefresh_();
     }).catch(function(){});
 });
 

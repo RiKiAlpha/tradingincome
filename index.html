@@ -169,8 +169,24 @@ body.churner-mode .tab.on .tlabel{color:var(--churner2)!important;}
   padding-right:24px;
 }
 
+/* CHURNER_DATE_PICKER_HITBOX_FIX_V1
+   Make the invisible native picker hitbox cover the visible calendar icon.
+   Previously the fake SVG icon and browser picker hitbox were offset on desktop. */
+.churner-date-input{
+  position:relative;
+  cursor:pointer;
+}
+
 .churner-date-input::-webkit-calendar-picker-indicator{
   opacity:0;
+  display:block;
+  position:absolute;
+  right:0;
+  top:0;
+  width:34px;
+  height:100%;
+  padding:0;
+  margin:0;
   cursor:pointer;
 }
 .churner-mini-btn{height:28px;border-radius:8px;border:1px solid rgba(61,156,255,.38);background:rgba(61,156,255,.08);color:var(--churner2);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:0 10px;cursor:pointer;}
@@ -980,7 +996,18 @@ function renderHeader(d){
   // CHURNER_TODAY_STATE_REFRESH_V1
 // Prevent stale cached DATA.churner from pinning dashboard to yesterday after idle.
 // Last user choice is persisted; entering Churner mode reloads fresh from TxCache.
-
+// CHURNER_DATE_PICKER_HITBOX_FIX_V1
+// Desktop browsers can misalign the native date picker hotspot when the icon is custom CSS.
+// Open the picker when the user clicks anywhere on the date pill/icon.
+function churnerOpenDatePicker_(el){
+  try{
+    if(el && typeof el.showPicker === 'function'){
+      el.showPicker();
+    }
+  }catch(e){
+    // Ignore: browser will still focus/open normally where supported.
+  }
+}
 function churnerTodayEt_(){
   var d = new Date();
   var parts = new Intl.DateTimeFormat('en-CA', {
@@ -1053,7 +1080,8 @@ function renderChurnerDash(d){
       '</div></div>' +
     '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +
       '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER" value="'+chFocusTicker+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(this.value);}">' +
-'<input id="churner-asof-input" class="churner-input churner-date-input" type="date" value="'+chAsOf+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(ge(\'churner-ticker-input\').value);}">' +      '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +
+'<input id="churner-asof-input" class="churner-input churner-date-input" type="date" value="'+chAsOf+'" onclick="churnerOpenDatePicker_(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(ge(\'churner-ticker-input\').value);}">' +
+    '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +
       '<button class="churner-mini-btn" onclick="loadChurnerAllTickers()">All</button>' +
       '<button class="churner-mini-btn" onclick="clearChurnerAsOf()">Today</button>' +
     '</div>';

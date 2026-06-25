@@ -1065,8 +1065,9 @@ function fmtPct(n){ n=parseFloat(n)||0; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
 function fmtOI(n){ n=parseInt(n)||0; return n>=1000?(n/1000).toFixed(1)+'k':String(n); }
 function fmtStrike(n){ return n%1===0?n.toFixed(0):n.toFixed(2); }
 function toast(msg,ms){ var t=ge('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},ms||2200); }
-// TRADE_QUICK_STO_FILLED_COUNT_ORDERS_V2_ALL_TICKERS
-// Click-only read from Schwab FILLED orders. Counts ALL OPTION SELL_TO_OPEN contracts for today across A1/A2.
+// TRADE_QUICK_STO_FILLED_COUNT_TX_V3_NO_ORDER_CAP
+// Click-only read from Schwab transactions. Counts ALL filled OPTION STO contracts for today across A1/A2.
+// Uses executed transactions instead of orders so high-volume RiKi days do not hit order-result caps.
 function quickStoTodayEt_(){
   var parts = new Intl.DateTimeFormat('en-CA', { timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
   var out={}; parts.forEach(function(p){ out[p.type]=p.value; });
@@ -1099,7 +1100,7 @@ function quickStoFilledCount(){
       if(val) val.textContent = n.toLocaleString('en-US');
       var top = quickStoTopTickers_(d.tickerRows || []);
       var cap = d.maybeCapped ? ' · CHECK CAP' : '';
-      toast('STO today ALL: ' + n.toLocaleString('en-US') + (top ? ' · ' + top : '') + cap + ' · ' + quickStoTimeLabel_(d.generatedAt), 4200);
+      toast('STO TX today ALL: ' + n.toLocaleString('en-US') + (top ? ' · ' + top : '') + cap + ' · ' + quickStoTimeLabel_(d.generatedAt), 4200);
     })
     .catch(function(e){
       if(val) val.textContent='ERR';

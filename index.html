@@ -1062,13 +1062,22 @@ function loadChurnerLastState(forceTodayIfBlank){
 
   loadChurnerTicker(ticker);
 }
-  // CHURNER_BOOT_FORCE_REFRESH_V1
-// On first page load, cached DATA.churner can be yesterday/$0.
-// Churner dashboard should always refresh from the saved date/symbol state when booting.
-var _churnerBootTimer = null;
+// CHURNER_BOOT_FORCE_REFRESH_V1
+// On first page load / idle wake, cached DATA.churner can be yesterday/$0.
+// Debounced so startup cache + DATA_JSON refresh do not double-fire churnerAnalytics.
+var churnerBootRefreshInFlight_ = false;
+var churnerLastBootRefreshMs_ = 0;
+
 function churnerBootForceRefresh_(){
   try{
     if(appMode !== 'churner') return;
+
+    var nowMs = Date.now();
+    if(churnerBootRefreshInFlight_) return;
+    if(churnerLastBootRefreshMs_ && (nowMs - churnerLastBootRefreshMs_) < 1500) return;
+
+    churnerBootRefreshInFlight_ = true;
+    churnerLastBootRefreshMs_ = nowMs;
 
     var asOf = churnerSavedAsOf_();
     if(!asOf){
@@ -1087,15 +1096,17 @@ function churnerBootForceRefresh_(){
     var tickerEl = ge('churner-ticker-input');
     if(tickerEl) tickerEl.value = churnerSavedTicker_();
 
-    // CHURNER_BOOT_FORCE_REFRESH_V1_IDLE_FIX
-    // Debounce boot/idle/wake refresh paths so cached + DATA_JSON renders do not
-    // fire duplicate churnerAnalytics calls back-to-back.
-    if(_churnerBootTimer) clearTimeout(_churnerBootTimer);
-    _churnerBootTimer = setTimeout(function(){
-      _churnerBootTimer = null;
-      loadChurnerLastState(true);
-    }, 80);
+    setTimeout(function(){
+      try{
+        loadChurnerLastState(true);
+      }finally{
+        setTimeout(function(){
+          churnerBootRefreshInFlight_ = false;
+        }, 1200);
+      }
+    }, 50);
   }catch(e){
+    churnerBootRefreshInFlight_ = false;
     console.warn('[RiKi] churnerBootForceRefresh_ skipped', e);
   }
 }

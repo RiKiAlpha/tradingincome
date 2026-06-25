@@ -1120,9 +1120,15 @@ function loadChurnerLastState(forceTodayIfBlank){
   var ticker = churnerSavedTicker_();
   var asOf = churnerSavedAsOf_();
 
-  if(forceTodayIfBlank && !asOf){
-    asOf = churnerTodayEt_();
-    localStorage.setItem('riki_churner_asof_date', asOf);
+  // CHURNER_NO_STALE_LEGACY_DEFAULT_V1
+  // On boot/idle, default Churner to today ET rather than a stale Legacy DATA_JSON date.
+  // Manual date picker selections are still honored when loadChurnerTicker() is called directly.
+  if(forceTodayIfBlank){
+    var today = churnerTodayEt_();
+    if(!asOf || asOf < today){
+      asOf = today;
+      localStorage.setItem('riki_churner_asof_date', asOf);
+    }
   }
 
   if(DATA) DATA.churner = null;
@@ -2019,6 +2025,12 @@ function startLoadingData(){
   try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
 
   if(_cached){
+    // CHURNER_NO_STALE_LEGACY_DEFAULT_V1
+    // Cached dashboard may contain yesterday/$0 churner data; do not render it in Churner mode.
+    if(isChurnerMode()){
+      _cached.churner = null;
+      _cached.churnerLoadedAtEt = '';
+    }
     renderAll(_cached);
 
     // CHURNER_BOOT_FORCE_REFRESH_V1
@@ -2036,6 +2048,14 @@ function startLoadingData(){
       var newMs = Number(d._savedMs || 0);
 
       if(!_cached || newMs >= curMs){
+        // CHURNER_NO_STALE_LEGACY_DEFAULT_V1
+        // Legacy DATA_JSON can be yesterday and may contain stale/empty churner payload.
+        // In Churner mode, never render that stale churner object; render shell then load ChurnerData.
+        if(isChurnerMode()){
+          d.churner = null;
+          d.churnerLoadedAtEt = '';
+        }
+
         renderAll(d);
         saveCache(d);
         _lastFetch = Date.now();
@@ -2043,7 +2063,7 @@ function startLoadingData(){
 
         // CHURNER_BOOT_FORCE_REFRESH_V1
         // Fresh DATA_JSON may also carry stale dashboard Churner. Force Churner mode
-        // to reload from churnerAnalytics instead of trusting cached DATA.churner.
+        // to reload from ChurnerData instead of trusting cached DATA.churner.
         churnerBootForceRefresh_();
       }
     }).catch(function(){});

@@ -1490,6 +1490,51 @@ function renderPositions(d){
     tb.appendChild(tr);
   });
 }
+function churnerHistoryTotalsClient_(rows){
+  var map = {};
+  (rows || []).forEach(function(r){
+    var p = String(r.period || '').trim();
+    if(!p) return;
+    if(!map[p]){
+      map[p] = {
+        period:p,
+        ticker:'ALL',
+        opened:0,
+        closed:0,
+        open:0,
+        banked:0,
+        a1Opened:0,
+        a2Opened:0,
+        a1Closed:0,
+        a2Closed:0,
+        a1Open:0,
+        a2Open:0,
+        a1Banked:0,
+        a2Banked:0,
+        tickerCount:0,
+        tickers:[]
+      };
+    }
+
+    var t = String(r.ticker || '').trim().toUpperCase();
+    if(t && map[p].tickers.indexOf(t) < 0) map[p].tickers.push(t);
+
+    ['opened','closed','open','banked','a1Opened','a2Opened','a1Closed','a2Closed','a1Open','a2Open','a1Banked','a2Banked'].forEach(function(k){
+      map[p][k] += Number(r[k] || 0);
+    });
+  });
+
+  return Object.keys(map).sort(function(a,b){ return b.localeCompare(a); }).map(function(p){
+    var r = map[p];
+    r.tickers.sort();
+    r.tickerCount = r.tickers.length;
+    ['opened','closed','open','banked','a1Opened','a2Opened','a1Closed','a2Closed','a1Open','a2Open','a1Banked','a2Banked'].forEach(function(k){
+      r[k] = Math.round(Number(r[k] || 0) * 100) / 100;
+    });
+    return r;
+  });
+}
+
 function renderChurnerHist(){
   var c=chData();
   var el=ge('hc'); el.innerHTML='';
@@ -1504,7 +1549,50 @@ function renderChurnerHist(){
       ? (c.historyMonthly || [])
       : (c.historyWeekly || []);
 
+  // CHURNER_HISTORY_TOTALS_V1
+  // Show true all-symbol totals first; keep ticker-level rows below for drilldown.
+  var totalRows = histMode === 'daily'
+    ? (c.historyDailyTotals || [])
+    : histMode === 'monthly'
+      ? (c.historyMonthlyTotals || [])
+      : (c.historyWeeklyTotals || []);
+
+  if(!totalRows.length){
+    totalRows = churnerHistoryTotalsClient_(rows);
+  }
+
   var title = histMode === 'daily' ? 'Date' : histMode === 'monthly' ? 'Month' : 'Week Ending';
+  var titleText = histMode === 'daily' ? 'Daily Total Banked' : histMode === 'monthly' ? 'Monthly Total Banked' : 'Weekly Total Banked';
+
+  if(totalRows.length){
+    var totalCard=document.createElement('div');
+    totalCard.className='churner-kpi';
+    totalCard.innerHTML =
+      '<div class="churner-line" style="border-top:none;margin-bottom:8px;"><span>'+titleText+'</span><b>All symbols</b></div>' +
+      '<div style="overflow-x:auto;">' +
+        '<table><thead><tr><th style="text-align:left">'+title+'</th><th>Tickers</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th></tr></thead>' +
+        '<tbody>' +
+          totalRows.slice(0, 18).map(function(r){
+            var tickers = Array.isArray(r.tickers) ? r.tickers.join(', ') : (r.tickerCount ? (r.tickerCount + ' tickers') : 'ALL');
+            if(tickers.length > 24) tickers = tickers.substring(0, 24) + '…';
+            return '<tr>'+
+              '<td style="text-align:left;font-weight:800">'+(r.period||'—')+'</td>'+
+              '<td>'+(r.tickerCount || (Array.isArray(r.tickers) ? r.tickers.length : 'ALL'))+'</td>'+
+              '<td>'+(r.opened||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Opened||0)+'/'+(r.a2Opened||0)+')</span></td>'+
+              '<td>'+(r.closed||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Closed||0)+'/'+(r.a2Closed||0)+')</span></td>'+
+              '<td>'+(r.open||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Open||0)+'/'+(r.a2Open||0)+')</span></td>'+
+              '<td class="'+cc(r.banked)+'" style="font-weight:900">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>'+
+            '</tr>';
+          }).join('') +
+        '</tbody></table>' +
+      '</div>';
+    el.appendChild(totalCard);
+  }
+
+  var detailTitle=document.createElement('div');
+  detailTitle.className='mhdr';
+  detailTitle.textContent='Ticker detail';
+  el.appendChild(detailTitle);
 
   var t=document.createElement('table');
   t.innerHTML='<thead><tr><th style="text-align:left">'+title+'</th><th>Ticker</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th></tr></thead>';
@@ -1520,8 +1608,7 @@ function renderChurnerHist(){
         '<td>'+(r.opened||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Opened||0)+'/'+(r.a2Opened||0)+')</span></td>'+
         '<td>'+(r.closed||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Closed||0)+'/'+(r.a2Closed||0)+')</span></td>'+
         '<td>'+(r.open||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Open||0)+'/'+(r.a2Open||0)+')</span></td>'+
-        '<td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+
-          fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>';
+        '<td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>';
       tb.appendChild(tr);
     });
   }

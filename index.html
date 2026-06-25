@@ -755,7 +755,8 @@ function hideOverlay(){
 }
 function saveCache(d){
   try{
-    if(!d._savedMs) d._savedMs = Date.now();
+    if(!d) return;
+    d._savedMs = Math.max(Number(d._savedMs || 0), Date.now());
     localStorage.setItem('riki_data', JSON.stringify(d));
     localStorage.setItem('riki_last_fresh', String(Date.now()));
   }catch(e){}
@@ -2020,53 +2021,76 @@ function lockNow(){
   toast('Locked — Face ID required on next open');
 }
 
+// LEGACY_LIVE_DATA_LOAD_NO_STALE_GITHUB_V1
+// GitHub DATA_JSON is now only a fallback. Normal app open / idle wake reads live Apps Script sheet data
+// so the header timestamp cannot revert to yesterday's last GitHub write.
+function rikiPrepareIncomingData_(d){
+  if(!d) return d;
+  d._savedMs = Math.max(Number(d._savedMs || 0), Date.now());
+
+  // Keep the Churner display-source rule intact: Churner mode should reload ChurnerData,
+  // not render any stale churner object packaged inside legacy dashboard data.
+  if(isChurnerMode()){
+    d.churner = null;
+    d.churnerLoadedAtEt = '';
+  }
+  return d;
+}
+
+function rikiRenderFreshData_(d, flash){
+  if(!d) return;
+  if(d.tokenExpired){ showTokenExpired(); return; }
+  d = rikiPrepareIncomingData_(d);
+  renderAll(d);
+  saveCache(d);
+  _lastFetch = Date.now();
+  if(flash) flashLogo();
+  churnerBootForceRefresh_();
+}
+
+function rikiFetchLiveData_(){
+  return fetch(BACKEND + '?action=data&_=' + Date.now())
+    .then(function(r){ return r.json(); });
+}
+
+function rikiFetchGithubFallback_(){
+  return fetch(DATA_JSON + '?_=' + Date.now())
+    .then(function(r){ return r.json(); });
+}
+
 function startLoadingData(){
   var _cached=null;
   try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
 
   if(_cached){
-    // CHURNER_NO_STALE_LEGACY_DEFAULT_V1
-    // Cached dashboard may contain yesterday/$0 churner data; do not render it in Churner mode.
+    // Render cached shell immediately for speed, but live backend below is authoritative.
     if(isChurnerMode()){
       _cached.churner = null;
       _cached.churnerLoadedAtEt = '';
     }
     renderAll(_cached);
-
-    // CHURNER_BOOT_FORCE_REFRESH_V1
-    // Cached DATA can contain yesterday/$0 Churner. If opening in Churner mode,
-    // immediately replace it with fresh TxCache analytics for saved date/symbol.
     churnerBootForceRefresh_();
   }
 
-  fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){ return r.json(); })
+  // Prefer live Workspace/App Script data. This avoids stale GitHub JSON/header timestamps after idle.
+  rikiFetchLiveData_()
     .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-
-      var curMs = Number((_cached && _cached._savedMs) || 0);
-      var newMs = Number(d._savedMs || 0);
-
-      if(!_cached || newMs >= curMs){
-        // CHURNER_NO_STALE_LEGACY_DEFAULT_V1
-        // Legacy DATA_JSON can be yesterday and may contain stale/empty churner payload.
-        // In Churner mode, never render that stale churner object; render shell then load ChurnerData.
-        if(isChurnerMode()){
-          d.churner = null;
-          d.churnerLoadedAtEt = '';
-        }
-
-        renderAll(d);
-        saveCache(d);
-        _lastFetch = Date.now();
-        if(_cached && newMs > curMs) flashLogo();
-
-        // CHURNER_BOOT_FORCE_REFRESH_V1
-        // Fresh DATA_JSON may also carry stale dashboard Churner. Force Churner mode
-        // to reload from ChurnerData instead of trusting cached DATA.churner.
-        churnerBootForceRefresh_();
-      }
-    }).catch(function(){});
+      rikiRenderFreshData_(d, !!_cached);
+    })
+    .catch(function(){
+      // Static GitHub JSON is now fallback only. Only render it if there is no cached/live data,
+      // or if its saved timestamp is newer than the current in-memory data.
+      rikiFetchGithubFallback_()
+        .then(function(d){
+          if(d.tokenExpired){ showTokenExpired(); return; }
+          var newMs = Number(d._savedMs || 0);
+          var curMs = Number((DATA && DATA._savedMs) || 0);
+          if(!DATA || newMs > curMs){
+            rikiRenderFreshData_(d, !!_cached);
+          }
+        })
+        .catch(function(){});
+    });
 }
 
 function initApp(){
@@ -2086,45 +2110,24 @@ startLoadingData();
 
 var _lastFetch = Date.now();
 
-// ── 5-min CDN poll ────────────────────────────────────────────────────────────
+// ── 5-min live poll ───────────────────────────────────────────────────────────
 setInterval(function(){
   if(document.visibilityState !== 'visible') return;
   if(!isAuthed()) return;
-  fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-      var newMs = Number(d._savedMs || 0);
-      var curMs = Number((DATA && DATA._savedMs) || 0);
-      if(newMs <= curMs) return;
-      renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
-
-      // CHURNER_BOOT_FORCE_REFRESH_V1_IDLE_FIX
-      // CDN DATA_JSON can carry stale Churner after idle. If user is in Churner mode,
-      // immediately reload fresh churnerAnalytics instead of showing stale cached values.
-      churnerBootForceRefresh_();
-    }).catch(function(){});
+  rikiFetchLiveData_()
+    .then(function(d){ rikiRenderFreshData_(d, false); })
+    .catch(function(){});
 }, 5 * 60 * 1000);
 
-// ── Visibility change — lock check + CDN refresh ──────────────────────────────
+// ── Visibility change — lock check + live refresh ─────────────────────────────
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
 if(!isAuthed()){ showAuthScreen(); return; }
 if(checkLock()) return;
 if(Date.now() - _lastFetch < 60000) return;
-  fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.tokenExpired){ showTokenExpired(); return; }
-      var newMs = Number(d._savedMs || 0);
-      var curMs = Number((DATA && DATA._savedMs) || 0);
-      if(newMs <= curMs) return;
-      renderAll(d); _lastFetch=Date.now(); saveCache(d); flashLogo();
-
-      // CHURNER_BOOT_FORCE_REFRESH_V1_IDLE_FIX
-      // When tab wakes, DATA_JSON may be stale for Churner. Force fresh TxCache analytics.
-      churnerBootForceRefresh_();
-    }).catch(function(){});
+  rikiFetchLiveData_()
+    .then(function(d){ rikiRenderFreshData_(d, true); })
+    .catch(function(){});
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

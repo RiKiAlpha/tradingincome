@@ -51,6 +51,12 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     #market-pill.live{background:rgba(0,212,166,.12);color:var(--call);border:1px solid rgba(0,212,166,.2);}
     #market-pill.closed{background:rgba(221,228,239,.06);color:var(--text3);border:1px solid var(--border);}
     .quote-mode-toggle{height:24px;min-width:70px;border-radius:999px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);font-family:var(--mono);font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;touch-action:manipulation;padding:0 9px;transition:border-color .18s,background .18s,color .18s,opacity .18s;}    .quote-mode-toggle:active{opacity:.72;}    .quote-mode-toggle .qmt-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);box-shadow:none;}    .quote-mode-toggle.sleep{border-color:rgba(61,156,255,.30);background:rgba(61,156,255,.08);color:var(--blue);}    .quote-mode-toggle.sleep .qmt-dot{background:var(--blue);}    .quote-mode-toggle.live{border-color:rgba(0,212,166,.42);background:rgba(0,212,166,.12);color:var(--call);}    .quote-mode-toggle.live .qmt-dot{background:var(--call);box-shadow:0 0 8px rgba(0,212,166,.45);}
+    /* TRADE_QUICK_STO_FILLED_COUNT_ORDERS_V1 */
+    .quick-sto-wrap{display:flex;align-items:center;gap:5px;height:24px;border-radius:999px;border:1px solid rgba(61,156,255,.24);background:rgba(61,156,255,.055);padding:0 6px;font-family:var(--mono);}
+    .quick-sto-lbl{font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+    .quick-sto-val{font-size:10px;font-weight:900;color:var(--blue);min-width:18px;text-align:right;}
+    .quick-sto-btn{height:18px;padding:0 6px;border-radius:999px;border:1px solid rgba(61,156,255,.32);background:rgba(61,156,255,.09);color:var(--blue);font-family:var(--sans);font-size:8px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;}
+    .quick-sto-btn:disabled{opacity:.45;cursor:not-allowed;}
     .tkr-left{display:flex;align-items:center;gap:8px;}
     .ticker-badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer;user-select:none;transition:border-color .18s,color .18s,box-shadow .18s,opacity .18s;}
     .ticker-badge.loading{opacity:.42;color:var(--text3);border-color:var(--border);box-shadow:none;}
@@ -688,6 +694,10 @@ Fallback: restore this Apps Script deployment version if future UI patches break
         <div class="beta-tag">TERMINAL</div>
         <div id="market-pill" class="closed">...</div>
         <button id="quote-mode-toggle" class="quote-mode-toggle sleep" onclick="toggleQuoteMode()" type="button"><span class="qmt-dot"></span><span id="quote-mode-text">SLEEP</span></button>
+        <div id="quick-sto-wrap" class="quick-sto-wrap" title="Read-only Schwab orders count. Click to fetch FILLED option SELL_TO_OPEN contracts today.">
+          <span class="quick-sto-lbl">STO</span><span id="quick-sto-val" class="quick-sto-val">—</span>
+          <button id="quick-sto-btn" class="quick-sto-btn" type="button" onclick="quickStoFilledCount()">Check</button>
+        </div>
       </div>
     </div>
     <div id="updated-lbl">Loading… <span id="mobile-basket-pill" class="mobile-basket-pill">Basket 0 · Orders 0</span></div>
@@ -1055,6 +1065,43 @@ function fmtPct(n){ n=parseFloat(n)||0; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
 function fmtOI(n){ n=parseInt(n)||0; return n>=1000?(n/1000).toFixed(1)+'k':String(n); }
 function fmtStrike(n){ return n%1===0?n.toFixed(0):n.toFixed(2); }
 function toast(msg,ms){ var t=ge('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},ms||2200); }
+// TRADE_QUICK_STO_FILLED_COUNT_ORDERS_V1
+// Click-only read from Schwab FILLED orders. Counts OPTION SELL_TO_OPEN contracts for today only.
+function quickStoTodayEt_(){
+  var parts = new Intl.DateTimeFormat('en-CA', { timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
+  var out={}; parts.forEach(function(p){ out[p.type]=p.value; });
+  return out.year+'-'+out.month+'-'+out.day;
+}
+function quickStoTimeLabel_(v){
+  var d = v ? new Date(String(v).replace(' ', 'T')) : new Date();
+  if(isNaN(d.getTime())) d = new Date();
+  return d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
+}
+function quickStoFilledCount(){
+  haptic();
+  var btn=ge('quick-sto-btn');
+  var val=ge('quick-sto-val');
+  if(btn){ btn.disabled=true; btn.textContent='...'; }
+  if(val) val.textContent='…';
+
+  var t = String(S.ticker || '').trim().toUpperCase();
+  var url = BACKEND + '?action=quickStoFilledCountOrders&date=' + encodeURIComponent(quickStoTodayEt_()) + '&ticker=' + encodeURIComponent(t) + '&_=' + Date.now();
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.success){ throw new Error((d && d.error) || 'quick STO count failed'); }
+      var n = Number(d.stoFilledContracts || 0);
+      if(val) val.textContent = n.toLocaleString('en-US');
+      toast('STO filled today: ' + n.toLocaleString('en-US') + ' · ' + quickStoTimeLabel_(d.generatedAt), 2400);
+    })
+    .catch(function(e){
+      if(val) val.textContent='ERR';
+      toast('STO count error: '+String((e && e.message) || e), 4200);
+    })
+    .finally(function(){
+      if(btn){ btn.disabled=false; btn.textContent='Check'; }
+    });
+}
     // GLOBAL_LOW_FETCH_FIRE_ONLY_MODE_V1
 function paintLowFetchMode(){
   var cb = ge('low-fetch-cb');

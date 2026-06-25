@@ -525,6 +525,28 @@ function errMsg(e){
   var s = (e && e.message) ? String(e.message) : String(e);
   return s.replace(/^(TypeError|Error|ReferenceError|SyntaxError):\s*/i,'').trim();
 }
+// CHURNER_TIMESTAMP_FORMAT_AND_DAYTRADE_HISTORY_V1
+// Display as M/D/YY   HH:MM AM/PM, e.g. 6/24/26   08:43 PM.
+function formatChurnerTimestamp_(v){
+  if(!v) return '';
+  var s=String(v).trim();
+  var m=s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})/);
+  var d;
+  if(m){
+    d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]), Number(m[4]), Number(m[5]));
+  } else {
+    d = new Date(s);
+  }
+  if(isNaN(d.getTime())) return s;
+  var mo=d.getMonth()+1;
+  var da=d.getDate();
+  var yy=String(d.getFullYear()).slice(-2);
+  var h=d.getHours();
+  var ampm=h>=12?'PM':'AM';
+  var hh=h%12; if(hh===0) hh=12;
+  var mm=String(d.getMinutes()).padStart(2,'0');
+  return mo+'/'+da+'/'+yy+'   '+String(hh).padStart(2,'0')+':'+mm+' '+ampm;
+}
 if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){ document.documentElement.classList.add('pwa'); }
 var DATA=null, activeTab='d', histMode='weeks';
 var appMode = localStorage.getItem('riki_app_mode') || 'legacy';
@@ -594,7 +616,7 @@ if(DATA){
 }
 
 var url = BACKEND +
-    '?action=churnerAnalytics' +
+    '?action=churnerData' +
     '&ticker=' + encodeURIComponent(ticker) +
     '&focus=' + (ticker ? '1' : '0') +
     '&start=' + encodeURIComponent(churnerStart) +
@@ -612,6 +634,41 @@ var url = BACKEND +
       toast('Churner as-of '+asOfDate, 2200);
     })
     .catch(function(e){ toast('Churner load error: '+errMsg(e), 4000); });
+}
+
+function rebuildChurnerData(){
+  haptic();
+  var tickerEl = ge('churner-ticker-input');
+  var ticker = tickerEl ? String(tickerEl.value || '').trim().toUpperCase() : churnerSavedTicker_();
+  var asOfEl = ge('churner-asof-input');
+  var asOfDate = asOfEl ? String(asOfEl.value || '').trim() : churnerSavedAsOf_();
+  if(!asOfDate) asOfDate = churnerTodayEt_();
+  localStorage.setItem('riki_churner_asof_date', asOfDate);
+  if(ticker) localStorage.setItem('riki_churner_focus_ticker', ticker); else localStorage.removeItem('riki_churner_focus_ticker');
+
+  var churnerStart = localStorage.getItem('riki_churner_start_date') || '2026-06-01';
+  if(DATA){ DATA.churner = null; DATA.churnerLoadedAtEt = ''; renderAll(DATA); }
+  toast('Rebuilding Churner from TxCache…', 3000);
+
+  var url = BACKEND +
+    '?action=churnerRebuild' +
+    '&ticker=' + encodeURIComponent(ticker) +
+    '&focus=' + (ticker ? '1' : '0') +
+    '&start=' + encodeURIComponent(churnerStart) +
+    '&asOf=' + encodeURIComponent(asOfDate) +
+    '&_=' + Date.now();
+
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!DATA) DATA = {};
+      DATA.churner = j;
+      DATA.churnerLoadedAtEt = j && j.generatedAt ? j.generatedAt : '';
+      renderAll(DATA);
+      saveCache(DATA);
+      toast(j && j.success ? 'ChurnerData rebuilt' : ('Rebuild failed: '+((j && j.error) || 'unknown')), j && j.success ? 2400 : 5000);
+    })
+    .catch(function(e){ toast('Rebuild error: '+errMsg(e), 5000); });
 }
 
 function clearChurnerAsOf(){
@@ -992,7 +1049,7 @@ function renderHeader(d){
   var raw = '';
 
   if(isChurnerMode() && DATA && DATA.churner && DATA.churner.generatedAt){
-    raw = 'Churner ' + DATA.churner.generatedAt;
+    raw = formatChurnerTimestamp_(DATA.churner.generatedAt);
   } else {
     raw = String(d.updated || '\u2014');
   }
@@ -1145,19 +1202,20 @@ function renderChurnerDash(d){
   // CHURNER_BOOT_FORCE_REFRESH_V1
 // Use only the Churner analytics generatedAt timestamp.
 // Do not fall back to stale dashboard/cache timestamps.
-var chGeneratedAt = (chData() && chData().generatedAt) ? String(chData().generatedAt) : '';
+var chGeneratedAt = (chData() && chData().generatedAt) ? formatChurnerTimestamp_(chData().generatedAt) : '';
 
   banner.innerHTML =
     '<div><div class="churner-title">Churner Analytics</div>' +
       '<div class="churner-sub">TxCache only · no Schwab ping · from '+((chData() && chData().churnerStartDate) || localStorage.getItem('riki_churner_start_date') || '2026-06-01')+
         ' · as of '+chAsOf+
-        (chGeneratedAt ? ' · calc '+chGeneratedAt+' ET' : '')+
+        (chGeneratedAt ? ' · calc '+chGeneratedAt : '')+
         (chFocusTicker ? ' · '+chFocusTicker : ' · all tickers')+
       '</div></div>' +
     '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +
       '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER" value="'+chFocusTicker+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(this.value);}">' +
 '<input id="churner-asof-input" class="churner-input churner-date-input" type="date" value="'+chAsOf+'" onclick="churnerOpenDatePicker_(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(ge(\'churner-ticker-input\').value);}">' +
-    '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Analyze</button>' +
+    '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Load</button>' +
+      '<button class="churner-mini-btn" onclick="rebuildChurnerData()">Rebuild</button>' +
       '<button class="churner-mini-btn" onclick="loadChurnerAllTickers()">All</button>' +
       '<button class="churner-mini-btn" onclick="clearChurnerAsOf()">Today</button>' +
     '</div>';
@@ -1503,6 +1561,8 @@ function churnerHistoryTotalsClient_(rows){
         closed:0,
         open:0,
         banked:0,
+        dayTradeBanked:0,
+        dayTradeContracts:0,
         a1Opened:0,
         a2Opened:0,
         a1Closed:0,
@@ -1511,6 +1571,10 @@ function churnerHistoryTotalsClient_(rows){
         a2Open:0,
         a1Banked:0,
         a2Banked:0,
+        a1DayTradeBanked:0,
+        a2DayTradeBanked:0,
+        a1DayTradeContracts:0,
+        a2DayTradeContracts:0,
         tickerCount:0,
         tickers:[]
       };
@@ -1519,7 +1583,7 @@ function churnerHistoryTotalsClient_(rows){
     var t = String(r.ticker || '').trim().toUpperCase();
     if(t && map[p].tickers.indexOf(t) < 0) map[p].tickers.push(t);
 
-    ['opened','closed','open','banked','a1Opened','a2Opened','a1Closed','a2Closed','a1Open','a2Open','a1Banked','a2Banked'].forEach(function(k){
+    ['opened','closed','open','banked','dayTradeBanked','dayTradeContracts','a1Opened','a2Opened','a1Closed','a2Closed','a1Open','a2Open','a1Banked','a2Banked','a1DayTradeBanked','a2DayTradeBanked','a1DayTradeContracts','a2DayTradeContracts'].forEach(function(k){
       map[p][k] += Number(r[k] || 0);
     });
   });
@@ -1528,7 +1592,7 @@ function churnerHistoryTotalsClient_(rows){
     var r = map[p];
     r.tickers.sort();
     r.tickerCount = r.tickers.length;
-    ['opened','closed','open','banked','a1Opened','a2Opened','a1Closed','a2Closed','a1Open','a2Open','a1Banked','a2Banked'].forEach(function(k){
+    ['opened','closed','open','banked','dayTradeBanked','dayTradeContracts','a1Opened','a2Opened','a1Closed','a2Closed','a1Open','a2Open','a1Banked','a2Banked','a1DayTradeBanked','a2DayTradeBanked','a1DayTradeContracts','a2DayTradeContracts'].forEach(function(k){
       r[k] = Math.round(Number(r[k] || 0) * 100) / 100;
     });
     return r;
@@ -1570,7 +1634,7 @@ function renderChurnerHist(){
     totalCard.innerHTML =
       '<div class="churner-line" style="border-top:none;margin-bottom:8px;"><span>'+titleText+'</span><b>All symbols</b></div>' +
       '<div style="overflow-x:auto;">' +
-        '<table><thead><tr><th style="text-align:left">'+title+'</th><th>Tickers</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th></tr></thead>' +
+        '<table><thead><tr><th style="text-align:left">'+title+'</th><th>Tickers</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th><th>Day Trade Gains</th></tr></thead>' +
         '<tbody>' +
           totalRows.slice(0, 18).map(function(r){
             var tickers = Array.isArray(r.tickers) ? r.tickers.join(', ') : (r.tickerCount ? (r.tickerCount + ' tickers') : 'ALL');
@@ -1581,7 +1645,7 @@ function renderChurnerHist(){
               '<td>'+(r.opened||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Opened||0)+'/'+(r.a2Opened||0)+')</span></td>'+
               '<td>'+(r.closed||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Closed||0)+'/'+(r.a2Closed||0)+')</span></td>'+
               '<td>'+(r.open||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Open||0)+'/'+(r.a2Open||0)+')</span></td>'+
-              '<td class="'+cc(r.banked)+'" style="font-weight:900">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>'+
+              '<td class="'+cc(r.banked)+'" style="font-weight:900">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>'+              '<td class="'+cc(r.dayTradeBanked)+'" style="font-weight:900">'+fmtS(r.dayTradeBanked||0)+' <span style="font-size:9px;color:var(--text3)">/'+(r.dayTradeContracts||0)+' ct</span></td>'+
             '</tr>';
           }).join('') +
         '</tbody></table>' +
@@ -1595,11 +1659,11 @@ function renderChurnerHist(){
   el.appendChild(detailTitle);
 
   var t=document.createElement('table');
-  t.innerHTML='<thead><tr><th style="text-align:left">'+title+'</th><th>Ticker</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th></tr></thead>';
+  t.innerHTML='<thead><tr><th style="text-align:left">'+title+'</th><th>Ticker</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th><th>Day Trade Gains</th></tr></thead>';
   var tb=document.createElement('tbody');
 
   if(!rows.length){
-    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">No churner history yet</td></tr>';
+    tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">No churner history yet</td></tr>';
   } else {
     rows.forEach(function(r){
       var tr=document.createElement('tr');
@@ -1608,7 +1672,7 @@ function renderChurnerHist(){
         '<td>'+(r.opened||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Opened||0)+'/'+(r.a2Opened||0)+')</span></td>'+
         '<td>'+(r.closed||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Closed||0)+'/'+(r.a2Closed||0)+')</span></td>'+
         '<td>'+(r.open||0)+' <span style="font-size:9px;color:var(--text3)">('+(r.a1Open||0)+'/'+(r.a2Open||0)+')</span></td>'+
-        '<td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>';
+        '<td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+' <span style="font-size:9px;color:var(--text3)">('+fmtS(r.a1Banked||0)+'/'+fmtS(r.a2Banked||0)+')</span></td>'+        '<td class="'+cc(r.dayTradeBanked)+'">'+fmtS(r.dayTradeBanked||0)+' <span style="font-size:9px;color:var(--text3)">/'+(r.dayTradeContracts||0)+' ct</span></td>';
       tb.appendChild(tr);
     });
   }

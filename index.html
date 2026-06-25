@@ -985,7 +985,23 @@ function renderAll(d){
 function renderHeader(d){
   updateModeUI();
   var el=ge('utime');
-  if(el){ var raw=String(d.updated||'\u2014');el.textContent=raw.replace(/^[\u25cf\u2022\u25b6\s]+/,'').replace(/^Updated:\s*/i,'').trim(); }
+ if(el){
+  // CHURNER_HEADER_TIMESTAMP_V1
+  // In Churner mode, header timestamp should reflect live churnerAnalytics,
+  // not stale static DATA_JSON updated time.
+  var raw = '';
+
+  if(isChurnerMode() && DATA && DATA.churner && DATA.churner.generatedAt){
+    raw = 'Churner ' + DATA.churner.generatedAt;
+  } else {
+    raw = String(d.updated || '\u2014');
+  }
+
+  el.textContent = raw
+    .replace(/^[\u25cf\u2022\u25b6\s]+/,'')
+    .replace(/^Updated:\s*/i,'')
+    .trim();
+}
   var dot=ge('sdot');
   if(dot){ dot.className='sdot';if(d.tokenState==='expiring')dot.classList.add('exp');else if(d.tokenState==='expired')dot.classList.add('dead'); }
   var staleWarn=ge('stale-warn');

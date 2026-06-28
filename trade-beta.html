@@ -1088,7 +1088,13 @@ var S = {
   basketPendingPayload:null,
   basketLastPayload:null,
   basketLastResult:null,
-  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:''};
+  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:'', churnerInlineReviewActive:false, churnerCloseAfterBasketResult:false};
+
+// ==========================================================
+// RIKI_V6_2_BIDASK_JSON_AND_ANALYZE_MODAL_CLOSE_FIX_V1
+// - Bid/ask refresh parses POST JSON before reading success/quotes.
+// - Basket result OK closes Analyze modal after a Review→Fire started from Analyze.
+// ==========================================================
 function ge(id){ return document.getElementById(id); }
 function haptic(){ try{ if(navigator.vibrate&&navigator.userActivation&&navigator.userActivation.hasBeenActive)navigator.vibrate(6); }catch(e){} }
 function fmtM(n){ n=parseFloat(n)||0; return (n<0?'\u2212$':'$')+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
@@ -1366,6 +1372,7 @@ function refreshBidAskNow(reason, quiet){
     ticker: S.ticker || '',
     symbols: JSON.stringify(symbols)
   })
+    .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || !d.success) throw new Error((d && d.error) || 'bid/ask refresh failed');
       applyBidAskQuotes_(d.quotes || {});
@@ -2061,10 +2068,13 @@ function openChurnerAnalyze(){
 function closeChurnerAnalyze(){
   var m = ge('churner-modal');
   if(m) m.classList.remove('on');
+  S.churnerInlineReviewActive = false;
 }
 
 function resetChurnerInlineActions_(){
   S.churnerInlineReviewed = false;
+  S.churnerInlineReviewActive = false;
+  S.churnerCloseAfterBasketResult = false;
   ['ch-add-more-btn','ch-review-btn','ch-fire-btn'].forEach(function(id){
     var b = ge(id);
     if(b){ b.classList.remove('on'); b.disabled = id !== 'ch-add-more-btn'; }
@@ -2078,6 +2088,8 @@ function showChurnerInlineActions_(){
 }
 function churnerAddMoreExpiry(){
   haptic();
+  S.churnerInlineReviewActive = false;
+  S.churnerCloseAfterBasketResult = false;
   closeChurnerAnalyze();
   toast('Basket kept — pick another expiry to add more', 2200);
 }
@@ -2086,6 +2098,7 @@ function churnerInlineReviewBasket(){
   var selected = basketSelectedList();
   if(!selected.length){ alert('No basket contracts selected.'); return; }
   S.churnerInlineReviewed = true;
+  S.churnerInlineReviewActive = true;
   var fire = ge('ch-fire-btn');
   if(fire) fire.disabled = false;
   reviewBasket();
@@ -2097,7 +2110,8 @@ function churnerInlineFireBasket(){
     churnerInlineReviewBasket();
     return;
   }
-  closeChurnerAnalyze();
+  S.churnerInlineReviewActive = true;
+  S.churnerCloseAfterBasketResult = true;
   basketFireCurrent();
 }
 
@@ -2469,6 +2483,7 @@ function basketFireCurrent(){
   payload.lowFetchMode = !!S.lowFetchMode;
 
   S.basketLastPayload = JSON.parse(JSON.stringify(payload));
+  if(S.churnerInlineReviewActive){ S.churnerCloseAfterBasketResult = true; }
   showBasketRunning(payload);
    var postBody = new URLSearchParams();
   postBody.set('action', 'basketSto');
@@ -2840,8 +2855,13 @@ function closeBasketModal(){
 function closeBasketResultAndClear(){
   closeBasketModal();
 
+  var shouldCloseChurner = !!S.churnerCloseAfterBasketResult;
   S.basketSelected = {};
   S.basketPendingPayload = null;
+  S.churnerCloseAfterBasketResult = false;
+  S.churnerInlineReviewActive = false;
+
+  if(shouldCloseChurner){ closeChurnerAnalyze(); }
 
   paintBasketControls();
   renderChain();

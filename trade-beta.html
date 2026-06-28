@@ -1741,68 +1741,67 @@ function setMobileCompact(on){
 function installMobileCompactScroll(){
   var app = ge('app');
   var sc = ge('cs');
-  if(app && !app._rikiCompactInstalled){
-    app._rikiCompactInstalled = true;
 
-    var lastY = 0;
-    var ticking = false;
+  // RIKI_V6_1_SCROLL_SHAKE_FIX_POSITION_LATCH_V1
+  // Desktop fast-wheel fix: compact mode is now position-latched.
+  // Do not toggle compact mode directly from wheel direction; fast desktop wheel
+  // bursts can bounce between #app and #cs while compact mode changes chain height.
+  function modalOpen_(){
+    return (ge('panic-result-modal') && ge('panic-result-modal').classList.contains('on')) ||
+           (ge('sh') && ge('sh').classList.contains('open')) ||
+           (ge('churner-modal') && ge('churner-modal').classList.contains('on'));
+  }
 
-    function handleCompactFromY_(y){
-      var dy = y - lastY;
-      var modalOpen = (ge('panic-result-modal') && ge('panic-result-modal').classList.contains('on')) ||
-                      (ge('sh') && ge('sh').classList.contains('open')) ||
-                      (ge('churner-modal') && ge('churner-modal').classList.contains('on'));
+  function compactFromPositions_(){
+    if(!app) return;
+    var chain = ge('cs');
+    var appY = Number(app.scrollTop || 0);
+    var chainY = chain ? Number(chain.scrollTop || 0) : 0;
 
-      if(modalOpen || y < 18){
-        setMobileCompact(false);
-      } else if(dy > 4 && y > 36){
-        setMobileCompact(true);
-      } else if(dy < -6){
-        setMobileCompact(false);
-      }
-      lastY = y;
+    if(modalOpen_()){
+      setMobileCompact(false);
+      return;
     }
 
-    app.addEventListener('scroll', function(){
-      if(ticking) return;
-      ticking = true;
-      requestAnimationFrame(function(){
-        handleCompactFromY_(app.scrollTop || 0);
-        ticking = false;
-      });
-    }, { passive:true });
+    if(appY > 36 || chainY > 70){
+      setMobileCompact(true);
+      return;
+    }
 
-    app.addEventListener('wheel', function(ev){
-      if(ev.deltaY > 8) setMobileCompact(true);
-      else if(ev.deltaY < -10 && (app.scrollTop || 0) < 24) setMobileCompact(false);
-    }, { passive:true });
-
-    window.addEventListener('resize', function(){ updateMobileBasketPill(); });
+    // Latch OFF only when both scroll surfaces are back near the top.
+    // This prevents fast desktop wheel bursts from flip-flopping compact mode.
+    if(appY < 18 && chainY < 18){
+      setMobileCompact(false);
+    }
   }
 
-  // Preserve chain internal scroll behavior too. It can still compact/expand,
-  // but the chain is no longer the only scroll surface.
+  function scheduleCompactCheck_(){
+    if(!app) return;
+    if(app._rikiCompactTicking) return;
+    app._rikiCompactTicking = true;
+    requestAnimationFrame(function(){
+      compactFromPositions_();
+      app._rikiCompactTicking = false;
+    });
+  }
+
+  if(app && !app._rikiCompactInstalled){
+    app._rikiCompactInstalled = true;
+    app.addEventListener('scroll', scheduleCompactCheck_, { passive:true });
+    window.addEventListener('resize', function(){
+      updateMobileBasketPill();
+      scheduleCompactCheck_();
+    });
+  }
+
+  // Preserve chain internal scrolling, but only use its position as an input.
+  // No direct wheel listener and no direction-based compact toggle.
   if(sc && !sc._rikiCompactInstalled){
     sc._rikiCompactInstalled = true;
-    var lastChainY = 0;
-    var tickingChain = false;
-    sc.addEventListener('scroll', function(){
-      if(tickingChain) return;
-      tickingChain = true;
-      requestAnimationFrame(function(){
-        var y = sc.scrollTop || 0;
-        var dy = y - lastChainY;
-        var modalOpen = (ge('panic-result-modal') && ge('panic-result-modal').classList.contains('on')) ||
-                        (ge('sh') && ge('sh').classList.contains('open')) ||
-                        (ge('churner-modal') && ge('churner-modal').classList.contains('on'));
-        if(modalOpen || y < 18) setMobileCompact(false);
-        else if(dy > 4 && y > 70) setMobileCompact(true);
-        else if(dy < -6) setMobileCompact(false);
-        lastChainY = y;
-        tickingChain = false;
-      });
-    }, { passive:true });
+    sc.addEventListener('scroll', scheduleCompactCheck_, { passive:true });
   }
+
+  scheduleCompactCheck_();
 }
 
 // ── STO Basket frontend engine ────────────────────────────────────────────────

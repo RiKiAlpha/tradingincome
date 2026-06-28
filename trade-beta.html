@@ -585,12 +585,14 @@ Fallback: restore this Apps Script deployment version if future UI patches break
       background:rgba(18,26,34,.86)!important;
       border:1px solid rgba(255,255,255,.065)!important;
     }
-    /* Smooth compact collapse — desktop + mobile
-       Collapse ONLY buying power + order ratio/multiplier.
-       Keep expiry, range, All, Basket controls, Panic row, and chain header visible. */
+    /* RIKI_V6_3_DESKTOP_SCROLL_OWNER_FIX_V1
+       Desktop Mac trackpad fix: do not collapse the tall Quick BTC panel mid-scroll.
+       Collapsing that panel after the BTC fire button removed a large block of height
+       and caused momentum-scroll jump/shake. Desktop now uses #app as the single
+       vertical scroll owner for the terminal/chain; mobile keeps the prior compact
+       Quick BTC collapse because touch behavior was already stable. */
 #app .bp-hdr,
-#app .ratio-card,
-#app .ctrl-panic-row{
+#app .ratio-card{
       transition:
         opacity .20s ease,
         max-height .22s ease,
@@ -602,14 +604,58 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     }
 
 #app.mobile-compact .bp-hdr,
-#app.mobile-compact .ratio-card,
-#app.mobile-compact.basket-on .ctrl-panic-row{
+#app.mobile-compact .ratio-card{
       opacity:0;
       max-height:0;
       margin:0!important;
       padding:0!important;
       transform:translateY(-6px);
       pointer-events:none;
+    }
+
+    @media(max-width:720px){
+      #app .ctrl-panic-row{
+        transition:
+          opacity .20s ease,
+          max-height .22s ease,
+          margin .22s ease,
+          padding .22s ease,
+          transform .20s ease;
+        overflow:hidden;
+        will-change:opacity,max-height,transform;
+      }
+
+      #app.mobile-compact.basket-on .ctrl-panic-row{
+        opacity:0;
+        max-height:0;
+        margin:0!important;
+        padding:0!important;
+        transform:translateY(-6px);
+        pointer-events:none;
+      }
+    }
+
+    @media(min-width:721px){
+      #app{
+        overflow-anchor:none;
+      }
+      #tw{
+        flex:0 0 auto;
+        min-height:360px;
+        overflow:visible;
+      }
+      #app.mobile-compact #tw{
+        flex-basis:auto;
+        min-height:360px;
+      }
+      #cs{
+        height:auto;
+        min-height:360px;
+        overflow-x:auto;
+        overflow-y:visible;
+        -webkit-overflow-scrolling:auto;
+        overscroll-behavior-y:auto;
+      }
     }
 
     #app.mobile-compact #updated-lbl{

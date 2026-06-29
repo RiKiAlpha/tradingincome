@@ -345,6 +345,20 @@ Fallback: restore this Apps Script deployment version if future UI patches break
 .sto.sel.p{background:rgba(240,140,48,.18);box-shadow:0 0 10px rgba(240,140,48,.20);}
 
 @media(max-width:720px){.pr-summary{grid-template-columns:repeat(2,1fr);}.pr-card{max-height:92vh;}.pr-title{font-size:12px;}.ctrl-basket-row{flex-wrap:wrap}.basket-line{flex-wrap:wrap}}
+
+/* === RIKI_V7_IBKR_WEB_API_TOGGLE_READONLY_V1: broker toggle === */
+.broker-toggle-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 7px;background:rgba(244,197,66,.035);border:1px solid rgba(244,197,66,.18);border-radius:9px;padding:6px 8px;}
+.broker-toggle-label{font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+.broker-pill{height:24px;padding:0 10px;border-radius:999px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--sans);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;white-space:nowrap;}
+.broker-pill.active{border-color:rgba(244,197,66,.50);background:rgba(244,197,66,.10);color:var(--gold);box-shadow:0 0 10px rgba(244,197,66,.07);}
+.ibkr-panel{display:none;margin:0 0 7px;background:rgba(12,17,24,.92);border:1px solid rgba(244,197,66,.28);border-radius:10px;padding:8px 9px;}
+.ibkr-panel-title{font-size:9px;font-weight:900;letter-spacing:.10em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+.ibkr-status-line{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text2);line-height:1.45;white-space:pre-wrap;}
+.ibkr-warning-line{font-size:8px;font-weight:800;color:var(--put);line-height:1.35;margin-top:6px;}
+.ibkr-mini-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;}
+.ibkr-mini-btn{height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(244,197,66,.35);background:rgba(244,197,66,.08);color:var(--gold);font-family:var(--sans);font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
+.ibkr-mini-btn:active{opacity:.72;}
+
     .seg{display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px;}
     .sbtn{flex:1;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--text3);cursor:pointer;touch-action:manipulation;white-space:nowrap;}
     .sbtn.ob{background:var(--bg4);color:var(--text);}
@@ -833,6 +847,21 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     </div>
   </div>
   <div id="ctrl">
+    <!-- === RIKI_V7_IBKR_WEB_API_TOGGLE_READONLY_V1: broker toggle === -->
+    <div class="broker-toggle-wrap">
+      <span class="broker-toggle-label">Broker</span>
+      <button id="brokerSchwabBtn" type="button" class="broker-pill active" onclick="rikiSetBrokerMode('SCHWAB')">TOS / Schwab</button>
+      <button id="brokerIbkrBtn" type="button" class="broker-pill" onclick="rikiSetBrokerMode('IBKR')">IBKR</button>
+    </div>
+    <div id="ibkrPanel" class="ibkr-panel">
+      <div class="ibkr-panel-title">IBKR Web API</div>
+      <div id="ibkrStatusLine" class="ibkr-status-line">IBKR not checked yet.</div>
+      <div class="ibkr-warning-line">Read-only V1: IBKR order firing is disabled until paper BTC is validated.</div>
+      <div class="ibkr-mini-actions">
+        <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrStatus()">Check IBKR</button>
+        <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrPositions()">Test Positions</button>
+      </div>
+    </div>
     <div class="ctrl-row">
       <div class="seg">
         <div class="sbtn ob" id="sb-b" onclick="setFilter('B')">Both</div>
@@ -1134,7 +1163,7 @@ var S = {
   basketPendingPayload:null,
   basketLastPayload:null,
   basketLastResult:null,
-  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:'', churnerInlineReviewActive:false, churnerCloseAfterBasketResult:false};
+  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:'', churnerInlineReviewActive:false, churnerCloseAfterBasketResult:false, brokerMode:localStorage.getItem('riki_broker_mode') || 'SCHWAB', ibkrStatus:null};
 
 // ==========================================================
 // RIKI_V6_2_BIDASK_JSON_AND_ANALYZE_MODAL_CLOSE_FIX_V1
@@ -1612,6 +1641,101 @@ function postBackendForm(action, fields){
     body:body
   });
 }
+
+
+/* === RIKI_V7_IBKR_WEB_API_TOGGLE_READONLY_V1: frontend broker functions === */
+function rikiGetBrokerMode(){
+  try{ if(typeof S !== 'undefined' && S.brokerMode) return S.brokerMode; }catch(e){}
+  return localStorage.getItem('riki_broker_mode') || 'SCHWAB';
+}
+function rikiSetBrokerMode(mode){
+  if(mode !== 'SCHWAB' && mode !== 'IBKR') return;
+  try{ if(typeof S !== 'undefined') S.brokerMode = mode; }catch(e){}
+  localStorage.setItem('riki_broker_mode', mode);
+  rikiRefreshBrokerUi();
+  if(mode === 'IBKR') rikiCheckIbkrStatus();
+}
+function rikiRefreshBrokerUi(){
+  var mode = rikiGetBrokerMode();
+  var schwabBtn = ge('brokerSchwabBtn');
+  var ibkrBtn = ge('brokerIbkrBtn');
+  var ibkrPanel = ge('ibkrPanel');
+  if(schwabBtn) schwabBtn.classList.toggle('active', mode === 'SCHWAB');
+  if(ibkrBtn) ibkrBtn.classList.toggle('active', mode === 'IBKR');
+  if(ibkrPanel) ibkrPanel.style.display = mode === 'IBKR' ? 'block' : 'none';
+}
+function rikiSetIbkrStatusText(text){
+  var el = ge('ibkrStatusLine');
+  if(el) el.textContent = text || 'No IBKR status.';
+}
+function rikiBackendGetJson_(action){
+  return fetch(BACKEND + '?action=' + encodeURIComponent(action) + '&_=' + Date.now(), { method:'GET', cache:'no-store' })
+    .then(function(r){ return r.text(); })
+    .then(function(raw){
+      try { return JSON.parse(raw); }
+      catch(e){ return { success:false, ok:false, error:'Backend returned non-JSON response: ' + e.message, raw:String(raw || '').substring(0,240) }; }
+    });
+}
+function rikiCheckIbkrStatus(){
+  rikiSetIbkrStatusText('Checking IBKR Web API session...');
+  rikiBackendGetJson_('ibkrStatus')
+    .then(function(res){
+      if(!res || res.ok === false || res.success === false){
+        rikiSetIbkrStatusText(
+          'IBKR not ready.\n' +
+          'Reason: ' + ((res && (res.error || res.message)) || 'Unknown error') + '\n' +
+          'Mode: ' + ((res && res.mode) || 'unknown')
+        );
+        return;
+      }
+      try{ if(typeof S !== 'undefined') S.ibkrStatus = res; }catch(e){}
+      rikiSetIbkrStatusText(
+        'IBKR ready: YES\n' +
+        'Mode: ' + (res.mode || 'unknown') + '\n' +
+        'Account: ' + (res.accountId || 'n/a') + '\n' +
+        'Authenticated: ' + (res.authenticated ? 'YES' : 'NO') + '\n' +
+        'Brokerage session: ' + (res.brokerageSession ? 'YES' : 'NO') + '\n' +
+        'Read-only: ' + (res.readOnly ? 'YES' : 'NO') + '\n' +
+        'Positions: ' + (res.positionsCount ?? 'n/a') + '\n' +
+        'As of: ' + (res.asOf || 'n/a')
+      );
+    })
+    .catch(function(err){
+      rikiSetIbkrStatusText('IBKR backend call failed.\n' + (err && err.message ? err.message : String(err || 'Unknown error')));
+    });
+}
+function rikiCheckIbkrPositions(){
+  rikiSetIbkrStatusText('Checking IBKR positions...');
+  rikiBackendGetJson_('ibkrPositions')
+    .then(function(res){
+      if(!res || res.ok === false || res.success === false){
+        rikiSetIbkrStatusText('IBKR positions unavailable.\nReason: ' + ((res && (res.error || res.message)) || 'Unknown error'));
+        return;
+      }
+      var count = Array.isArray(res.positions) ? res.positions.length : 0;
+      rikiSetIbkrStatusText(
+        'IBKR positions loaded: YES\n' +
+        'Account: ' + (res.accountId || 'n/a') + '\n' +
+        'Position rows: ' + count + '\n' +
+        'As of: ' + (res.asOf || 'n/a') + '\n' +
+        'Read-only V1: no IBKR orders enabled.'
+      );
+      console.log('RIKI IBKR POSITIONS V1', res);
+    })
+    .catch(function(err){
+      rikiSetIbkrStatusText('IBKR positions backend call failed.\n' + (err && err.message ? err.message : String(err || 'Unknown error')));
+    });
+}
+function rikiBlockIbkrOrdersReadOnlyV1(actionName){
+  if(rikiGetBrokerMode() !== 'IBKR') return false;
+  alert(
+    'IBKR is read-only in this version.\n\n' +
+    'Blocked action: ' + (actionName || 'Order action') + '\n\n' +
+    'Switch Broker to TOS / Schwab to use current live RiKi order firing.'
+  );
+  return true;
+}
+document.addEventListener('DOMContentLoaded', function(){ rikiRefreshBrokerUi(); });
 
 function panicFetchRun_(run){
   return postBackendForm('panicBtc', {
@@ -2517,6 +2641,7 @@ function showBasketRunning(payload){
 }
 
 function basketFireCurrent(){
+  if(rikiBlockIbkrOrdersReadOnlyV1('Basket Fire')) return;
   var payload = S.basketPendingPayload;
   if(!payload || !payload.rows || !payload.rows.length){
     alert('No basket payload ready.');
@@ -3263,6 +3388,7 @@ function abortPanicResume() {
 }
 
 function continuePanicNextRound() {
+  if(rikiBlockIbkrOrdersReadOnlyV1('Panic BTC Continue')) return;
   if (!panicLastRun) {
     alert('No saved panic context found.');
     return;
@@ -3335,6 +3461,7 @@ function continuePanicNextRound() {
 }
 // EMERGENCY FRONTEND CONTROLLER FUNCTION
 function triggerPanicClose() {
+  if(rikiBlockIbkrOrdersReadOnlyV1('Quick BTC')) return;
   var btn = ge('panic-close-btn');
 
   var rows;
@@ -4146,6 +4273,7 @@ function closeSheet(){ ge('bd').className=''; ge('sh').className=''; clearInterv
 function doBack(){ haptic(); clearInterval(S.cdTimer); setState('stage'); }
 
 function doStage(){
+  if(rikiBlockIbkrOrdersReadOnlyV1('Normal STO Stage')) return;
   haptic();
   if((S.qtyA1+S.qtyA2)<=0){ alert('Total allocation count must be greater than zero.'); return; }
   if(S.price<=0.01){ alert('Minimum limit price field constraint is $0.02.'); return; }
@@ -4175,6 +4303,7 @@ function doStage(){
 }
 
 function doFire(){
+  if(rikiBlockIbkrOrdersReadOnlyV1('Normal STO Fire')) return;
   haptic();
   clearInterval(S.cdTimer);
 

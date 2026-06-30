@@ -860,7 +860,7 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     </div>
   </div>
   <div id="ctrl">
-    <!-- === RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1: IBKR broker toggle === -->
+    <!-- === RIKI_V7_BROKER_SWITCH_CLEAR_STATE_GUARD_V1 + RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1: IBKR broker toggle === -->
     <div class="broker-toggle-wrap">
       <span class="broker-toggle-label">Broker</span>
       <button id="brokerSchwabBtn" type="button" class="broker-pill active" onclick="rikiSetBrokerMode('SCHWAB')">TOS / Schwab</button>
@@ -1680,10 +1680,64 @@ function rikiGetBrokerMode(){
 }
 function rikiSetBrokerMode(mode){
   if(mode !== 'SCHWAB' && mode !== 'IBKR') return;
+
+  var prev = rikiGetBrokerMode();
+  var changed = prev !== mode;
+
   try{ if(typeof S !== 'undefined') S.brokerMode = mode; }catch(e){}
   localStorage.setItem('riki_broker_mode', mode);
+
+  if(changed){
+    rikiBrokerSwitchClearStateGuardV1_(prev, mode);
+  }
+
   rikiRefreshBrokerUi();
   if(mode === 'IBKR') rikiCheckIbkrDiagnostics();
+}
+
+/* === RIKI_V7_BROKER_SWITCH_CLEAR_STATE_GUARD_V1 ===
+   Sequential broker workflow guard. When switching TOS/Schwab <-> IBKR, clear
+   any basket/review/fire state so an old staged basket cannot be fired under
+   the newly selected broker. Frontend-only safety; Schwab backend/order engine
+   is untouched. */
+function rikiBrokerSwitchClearStateGuardV1_(fromBroker, toBroker){
+  try{
+    if(typeof S === 'undefined' || !S) return;
+
+    S.basketSelected = {};
+    S.basketPendingPayload = null;
+    S.basketLastPayload = null;
+    S.basketLastResult = null;
+    S.basketResumeCanContinue = false;
+
+    if(S.basketRetryTimerId){
+      clearInterval(S.basketRetryTimerId);
+      S.basketRetryTimerId = null;
+    }
+
+    S.churnerInlineReviewed = false;
+    S.churnerInlineReviewActive = false;
+    S.churnerCloseAfterBasketResult = false;
+
+    // Close any review/result/order sheet that could contain the previous broker state.
+    var pr = ge('panic-result-modal');
+    if(pr) pr.classList.remove('on');
+
+    var sh = ge('sh');
+    if(sh) sh.classList.remove('open');
+
+    var bd = ge('bd');
+    if(bd) bd.classList.remove('on');
+
+    if(typeof resetPanicModalActions === 'function') resetPanicModalActions();
+    if(typeof paintBasketControls === 'function') paintBasketControls();
+    if(typeof renderChain === 'function') renderChain();
+
+    toast('Broker changed to ' + (toBroker === 'IBKR' ? 'IBKR' : 'TOS / Schwab') + ' — basket cleared', 2200);
+  }catch(e){
+    console.warn('RIKI broker switch clear guard failed', e);
+    toast('Broker changed — clear basket before firing', 2600);
+  }
 }
 function rikiRefreshBrokerUi(){
   var mode = rikiGetBrokerMode();

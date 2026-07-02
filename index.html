@@ -1682,7 +1682,11 @@ function renderChurnerHist(){
       : (c.historyWeeklyTotals || []);
 
   if(histMode === 'daily'){
-    totalRows = (totalRows || []).filter(function(r){ return String(r.period||'') === String((c && c.asOfDate) || ''); });
+    // RIKI_V7_4_CHURNER_HISTORY_DISPLAY_START_TOTALS_FIX_V1
+    // Daily total card shows the full daily ledger list, while ticker detail below
+    // remains limited to the selected date. Backend already filters display totals
+    // from the Churner display-start date.
+    totalRows = (totalRows || []).slice();
   }
 
   if(!totalRows.length){
@@ -1700,7 +1704,7 @@ function renderChurnerHist(){
       '<div style="overflow-x:auto;">' +
         '<table><thead><tr><th style="text-align:left">'+title+'</th><th>Tickers</th><th>Opened</th><th>Closed</th><th>Open</th><th>Banked</th><th>Day Trade Gains</th></tr></thead>' +
         '<tbody>' +
-          totalRows.slice(0, 18).map(function(r){
+          totalRows.map(function(r){
             var tickers = Array.isArray(r.tickers) ? r.tickers.join(', ') : (r.tickerCount ? (r.tickerCount + ' tickers') : 'ALL');
             if(tickers.length > 24) tickers = tickers.substring(0, 24) + '…';
             return '<tr>'+

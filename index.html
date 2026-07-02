@@ -630,7 +630,11 @@ function loadChurnerTicker(ticker,opts){
     localStorage.setItem('riki_churner_asof_date',asOf);
   }
 
-  var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
+  // RIKI_V7_7_CHURNER_TIMESTAMP_EXECUTION_LOAD_FASTFIX_V1
+  // Ticker/date Load should be compact: selected-day detail + total ledger only.
+  // Full ticker-history reconstruction is reserved for Rebuild/Backfill/all-history views.
+  var compact = ticker ? '1' : '0';
+  var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&compact='+compact+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
   var cacheKey=(asOf||'latest')+'|'+(ticker||'ALL');
   if(CHURNER_LOAD_CACHE[cacheKey]){
     DATA = DATA || {};
@@ -645,6 +649,11 @@ function loadChurnerTicker(ticker,opts){
   fetch(url).then(function(r){return r.json();}).then(function(j){
     setChurnerBusy_(false);
     if(j && j.success){
+      if(j.compactMode && DATA && DATA.churner){
+        j.historyDaily = j.historyDaily && j.historyDaily.length ? j.historyDaily : (DATA.churner.historyDaily || []);
+        j.historyWeekly = j.historyWeekly && j.historyWeekly.length ? j.historyWeekly : (DATA.churner.historyWeekly || []);
+        j.historyMonthly = j.historyMonthly && j.historyMonthly.length ? j.historyMonthly : (DATA.churner.historyMonthly || []);
+      }
       CHURNER_LOAD_CACHE[cacheKey]=j;
       DATA.churner=j;
       DATA.churnerLoadedAtEt=j.generatedAt||'';
@@ -863,7 +872,6 @@ function doRefresh(){
       if(fresh.refreshSkipped || fresh.refreshDashboardPaused){
         renderAll(fresh);
         saveCache(fresh);
-        churnerBootForceRefresh_();
         toast(fresh.refreshMessage || 'refreshDashboard is paused', 4000);
         return;
       }
@@ -871,7 +879,6 @@ function doRefresh(){
       renderAll(fresh);
       saveCache(fresh);
       flashLogo();
-      churnerBootForceRefresh_();
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
 }
@@ -1096,8 +1103,10 @@ function renderHeader(d){
   // not stale static DATA_JSON updated time.
   var raw = '';
 
-  if(isChurnerMode() && DATA && DATA.churner && DATA.churner.generatedAt){
-    raw = formatChurnerTimestamp_(DATA.churner.generatedAt);
+  // V7.7: header should show app/Refresh freshness, not Churner calc age.
+  // Churner calculation time remains visible in the Churner banner as "calc ...".
+  if(d && d.generatedAtEt){
+    raw = formatChurnerTimestamp_(d.generatedAtEt);
   } else {
     raw = String(d.updated || '\u2014');
   }
@@ -2124,7 +2133,6 @@ function rikiRenderFreshData_(d, flash){
   saveCache(d);
   _lastFetch = Date.now();
   if(flash) flashLogo();
-  churnerBootForceRefresh_();
 }
 
 function rikiFetchLiveData_(){

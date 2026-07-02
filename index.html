@@ -1681,6 +1681,10 @@ function renderChurnerHist(){
       ? (c.historyMonthlyTotals || [])
       : (c.historyWeeklyTotals || []);
 
+  if(histMode === 'daily'){
+    totalRows = (totalRows || []).filter(function(r){ return String(r.period||'') === String((c && c.asOfDate) || ''); });
+  }
+
   if(!totalRows.length){
     totalRows = churnerHistoryTotalsClient_(rows);
   }

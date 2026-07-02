@@ -551,6 +551,7 @@ function formatChurnerTimestamp_(v){
 }
 if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){ document.documentElement.classList.add('pwa'); }
 var DATA=null, activeTab='d', histMode='weeks';
+var CHURNER_LOAD_CACHE = {}; // RIKI_V7_5 fast in-memory date+ticker sheet cache
 var appMode = localStorage.getItem('riki_app_mode') || 'legacy';
 var churnerLogoPulseTimer_ = null;
 function setChurnerBusy_(on,label){
@@ -630,10 +631,21 @@ function loadChurnerTicker(ticker,opts){
   }
 
   var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
-  setChurnerBusy_(true,'Loading ChurnerData…');
+  var cacheKey=(asOf||'latest')+'|'+(ticker||'ALL');
+  if(CHURNER_LOAD_CACHE[cacheKey]){
+    DATA = DATA || {};
+    DATA.churner = CHURNER_LOAD_CACHE[cacheKey];
+    DATA.churnerLoadedAtEt = DATA.churner.generatedAt || '';
+    DATA.churnerSource = DATA.churner.source || '';
+    renderAll(DATA);
+    setChurnerBusy_(true,'Refreshing ChurnerData…');
+  }else{
+    setChurnerBusy_(true,'Loading ChurnerData…');
+  }
   fetch(url).then(function(r){return r.json();}).then(function(j){
     setChurnerBusy_(false);
     if(j && j.success){
+      CHURNER_LOAD_CACHE[cacheKey]=j;
       DATA.churner=j;
       DATA.churnerLoadedAtEt=j.generatedAt||'';
       DATA.churnerSource=j.source||'';

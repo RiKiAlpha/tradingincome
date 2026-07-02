@@ -685,6 +685,28 @@ function rebuildChurnerData(){
   });
 }
 
+function backfillChurnerHistory(){
+  var dateInput=getChurnerAsOfInput_();
+  var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
+  var endParam=asOf ? '&end='+encodeURIComponent(asOf) : '';
+  var url=BACKEND+'?action=churnerBackfillAll&start=2026-06-01'+endParam+'&_='+Date.now();
+  setChurnerBusy_(true,'Backfilling Churner history…');
+  fetch(url).then(function(r){return r.json();}).then(function(j){
+    setChurnerBusy_(false);
+    if(j&&j.success){
+      toast('Backfilled '+(j.rebuilt||0)+' trading days');
+      loadChurnerTicker((getChurnerTickerInput_()||{}).value||'', {quiet:true});
+    }else{
+      toast((j&&j.error)||'Churner backfill failed');
+      renderAll(DATA);
+    }
+  }).catch(function(){
+    setChurnerBusy_(false);
+    toast('Churner backfill error');
+    renderAll(DATA);
+  });
+}
+
 function clearChurnerAsOf(){
   var today = churnerTodayEt_();
   localStorage.setItem('riki_churner_asof_date', today);
@@ -1233,6 +1255,7 @@ var chBusyAttr = chBusy ? ' disabled' : '';
 '<input id="churner-asof-input" class="churner-input churner-date-input" type="date" value="'+chAsOf+'" onclick="churnerOpenDatePicker_(this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(ge(\'churner-ticker-input\').value);}">' +
     '<button class="churner-mini-btn" onclick="loadChurnerTicker(ge(\'churner-ticker-input\').value)">Load</button>' +
       '<button class="churner-mini-btn" onclick="rebuildChurnerData()">Rebuild</button>' +
+      '<button class="churner-mini-btn" onclick="backfillChurnerHistory()">Backfill</button>' +
       '<button class="churner-mini-btn" onclick="loadChurnerAllTickers()">All</button>' +
       '<button class="churner-mini-btn" onclick="clearChurnerAsOf()">Today</button>' +
     '</div>';
@@ -1636,10 +1659,19 @@ function renderChurnerHist(){
   }
 
   var rows = histMode === 'daily'
-    ? (c.historyDaily || [])
+    ? (c.historyDaily || []).filter(function(r){ return String(r.period||'') === String(c.asOfDate||''); })
     : histMode === 'monthly'
       ? (c.historyMonthly || [])
       : (c.historyWeekly || []);
+
+  // RIKI_V7_2_CHURNER_HISTORY_SORT_SELECTED_DAY_V1
+  // Daily ticker detail shows only the selected date. Weekly/monthly group by
+  // period and sort tickers by day-trade gains inside each period.
+  rows = rows.slice().sort(function(a,b){
+    var p = String(b.period||'').localeCompare(String(a.period||''));
+    if(p) return p;
+    return Number(b.dayTradeBanked||0) - Number(a.dayTradeBanked||0);
+  });
 
   // CHURNER_HISTORY_TOTALS_V1
   // Show true all-symbol totals first; keep ticker-level rows below for drilldown.
@@ -1683,7 +1715,7 @@ function renderChurnerHist(){
 
   var detailTitle=document.createElement('div');
   detailTitle.className='mhdr';
-  detailTitle.textContent='Ticker detail';
+  detailTitle.textContent = histMode === 'daily' ? ('Ticker detail · selected date '+((c && c.asOfDate) || '')) : 'Ticker detail · sorted by day-trade gains';
   el.appendChild(detailTitle);
 
   var t=document.createElement('table');
@@ -2049,11 +2081,17 @@ function rikiPrepareIncomingData_(d){
   if(!d) return d;
   d._savedMs = Math.max(Number(d._savedMs || 0), Date.now());
 
-  // Keep the Churner display-source rule intact: Churner mode should reload ChurnerData,
-  // not render any stale churner object packaged inside legacy dashboard data.
+  // RIKI_V7_2_CHURNER_HISTORY_STABLE_NO_BLANK_V1
+  // In Churner mode, preserve the currently displayed ChurnerData while live
+  // legacy dashboard refresh runs. The separate ChurnerData fetch will replace
+  // it after it returns. This prevents History from blanking/flickering.
   if(isChurnerMode()){
-    d.churner = null;
-    d.churnerLoadedAtEt = '';
+    if(DATA && DATA.churner){
+      d.churner = DATA.churner;
+      d.churnerLoadedAtEt = DATA.churnerLoadedAtEt || '';
+      d.churnerSource = DATA.churnerSource || '';
+      d.churnerLoadingLabel = DATA.churnerLoadingLabel || '';
+    }
   }
   return d;
 }
@@ -2085,10 +2123,8 @@ function startLoadingData(){
 
   if(_cached){
     // Render cached shell immediately for speed, but live backend below is authoritative.
-    if(isChurnerMode()){
-      _cached.churner = null;
-      _cached.churnerLoadedAtEt = '';
-    }
+    // RIKI_V7_2_CHURNER_HISTORY_STABLE_NO_BLANK_V1
+    // Keep cached ChurnerData visible during boot; it is immediately refreshed below.
     renderAll(_cached);
     churnerBootForceRefresh_();
   }

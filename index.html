@@ -601,16 +601,33 @@ function updateModeUI(){
     churner.className = 'mode-pill churner' + (isChurnerMode() ? ' on' : '');
   }
 }
+function getChurnerAsOfInput_(){
+  return ge('churner-asof-input') || ge('churner-date-input');
+}
+
+function getChurnerTickerInput_(){
+  return ge('churner-ticker-input');
+}
+
 function loadChurnerTicker(ticker,opts){
   opts=opts||{};
   ticker=String(ticker||'').trim().toUpperCase();
-  var inp=document.getElementById('churner-ticker-input');
+  var inp=getChurnerTickerInput_();
   if(inp) inp.value=ticker;
   localStorage.setItem('riki_churner_ticker',ticker);
+  localStorage.setItem('riki_churner_focus_ticker',ticker);
   if(ticker) localStorage.setItem('riki_churner_focus','1'); else localStorage.setItem('riki_churner_focus','0');
-  var dateInput=document.getElementById('churner-date-input');
+
+  // RIKI_V7_1_CHURNER_DATE_LOAD_ID_FIX_V1
+  // The rendered date picker id is churner-asof-input. The previous loader read
+  // churner-date-input, so selected historical dates were not sent to backend and
+  // the sheet read fell back to the latest row.
+  var dateInput=getChurnerAsOfInput_();
   var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
-  if(asOf) localStorage.setItem('riki_churner_asof',asOf);
+  if(asOf){
+    localStorage.setItem('riki_churner_asof',asOf);
+    localStorage.setItem('riki_churner_asof_date',asOf);
+  }
 
   var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
   setChurnerBusy_(true,'Loading ChurnerData…');
@@ -635,11 +652,16 @@ function loadChurnerTicker(ticker,opts){
 }
 
 function rebuildChurnerData(){
-  var ticker=(document.getElementById('churner-ticker-input')||{}).value||'';
+  var ticker=(getChurnerTickerInput_()||{}).value||'';
   ticker=String(ticker).trim().toUpperCase();
-  var dateInput=document.getElementById('churner-date-input');
+  var dateInput=getChurnerAsOfInput_();
   var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
-  if(asOf) localStorage.setItem('riki_churner_asof',asOf);
+  if(asOf){
+    localStorage.setItem('riki_churner_asof',asOf);
+    localStorage.setItem('riki_churner_asof_date',asOf);
+  }
+  localStorage.setItem('riki_churner_ticker',ticker);
+  localStorage.setItem('riki_churner_focus_ticker',ticker);
   var focus=ticker?'1':'0';
   var url=BACKEND+'?action=churnerRebuild&ticker='+encodeURIComponent(ticker)+'&focus='+focus+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
   setChurnerBusy_(true,'Rebuilding Churner from TxCache…');
@@ -666,20 +688,21 @@ function rebuildChurnerData(){
 function clearChurnerAsOf(){
   var today = churnerTodayEt_();
   localStorage.setItem('riki_churner_asof_date', today);
+  localStorage.setItem('riki_churner_asof', today);
 
-  var el = ge('churner-asof-input');
+  var el = getChurnerAsOfInput_();
   if(el) el.value = today;
 
-
-  loadChurnerTicker(localStorage.getItem('riki_churner_focus_ticker') || '');
+  loadChurnerTicker(localStorage.getItem('riki_churner_focus_ticker') || localStorage.getItem('riki_churner_ticker') || '');
 }
 
 function loadChurnerAllTickers(){
   localStorage.removeItem('riki_churner_focus_ticker');
+  localStorage.removeItem('riki_churner_ticker');
+  localStorage.setItem('riki_churner_focus','0');
 
-  var tickerEl = ge('churner-ticker-input');
+  var tickerEl = getChurnerTickerInput_();
   if(tickerEl) tickerEl.value = '';
-
 
   loadChurnerTicker('');
 }
@@ -1096,11 +1119,11 @@ function churnerTodayEt_(){
 }
 
 function churnerSavedTicker_(){
-  return String(localStorage.getItem('riki_churner_focus_ticker') || '').trim().toUpperCase();
+  return String(localStorage.getItem('riki_churner_focus_ticker') || localStorage.getItem('riki_churner_ticker') || '').trim().toUpperCase();
 }
 
 function churnerSavedAsOf_(){
-  return String(localStorage.getItem('riki_churner_asof_date') || '').trim();
+  return String(localStorage.getItem('riki_churner_asof_date') || localStorage.getItem('riki_churner_asof') || '').trim();
 }
 
 function churnerResultAsOf_(){
@@ -1123,10 +1146,10 @@ function loadChurnerLastState(forceTodayIfBlank){
   }
 
 
-  var tickerEl = ge('churner-ticker-input');
+  var tickerEl = getChurnerTickerInput_();
   if(tickerEl) tickerEl.value = ticker;
 
-  var asOfEl = ge('churner-asof-input');
+  var asOfEl = getChurnerAsOfInput_();
   if(asOfEl) asOfEl.value = asOf;
 
   loadChurnerTicker(ticker,{quiet:true});

@@ -190,6 +190,8 @@ body.churner-mode .tab.on .tlabel{color:var(--churner2)!important;}
   cursor:pointer;
 }
 .churner-mini-btn{height:28px;border-radius:8px;border:1px solid rgba(61,156,255,.38);background:rgba(61,156,255,.08);color:var(--churner2);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:0 10px;cursor:pointer;}
+.churner-mini-btn:disabled{opacity:.42;cursor:wait;}
+.churner-loading{color:var(--gold);font-weight:900;}
 .churner-kpi{margin:14px 16px 0;background:var(--bg2);border:1px solid rgba(61,156,255,.22);border-radius:16px;padding:18px;}
 .churner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .churner-k{padding:12px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);}
@@ -550,6 +552,20 @@ function formatChurnerTimestamp_(v){
 if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){ document.documentElement.classList.add('pwa'); }
 var DATA=null, activeTab='d', histMode='weeks';
 var appMode = localStorage.getItem('riki_app_mode') || 'legacy';
+var churnerLogoPulseTimer_ = null;
+function setChurnerBusy_(on,label){
+  DATA = DATA || {};
+  DATA.churnerLoadingLabel = on ? (label || 'Loading ChurnerData…') : '';
+  if(on){
+    flashLogo();
+    if(churnerLogoPulseTimer_) clearInterval(churnerLogoPulseTimer_);
+    churnerLogoPulseTimer_ = setInterval(function(){ flashLogo(); },850);
+  }else{
+    if(churnerLogoPulseTimer_){ clearInterval(churnerLogoPulseTimer_); churnerLogoPulseTimer_=null; }
+    flashLogo();
+  }
+  if(isChurnerMode()) renderAll(DATA);
+}
 function isChurnerMode(){ return appMode === 'churner'; }
 function setAppMode(mode){
   haptic();
@@ -585,90 +601,66 @@ function updateModeUI(){
     churner.className = 'mode-pill churner' + (isChurnerMode() ? ' on' : '');
   }
 }
-function loadChurnerTicker(ticker){
-  ticker = String(ticker || '').trim().toUpperCase();
-  if(ticker){
-    localStorage.setItem('riki_churner_focus_ticker', ticker);
-  } else {
-    localStorage.removeItem('riki_churner_focus_ticker');
-  }
+function loadChurnerTicker(ticker,opts){
+  opts=opts||{};
+  ticker=String(ticker||'').trim().toUpperCase();
+  var inp=document.getElementById('churner-ticker-input');
+  if(inp) inp.value=ticker;
+  localStorage.setItem('riki_churner_ticker',ticker);
+  if(ticker) localStorage.setItem('riki_churner_focus','1'); else localStorage.setItem('riki_churner_focus','0');
+  var dateInput=document.getElementById('churner-date-input');
+  var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
+  if(asOf) localStorage.setItem('riki_churner_asof',asOf);
 
-  var churnerStart = localStorage.getItem('riki_churner_start_date') || '2026-06-01';
-
-    var asOfEl = ge('churner-asof-input');
-  var savedAsOf = churnerSavedAsOf_();
-
-  // Prefer explicit date picker value.
-  // If blank, use last saved setting.
-  // If still blank, default to today ET so the dashboard cannot stick to yesterday.
-  var asOfDate = asOfEl ? String(asOfEl.value || '').trim() : savedAsOf;
-  if(!asOfDate) asOfDate = savedAsOf;
-  if(!asOfDate) asOfDate = churnerTodayEt_();
-
-  localStorage.setItem('riki_churner_asof_date', asOfDate);
-if(asOfEl) asOfEl.value = asOfDate;
-
-// CHURNER_BOOT_FORCE_REFRESH_V1
-// Clear stale cached Churner before fetching fresh data for selected date/symbol.
-if(DATA){
-  DATA.churner = null;
-  DATA.churnerLoadedAtEt = '';
-}
-
-var url = BACKEND +
-    '?action=churnerData' +
-    '&ticker=' + encodeURIComponent(ticker) +
-    '&focus=' + (ticker ? '1' : '0') +
-    '&start=' + encodeURIComponent(churnerStart) +
-    '&asOf=' + encodeURIComponent(asOfDate) +
-    '&_=' + Date.now();
-
-  fetch(url)
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      if(!DATA) DATA = {};
-      DATA.churner = j;
-      DATA.churnerLoadedAtEt = j && j.generatedAt ? j.generatedAt : '';
-      renderAll(DATA);
+  var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
+  setChurnerBusy_(true,'Loading ChurnerData…');
+  fetch(url).then(function(r){return r.json();}).then(function(j){
+    setChurnerBusy_(false);
+    if(j && j.success){
+      DATA.churner=j;
+      DATA.churnerLoadedAtEt=j.generatedAt||'';
+      DATA.churnerSource=j.source||'';
       saveCache(DATA);
-      toast('Churner as-of '+asOfDate, 2200);
-    })
-    .catch(function(e){ toast('Churner load error: '+errMsg(e), 4000); });
+      renderAll(DATA);
+      if(j.needsRebuild && !opts.quiet) toast(j.message||'No saved ChurnerData — run Rebuild');
+    }else{
+      toast((j&&j.error)||'Churner load failed');
+      renderAll(DATA);
+    }
+  }).catch(function(e){
+    setChurnerBusy_(false);
+    toast('Churner load error');
+    renderAll(DATA);
+  });
 }
 
 function rebuildChurnerData(){
-  haptic();
-  var tickerEl = ge('churner-ticker-input');
-  var ticker = tickerEl ? String(tickerEl.value || '').trim().toUpperCase() : churnerSavedTicker_();
-  var asOfEl = ge('churner-asof-input');
-  var asOfDate = asOfEl ? String(asOfEl.value || '').trim() : churnerSavedAsOf_();
-  if(!asOfDate) asOfDate = churnerTodayEt_();
-  localStorage.setItem('riki_churner_asof_date', asOfDate);
-  if(ticker) localStorage.setItem('riki_churner_focus_ticker', ticker); else localStorage.removeItem('riki_churner_focus_ticker');
-
-  var churnerStart = localStorage.getItem('riki_churner_start_date') || '2026-06-01';
-  if(DATA){ DATA.churner = null; DATA.churnerLoadedAtEt = ''; renderAll(DATA); }
-  toast('Rebuilding Churner from TxCache…', 3000);
-
-  var url = BACKEND +
-    '?action=churnerRebuild' +
-    '&ticker=' + encodeURIComponent(ticker) +
-    '&focus=' + (ticker ? '1' : '0') +
-    '&start=' + encodeURIComponent(churnerStart) +
-    '&asOf=' + encodeURIComponent(asOfDate) +
-    '&_=' + Date.now();
-
-  fetch(url)
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      if(!DATA) DATA = {};
-      DATA.churner = j;
-      DATA.churnerLoadedAtEt = j && j.generatedAt ? j.generatedAt : '';
-      renderAll(DATA);
+  var ticker=(document.getElementById('churner-ticker-input')||{}).value||'';
+  ticker=String(ticker).trim().toUpperCase();
+  var dateInput=document.getElementById('churner-date-input');
+  var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
+  if(asOf) localStorage.setItem('riki_churner_asof',asOf);
+  var focus=ticker?'1':'0';
+  var url=BACKEND+'?action=churnerRebuild&ticker='+encodeURIComponent(ticker)+'&focus='+focus+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
+  setChurnerBusy_(true,'Rebuilding Churner from TxCache…');
+  fetch(url).then(function(r){return r.json();}).then(function(j){
+    setChurnerBusy_(false);
+    if(j&&j.success){
+      DATA.churner=j;
+      DATA.churnerLoadedAtEt=j.generatedAt||'';
+      DATA.churnerSource=j.source||'';
       saveCache(DATA);
-      toast(j && j.success ? 'ChurnerData rebuilt' : ('Rebuild failed: '+((j && j.error) || 'unknown')), j && j.success ? 2400 : 5000);
-    })
-    .catch(function(e){ toast('Rebuild error: '+errMsg(e), 5000); });
+      renderAll(DATA);
+      toast('Churner rebuilt');
+    }else{
+      toast((j&&j.error)||'Churner rebuild failed');
+      renderAll(DATA);
+    }
+  }).catch(function(){
+    setChurnerBusy_(false);
+    toast('Churner rebuild error');
+    renderAll(DATA);
+  });
 }
 
 function clearChurnerAsOf(){
@@ -678,7 +670,6 @@ function clearChurnerAsOf(){
   var el = ge('churner-asof-input');
   if(el) el.value = today;
 
-  if(DATA) DATA.churner = null;
 
   loadChurnerTicker(localStorage.getItem('riki_churner_focus_ticker') || '');
 }
@@ -689,7 +680,6 @@ function loadChurnerAllTickers(){
   var tickerEl = ge('churner-ticker-input');
   if(tickerEl) tickerEl.value = '';
 
-  if(DATA) DATA.churner = null;
 
   loadChurnerTicker('');
 }
@@ -1132,7 +1122,6 @@ function loadChurnerLastState(forceTodayIfBlank){
     }
   }
 
-  if(DATA) DATA.churner = null;
 
   var tickerEl = ge('churner-ticker-input');
   if(tickerEl) tickerEl.value = ticker;
@@ -1140,7 +1129,7 @@ function loadChurnerLastState(forceTodayIfBlank){
   var asOfEl = ge('churner-asof-input');
   if(asOfEl) asOfEl.value = asOf;
 
-  loadChurnerTicker(ticker);
+  loadChurnerTicker(ticker,{quiet:true});
 }
 // CHURNER_BOOT_FORCE_REFRESH_V1
 // On first page load / idle wake, cached DATA.churner can be yesterday/$0.
@@ -1163,11 +1152,6 @@ function churnerBootForceRefresh_(){
     if(!asOf){
       asOf = churnerTodayEt_();
       localStorage.setItem('riki_churner_asof_date', asOf);
-    }
-
-    if(DATA){
-      DATA.churner = null;
-      DATA.churnerLoadedAtEt = '';
     }
 
     var asOfEl = ge('churner-asof-input');
@@ -1210,6 +1194,8 @@ function renderChurnerDash(d){
 // Use only the Churner analytics generatedAt timestamp.
 // Do not fall back to stale dashboard/cache timestamps.
 var chGeneratedAt = (chData() && chData().generatedAt) ? formatChurnerTimestamp_(chData().generatedAt) : '';
+var chBusy = DATA && DATA.churnerLoadingLabel ? String(DATA.churnerLoadingLabel) : '';
+var chBusyAttr = chBusy ? ' disabled' : '';
 
   banner.innerHTML =
     '<div><div class="churner-title">Churner Analytics</div>' +
@@ -1217,6 +1203,7 @@ var chGeneratedAt = (chData() && chData().generatedAt) ? formatChurnerTimestamp_
         ' · as of '+chAsOf+
         (chGeneratedAt ? ' · calc '+chGeneratedAt : '')+
         (chFocusTicker ? ' · '+chFocusTicker : ' · all tickers')+
+        (chBusy ? ' · <span class="churner-loading">'+chBusy+'</span>' : '')+
       '</div></div>' +
     '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">' +
       '<input id="churner-ticker-input" class="churner-input" placeholder="TICKER" value="'+chFocusTicker+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();loadChurnerTicker(this.value);}">' +
@@ -1227,6 +1214,13 @@ var chGeneratedAt = (chData() && chData().generatedAt) ? formatChurnerTimestamp_
       '<button class="churner-mini-btn" onclick="clearChurnerAsOf()">Today</button>' +
     '</div>';
   dw.appendChild(banner);
+
+  if(c && c.needsRebuild){
+    var nb=document.createElement('div');
+    nb.className='warn';
+    nb.innerHTML='<span>↻</span><div>'+(c.message||'No saved ChurnerData for this date/ticker — run Rebuild from TxCache.')+'</div>';
+    dw.appendChild(nb);
+  }
 
   if(!c || c.success === false){
     var err=document.createElement('div');
@@ -1297,7 +1291,9 @@ var chGeneratedAt = (chData() && chData().generatedAt) ? formatChurnerTimestamp_
     // CHURNER_DAYTRADE_TICKER_EXPIRY_BREAKDOWN_V1
     // Lower cards should show only expiries that contributed to day-trade realized dollars.
     return Number(r.dayTradeContractsToday || 0) > 0 ||
-           Math.abs(Number(r.dayTradeBankedToday || 0)) > 0.004;
+           Number(r.expiredWorthlessContracts || 0) > 0 ||
+           Math.abs(Number(r.dayTradeBankedToday || 0)) > 0.004 ||
+           Math.abs(Number(r.totalBankedToday || 0)) > 0.004;
   }).sort(function(a,b){
     var at = String(a.ticker || '');
     var bt = String(b.ticker || '');
@@ -1313,7 +1309,7 @@ var chGeneratedAt = (chData() && chData().generatedAt) ? formatChurnerTimestamp_
   if(!expRows.length){
     var empty=document.createElement('div');
     empty.className='churner-exp-card';
-    empty.innerHTML='<div class="churner-exp-title">No day-trade expiry contributors</div><div class="churner-exp-sub">No expiry produced opened-today-and-closed-today realized gain for this ticker/date.</div>';
+    empty.innerHTML='<div class="churner-exp-title">No expiry gain source</div><div class="churner-exp-sub">No saved expiry-level gains for this ticker/date. Run Rebuild if this date should have activity.</div>';
     dcp.appendChild(empty);
     return;
   }
@@ -1324,12 +1320,14 @@ var chGeneratedAt = (chData() && chData().generatedAt) ? formatChurnerTimestamp_
     card.innerHTML =
       '<div class="churner-exp-head">' +
         '<div><div class="churner-exp-title">'+r.ticker+' · '+r.expiry+'</div>' +
-        '<div class="churner-exp-sub">Day-trade contributor only · opened and closed on selected day</div></div>' +
+        '<div class="churner-exp-sub">Expiry gain source · sheet-backed ticker/expiry ledger</div></div>' +
         '<div class="churner-bank '+cc(r.dayTradeBankedToday)+'">'+fmtS(r.dayTradeBankedToday||0)+'</div>' +
       '</div>' +
       '<div class="churner-line"><span>Day-trade contracts</span><b>'+(r.dayTradeContractsToday||0)+'</b></div>' +
-      '<div class="churner-line"><span>Opened today / BTC today</span><b>'+(r.openedToday||0)+' / '+(r.closedToday||0)+'</b></div>' +
-      '<div class="churner-line"><span>Day-trade banked</span><b class="'+cc(r.dayTradeBankedToday)+'">'+fmtS(r.dayTradeBankedToday||0)+'</b></div>';
+      '<div class="churner-line"><span>Opened / closed today</span><b>'+(r.openedToday||0)+' / '+(r.closedToday||0)+'</b></div>' +
+      '<div class="churner-line"><span>Day-trade banked</span><b class="'+cc(r.dayTradeBankedToday)+'">'+fmtS(r.dayTradeBankedToday||0)+'</b></div>' +
+      (Number(r.expiredWorthlessContracts||0)>0?'<div class="churner-line"><span>Expired worthless full credit</span><b>'+fmtS(r.expiredWorthlessBanked||0)+' · '+(r.expiredWorthlessContracts||0)+' ct</b></div>':'') +
+      (Math.abs(Number(r.totalBankedToday||0))>0.004?'<div class="churner-line"><span>Total banked today</span><b>'+fmtS(r.totalBankedToday||0)+'</b></div>':'');
     dcp.appendChild(card);
   });
 }

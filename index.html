@@ -583,7 +583,7 @@ function setAppMode(mode){
 
   if(DATA){ renderAll(DATA); }
 
-  // RIKI_V7_9_CHURNER_MANUAL_ONLY_FAST_REBUILD_V1
+  // RIKI_V7_10_CHURNER_SINGLE_435_FINALIZER_V1
   // Manual-only mode: switching to Churner does not start an Apps Script job.
   // Use Load, Refresh, or Rebuild explicitly.
 }
@@ -2173,7 +2173,7 @@ function startLoadingData(){
   var _cached=null;
   try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
 
-  // RIKI_V7_9_CHURNER_MANUAL_ONLY_FAST_REBUILD_V1
+  // RIKI_V7_10_CHURNER_SINGLE_435_FINALIZER_V1
   // Manual-only: app open/visibility does not call Apps Script. This prevents
   // hidden 1-minute/5-minute executions. Use Refresh/Load/Rebuild explicitly.
   if(_cached){

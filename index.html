@@ -552,6 +552,8 @@ function formatChurnerTimestamp_(v){
 if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){ document.documentElement.classList.add('pwa'); }
 var DATA=null, activeTab='d', histMode='weeks';
 var CHURNER_LOAD_CACHE = {}; // RIKI_V7_5 fast in-memory date+ticker sheet cache
+var CHURNER_LOAD_INFLIGHT = {}; // RIKI_V7_8 prevent duplicate date/ticker load executions
+var CHURNER_REBUILD_INFLIGHT = false; // RIKI_V7_8 one rebuild from this browser tab at a time
 var appMode = localStorage.getItem('riki_app_mode') || 'legacy';
 var churnerLogoPulseTimer_ = null;
 function setChurnerBusy_(on,label){
@@ -581,12 +583,9 @@ function setAppMode(mode){
 
   if(DATA){ renderAll(DATA); }
 
-  // CHURNER_TODAY_STATE_REFRESH_V1
-  // Always refresh Churner from TxCache when entering Churner mode.
-  // Cached DATA.churner can be yesterday after idle/browser cache.
-  if(appMode === 'churner'){
-    loadChurnerLastState(true);
-  }
+  // RIKI_V7_9_CHURNER_MANUAL_ONLY_FAST_REBUILD_V1
+  // Manual-only mode: switching to Churner does not start an Apps Script job.
+  // Use Load, Refresh, or Rebuild explicitly.
 }
 
 function updateModeUI(){
@@ -634,8 +633,21 @@ function loadChurnerTicker(ticker,opts){
   // Ticker/date Load should be compact: selected-day detail + total ledger only.
   // Full ticker-history reconstruction is reserved for Rebuild/Backfill/all-history views.
   var compact = ticker ? '1' : '0';
-  var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&compact='+compact+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
+  var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&compact='+compact+'&start=2026-06-01&fast=1'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
   var cacheKey=(asOf||'latest')+'|'+(ticker||'ALL');
+  if(CHURNER_LOAD_INFLIGHT[cacheKey]){
+    if(CHURNER_LOAD_CACHE[cacheKey]){
+      DATA = DATA || {};
+      DATA.churner = CHURNER_LOAD_CACHE[cacheKey];
+      DATA.churnerLoadedAtEt = DATA.churner.generatedAt || '';
+      DATA.churnerSource = DATA.churner.source || '';
+      renderAll(DATA);
+    }
+    setChurnerBusy_(true,'ChurnerData load already running…');
+    return;
+  }
+  CHURNER_LOAD_INFLIGHT[cacheKey]=true;
+
   if(CHURNER_LOAD_CACHE[cacheKey]){
     DATA = DATA || {};
     DATA.churner = CHURNER_LOAD_CACHE[cacheKey];
@@ -647,6 +659,7 @@ function loadChurnerTicker(ticker,opts){
     setChurnerBusy_(true,'Loading ChurnerData…');
   }
   fetch(url).then(function(r){return r.json();}).then(function(j){
+    delete CHURNER_LOAD_INFLIGHT[cacheKey];
     setChurnerBusy_(false);
     if(j && j.success){
       if(j.compactMode && DATA && DATA.churner){
@@ -666,6 +679,7 @@ function loadChurnerTicker(ticker,opts){
       renderAll(DATA);
     }
   }).catch(function(e){
+    delete CHURNER_LOAD_INFLIGHT[cacheKey];
     setChurnerBusy_(false);
     toast('Churner load error');
     renderAll(DATA);
@@ -673,6 +687,12 @@ function loadChurnerTicker(ticker,opts){
 }
 
 function rebuildChurnerData(){
+  if(CHURNER_REBUILD_INFLIGHT){
+    toast('Churner rebuild already running — duplicate blocked',3500);
+    setChurnerBusy_(true,'Rebuild already running…');
+    return;
+  }
+  CHURNER_REBUILD_INFLIGHT = true;
   var ticker=(getChurnerTickerInput_()||{}).value||'';
   ticker=String(ticker).trim().toUpperCase();
   var dateInput=getChurnerAsOfInput_();
@@ -684,9 +704,10 @@ function rebuildChurnerData(){
   localStorage.setItem('riki_churner_ticker',ticker);
   localStorage.setItem('riki_churner_focus_ticker',ticker);
   var focus=ticker?'1':'0';
-  var url=BACKEND+'?action=churnerRebuild&ticker='+encodeURIComponent(ticker)+'&focus='+focus+'&start=2026-06-01'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
-  setChurnerBusy_(true,'Rebuilding Churner from TxCache…');
+  var url=BACKEND+'?action=churnerRebuild&ticker='+encodeURIComponent(ticker)+'&focus='+focus+'&start=2026-06-01&fast=1'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
+  setChurnerBusy_(true,'Rebuilding selected date from TxCache…');
   fetch(url).then(function(r){return r.json();}).then(function(j){
+    CHURNER_REBUILD_INFLIGHT = false;
     setChurnerBusy_(false);
     if(j&&j.success){
       DATA.churner=j;
@@ -696,10 +717,15 @@ function rebuildChurnerData(){
       renderAll(DATA);
       toast('Churner rebuilt');
     }else{
-      toast((j&&j.error)||'Churner rebuild failed');
+      if(j&&j.inProgress){
+        toast(j.message||'Churner rebuild already running — duplicate blocked',4500);
+      }else{
+        toast((j&&j.error)||'Churner rebuild failed');
+      }
       renderAll(DATA);
     }
   }).catch(function(){
+    CHURNER_REBUILD_INFLIGHT = false;
     setChurnerBusy_(false);
     toast('Churner rebuild error');
     renderAll(DATA);
@@ -876,9 +902,7 @@ function doRefresh(){
         return;
       }
 
-      renderAll(fresh);
-      saveCache(fresh);
-      flashLogo();
+      rikiRenderFreshData_(fresh, true);
     })
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
 }
@@ -2149,70 +2173,32 @@ function startLoadingData(){
   var _cached=null;
   try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
 
+  // RIKI_V7_9_CHURNER_MANUAL_ONLY_FAST_REBUILD_V1
+  // Manual-only: app open/visibility does not call Apps Script. This prevents
+  // hidden 1-minute/5-minute executions. Use Refresh/Load/Rebuild explicitly.
   if(_cached){
-    // Render cached shell immediately for speed, but live backend below is authoritative.
-    // RIKI_V7_2_CHURNER_HISTORY_STABLE_NO_BLANK_V1
-    // Keep cached ChurnerData visible during boot; it is immediately refreshed below.
+    DATA=_cached;
     renderAll(_cached);
-    churnerBootForceRefresh_();
+    return;
   }
 
-  // Prefer live Workspace/App Script data. This avoids stale GitHub JSON/header timestamps after idle.
-  rikiFetchLiveData_()
-    .then(function(d){
-      rikiRenderFreshData_(d, !!_cached);
-    })
-    .catch(function(){
-      // Static GitHub JSON is now fallback only. Only render it if there is no cached/live data,
-      // or if its saved timestamp is newer than the current in-memory data.
-      rikiFetchGithubFallback_()
-        .then(function(d){
-          if(d.tokenExpired){ showTokenExpired(); return; }
-          var newMs = Number(d._savedMs || 0);
-          var curMs = Number((DATA && DATA._savedMs) || 0);
-          if(!DATA || newMs > curMs){
-            rikiRenderFreshData_(d, !!_cached);
-          }
-        })
-        .catch(function(){});
-    });
-}
-
-function initApp(){
-  var oauthCode=new URLSearchParams(window.location.search).get('code');
-  if(oauthCode){
-    window.history.replaceState({},document.title,window.location.pathname);
-    switchTab('s'); toast('Completing authentication\u2026',5000);
-    fetch(BACKEND+'?action=exchangeCode&code='+encodeURIComponent(oauthCode))
-      .then(function(r){return r.json();})
-      .then(function(d){ toast(d.success?'\u2713 Connected to Schwab!':'Auth failed: '+(d.error||'unknown')); })
-      .catch(function(e){toast('Auth error: '+errMsg(e));});
-  }
-if(!isAuthed()){ showAuthScreen(); return; }
-if(checkLock()) return;
-startLoadingData();
+  DATA={
+    dashRows:[], archRows:[], archClosed:[], allClosed:[], invRows:[],
+    updated:'Manual mode — click Refresh or Load', tokenState:'unknown',
+    churner:null, manualOnly:true, _savedMs:Date.now()
+  };
+  renderAll(DATA);
 }
 
 var _lastFetch = Date.now();
 
-// ── 5-min live poll ───────────────────────────────────────────────────────────
-setInterval(function(){
-  if(document.visibilityState !== 'visible') return;
-  if(!isAuthed()) return;
-  rikiFetchLiveData_()
-    .then(function(d){ rikiRenderFreshData_(d, false); })
-    .catch(function(){});
-}, 5 * 60 * 1000);
-
-// ── Visibility change — lock check + live refresh ─────────────────────────────
+// ── RIKI_V7_9 manual-only mode ───────────────────────────────────────────────
+// No interval polling. No visibility-wake Apps Script fetch. Use Load, Refresh,
+// or Rebuild explicitly so executions only happen when you ask for them.
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
-if(!isAuthed()){ showAuthScreen(); return; }
-if(checkLock()) return;
-if(Date.now() - _lastFetch < 60000) return;
-  rikiFetchLiveData_()
-    .then(function(d){ rikiRenderFreshData_(d, true); })
-    .catch(function(){});
+  if(!isAuthed()){ showAuthScreen(); return; }
+  checkLock();
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

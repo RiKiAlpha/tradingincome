@@ -1845,9 +1845,15 @@ function renderHist(){
 }
 function renderSettings(d){
   var pill=ge('tpill'),state=d.tokenState||'unknown';
-  var expMs=d.tokenExpiry||0;
+  var refreshExpMs=d.tokenRefreshExpiry||d.tokenExpiry||0;
+  var accessExpMs=d.tokenAccessExpiry||0;
+  var expMs=refreshExpMs||accessExpMs||0;
   var daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null;
-  var daysStr=daysLeft!==null?(daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'';
+  var daysStr=daysLeft!==null?('Re-auth: '+daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'Re-auth: —';
+  if(accessExpMs){
+    try{ daysStr += ' · Access: '+new Date(accessExpMs).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }catch(e){}
+  }
+  if(d.tokenLastUpdatedAtEt){ daysStr += ' · Updated: '+String(d.tokenLastUpdatedAtEt).replace(/^\d{4}-\d{2}-\d{2}\s*/,''); }
   var map={fresh:{lbl:'Active',cls:'pg'},expiring:{lbl:'Expiring',cls:'py'},expired:{lbl:'Expired',cls:'pr'}};
   var info=map[state]||{lbl:state,cls:'pb'};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}
@@ -2165,29 +2171,59 @@ function rikiFetchLiveData_(){
 }
 
 function rikiFetchGithubFallback_(){
-  return fetch(DATA_JSON + '?_=' + Date.now())
-    .then(function(r){ return r.json(); });
+  return fetch(DATA_JSON + '?_=' + Date.now(), { cache:'no-store' })
+    .then(function(r){ if(!r.ok) throw new Error('GitHub JSON HTTP '+r.status); return r.json(); });
+}
+
+function rikiDataFreshnessMs_(d){
+  if(!d) return 0;
+  return Number(d._savedMs || d.savedMs || d.generatedMs || 0) || 0;
+}
+
+function rikiShouldPaintGithubFirst_(githubData, cachedData){
+  if(!githubData || githubData.error || githubData.tokenExpired) return false;
+  if(!cachedData) return true;
+  var gm = rikiDataFreshnessMs_(githubData);
+  var cm = rikiDataFreshnessMs_(cachedData);
+  return !!(gm && (!cm || gm >= cm));
 }
 
 function startLoadingData(){
   var _cached=null;
   try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
 
-  // RIKI_V7_10_CHURNER_SINGLE_435_FINALIZER_V1
-  // Manual-only: app open/visibility does not call Apps Script. This prevents
-  // hidden 1-minute/5-minute executions. Use Refresh/Load/Rebuild explicitly.
+  // RIKI_V8_INDEX_GITHUB_FIRST_PAINT_NO_BLANK_V1
+  // Manual-only remains: app open does not call Apps Script/Schwab/Rebuild.
+  // It paints the shell immediately, paints localStorage if present, then performs
+  // one static GitHub JSON hydration so an empty browser never sits on Loading.
   if(_cached){
     DATA=_cached;
     renderAll(_cached);
-    return;
+  } else {
+    DATA={
+      dashRows:[], archRows:[], archClosed:[], allClosed:[], invRows:[],
+      updated:'Loading saved dashboard…', tokenState:'unknown',
+      churner:null, manualOnly:true, dataSource:'empty-shell', _savedMs:0
+    };
+    renderAll(DATA);
   }
 
-  DATA={
-    dashRows:[], archRows:[], archClosed:[], allClosed:[], invRows:[],
-    updated:'Manual mode — click Refresh or Load', tokenState:'unknown',
-    churner:null, manualOnly:true, _savedMs:Date.now()
-  };
-  renderAll(DATA);
+  rikiFetchGithubFallback_()
+    .then(function(githubData){
+      if(!rikiShouldPaintGithubFirst_(githubData, _cached)) return;
+      githubData = rikiPrepareIncomingData_(githubData);
+      githubData.dataSource = githubData.dataSource || 'GitHub:d8f3a.json';
+      DATA = githubData;
+      renderAll(githubData);
+      saveCache(githubData);
+    })
+    .catch(function(e){
+      if(!_cached){
+        DATA.updated = 'Saved dashboard unavailable — click Load or Refresh';
+        renderAll(DATA);
+      }
+      try{ console.warn('GitHub first-paint fallback failed', e); }catch(x){}
+    });
 }
 
 var _lastFetch = Date.now();

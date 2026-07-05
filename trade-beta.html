@@ -1221,10 +1221,15 @@ function quickStoTimeLabel_(v){
   if(isNaN(d.getTime())) d = new Date();
   return d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', hour12:true });
 }
+function quickStoMoney0_(v){
+  var n = Number(v || 0);
+  var sign = n < 0 ? '-$' : '$';
+  return sign + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits:0 });
+}
 function quickStoTopTickers_(rows){
   rows = Array.isArray(rows) ? rows.slice() : [];
-  rows.sort(function(a,b){ return Number(b.contracts||0)-Number(a.contracts||0); });
-  return rows.slice(0,3).map(function(r){ return String(r.ticker||'?')+':'+Number(r.contracts||0).toLocaleString('en-US'); }).join(' · ');
+  rows.sort(function(a,b){ return Number(b.dayTradeGain||0)-Number(a.dayTradeGain||0); });
+  return rows.slice(0,3).map(function(r){ return String(r.ticker||'?')+':'+quickStoMoney0_(r.dayTradeGain||0); }).join(' · ');
 }
 
 function quickStoFillPctText_(v){
@@ -1236,20 +1241,20 @@ function renderQuickStoScorecard_(rows, generatedAt){
   var box = ge('quick-sto-scorecard');
   if(!box) return;
   rows = Array.isArray(rows) ? rows.slice() : [];
-  rows.sort(function(a,b){ return Number(b.contracts||0)-Number(a.contracts||0); });
+  rows.sort(function(a,b){ return Number(b.dayTradeGain||0)-Number(a.dayTradeGain||0); });
   S.quickStoScorecardRows = rows;
   S.quickStoScorecardUpdatedAt = generatedAt || '';
 
   if(!rows.length){
-    box.innerHTML = '<div class="qsc-title">STO Scorecard</div><div class="qsc-empty">No filled STO tickers found for today.</div>';
+    box.innerHTML = '<div class="qsc-title">DT Gain Scorecard</div><div class="qsc-empty">No same-day STO/BTC activity found for today.</div>';
     return;
   }
 
-  box.innerHTML = '<div class="qsc-title">STO Scorecard</div>' + rows.map(function(r){
+  box.innerHTML = '<div class="qsc-title">DT Gain · Open Today</div>' + rows.map(function(r){
     return '<div class="qsc-row">'+
       '<div class="qsc-t">'+basketEsc(r.ticker || '?')+'</div>'+
-      '<div class="qsc-f">'+Number(r.contracts || 0).toLocaleString('en-US')+'</div>'+
-      '<div class="qsc-p">'+quickStoFillPctText_(r.fillPct)+'</div>'+
+      '<div class="qsc-f">'+quickStoMoney0_(r.dayTradeGain || 0)+'</div>'+
+      '<div class="qsc-p">Open '+Number(r.sameDayOpenContracts || 0).toLocaleString('en-US')+'</div>'+
     '</div>';
   }).join('');
 }
@@ -1279,11 +1284,13 @@ function quickStoFilledCount(){
     .then(function(d){
       if(!d || !d.success){ throw new Error((d && d.error) || 'quick STO count failed'); }
       var n = Number(d.stoFilledContracts || 0);
-      if(val) val.textContent = n.toLocaleString('en-US');
+      var gain = Number(d.totalDayTradeGain || 0);
+      var openToday = Number(d.sameDayOpenContracts || 0);
+      if(val) val.textContent = quickStoMoney0_(gain);
       renderQuickStoScorecard_(d.tickerRows || [], d.generatedAt || '');
       var top = quickStoTopTickers_(d.tickerRows || []);
       var cap = d.maybeCapped ? ' · CHECK CAP' : '';
-      toast('STO today: ' + n.toLocaleString('en-US') + (top ? ' · ' + top : '') + cap + ' · ' + quickStoTimeLabel_(d.generatedAt), 3200);
+      toast('DT gain: ' + quickStoMoney0_(gain) + ' · STO ' + n.toLocaleString('en-US') + ' · Open ' + openToday.toLocaleString('en-US') + (top ? ' · ' + top : '') + cap + ' · ' + quickStoTimeLabel_(d.generatedAt), 3600);
     })
     .catch(function(e){
       if(val) val.textContent='ERR';

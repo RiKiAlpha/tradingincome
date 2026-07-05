@@ -908,6 +908,7 @@ function doRefresh(){
 }
 function doAuth(){
   haptic();toast('Authenticating…');
+  try{ localStorage.setItem('riki_auth_pending','1'); }catch(x){}
   fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
 }
 
@@ -2188,6 +2189,47 @@ function rikiShouldPaintGithubFirst_(githubData, cachedData){
   return !!(gm && (!cm || gm >= cm));
 }
 
+// RIKI_V8_1_INITAPP_AND_TOKEN_STATUS_DISPLAY_FIX
+// Boot must never fail if a legacy initApp wrapper was missing.
+// Token-status refresh is metadata-only: Apps Script/UserProperties read, no Schwab call.
+function rikiApplyTokenStatus_(tok){
+  if(!tok || tok.success===false) return;
+  if(!DATA) DATA={};
+  ['tokenState','tokenExpiry','tokenAccessExpiry','tokenRefreshExpiry','tokenLastUpdatedAtEt','tokenIssuedAtMs','tokenExpired'].forEach(function(k){
+    if(tok[k]!==undefined) DATA[k]=tok[k];
+  });
+  renderSettings(DATA);
+  saveCache(DATA);
+}
+
+function rikiRefreshTokenStatusOnly_(reason){
+  return fetch(BACKEND + '?action=tokenStatus&reason=' + encodeURIComponent(reason||'manual') + '&_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(tok){
+      rikiApplyTokenStatus_(tok);
+      try{ localStorage.removeItem('riki_auth_pending'); }catch(x){}
+      return tok;
+    })
+    .catch(function(e){ try{ console.warn('tokenStatus refresh failed', e); }catch(x){} });
+}
+
+function rikiMaybeRefreshAuthDisplay_(reason){
+  var pending=false;
+  try{ pending = localStorage.getItem('riki_auth_pending') === '1'; }catch(x){}
+  var qs='';
+  try{ qs = window.location.search || ''; }catch(x){}
+  if(pending || /[?&](code|auth|oauth|state)=/i.test(qs)){
+    setTimeout(function(){ rikiRefreshTokenStatusOnly_(reason||'auth-return'); }, 250);
+  }
+}
+
+function initApp(){
+  if(!isAuthed()){ showAuthScreen(); return; }
+  if(checkLock()) return;
+  startLoadingData();
+  rikiMaybeRefreshAuthDisplay_('init');
+}
+
 function startLoadingData(){
   var _cached=null;
   try{ var _cs=localStorage.getItem('riki_data'); if(_cs)_cached=JSON.parse(_cs); }catch(e){}
@@ -2234,7 +2276,8 @@ var _lastFetch = Date.now();
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState !== 'visible') return;
   if(!isAuthed()){ showAuthScreen(); return; }
-  checkLock();
+  if(checkLock()) return;
+  rikiMaybeRefreshAuthDisplay_('visibility');
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

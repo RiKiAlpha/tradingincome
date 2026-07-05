@@ -1850,11 +1850,7 @@ function renderSettings(d){
   var accessExpMs=d.tokenAccessExpiry||0;
   var expMs=refreshExpMs||accessExpMs||0;
   var daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null;
-  var daysStr=daysLeft!==null?('Re-auth: '+daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'Re-auth: —';
-  if(accessExpMs){
-    try{ daysStr += ' · Access: '+new Date(accessExpMs).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }catch(e){}
-  }
-  if(d.tokenLastUpdatedAtEt){ daysStr += ' · Updated: '+String(d.tokenLastUpdatedAtEt).replace(/^\d{4}-\d{2}-\d{2}\s*/,''); }
+  var daysStr=daysLeft!==null?(daysLeft+' day'+(daysLeft===1?'':'s')+' left'):'—';
   var map={fresh:{lbl:'Active',cls:'pg'},expiring:{lbl:'Expiring',cls:'py'},expired:{lbl:'Expired',cls:'pr'}};
   var info=map[state]||{lbl:state,cls:'pb'};
   if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}

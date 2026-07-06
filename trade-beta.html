@@ -71,11 +71,11 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     .quick-sto-scorecard{position:absolute;right:0;top:calc(100% + 7px);z-index:70;min-width:342px;max-width:min(96vw,420px);padding:10px 11px;border-radius:11px;border:1px solid rgba(61,156,255,.24);background:rgba(12,17,24,.98);box-shadow:0 16px 38px rgba(0,0,0,.40);opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s ease,transform .15s ease;}
     .quick-sto-wrap:hover .quick-sto-scorecard,.quick-sto-wrap.open .quick-sto-scorecard{opacity:1;transform:translateY(0);pointer-events:auto;}
     .qsc-title{font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:7px;}
-    .qsc-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:8px;}
+    .qsc-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-bottom:8px;}
     .qsc-m{background:rgba(255,255,255,.025);border:1px solid var(--border2);border-radius:8px;padding:6px 6px;min-width:0;}
     .qsc-mk{font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .qsc-mv{font-family:var(--mono);font-size:10px;font-weight:900;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .qsc-head,.qsc-row{display:grid;grid-template-columns:52px 54px 54px 52px 1fr;gap:7px;align-items:center;}
+    .qsc-head,.qsc-row{display:grid;grid-template-columns:52px 48px 48px 48px 48px 1fr;gap:6px;align-items:center;}
     .qsc-head{padding:3px 0 4px;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);}
     .qsc-h{font-size:7px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);text-align:right;}
     .qsc-h:first-child{text-align:left;}
@@ -84,10 +84,11 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     .qsc-t{font-size:10px;font-weight:900;color:var(--text);}
     .qsc-f{font-size:10px;font-weight:900;color:var(--call);text-align:right;}
     .qsc-c{font-size:10px;font-weight:900;color:var(--text2);text-align:right;}
+    .qsc-o{font-size:10px;font-weight:900;color:var(--text);text-align:right;}
     .qsc-p{font-size:10px;font-weight:900;color:var(--gold);text-align:right;}
     .qsc-g{font-size:10px;font-weight:900;color:var(--blue);text-align:right;}
     .qsc-empty{font-size:9px;color:var(--text3);line-height:1.35;}
-    @media(max-width:520px){.quick-sto-scorecard{right:-78px;min-width:318px}.qsc-head,.qsc-row{grid-template-columns:48px 48px 48px 48px 1fr;gap:5px}.qsc-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media(max-width:520px){.quick-sto-scorecard{right:-92px;min-width:372px}.qsc-head,.qsc-row{grid-template-columns:46px 45px 45px 45px 45px 1fr;gap:4px}.qsc-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
     .tkr-left{display:flex;align-items:center;gap:8px;}
     .ticker-badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer;user-select:none;transition:border-color .18s,color .18s,box-shadow .18s,opacity .18s;}
     .ticker-badge.loading{opacity:.42;color:var(--text3);border-color:var(--border);box-shadow:none;}
@@ -1272,6 +1273,7 @@ function renderQuickStoScorecard_(data){
   var cancelled = Number(data.stoCancelledContracts || 0);
   var fillPct = quickStoFillPctText_(data.overallFillPct);
   var gain = Number(data.totalDayTradeGain || 0);
+  var openToday = Number(data.sameDayOpenContracts || 0);
 
   if(!rows.length && !filled && !cancelled && !gain){
     box.innerHTML = '<div class="qsc-title">STO Check · A1+A2</div><div class="qsc-empty">No STO fill/cancel activity found for today.</div>';
@@ -1282,18 +1284,21 @@ function renderQuickStoScorecard_(data){
     '<div class="qsc-summary">'+
       '<div class="qsc-m"><div class="qsc-mk">Filled</div><div class="qsc-mv">'+quickStoNum_(filled)+'</div></div>'+
       '<div class="qsc-m"><div class="qsc-mk">Cancelled</div><div class="qsc-mv">'+quickStoNum_(cancelled)+'</div></div>'+
+      '<div class="qsc-m"><div class="qsc-mk">Open</div><div class="qsc-mv">'+quickStoNum_(openToday)+'</div></div>'+
       '<div class="qsc-m"><div class="qsc-mk">Fill Rate</div><div class="qsc-mv">'+fillPct+'</div></div>'+
       '<div class="qsc-m"><div class="qsc-mk">DT Gain</div><div class="qsc-mv">'+quickStoMoney0_(gain)+'</div></div>'+
     '</div>'+
-    '<div class="qsc-head"><div class="qsc-h">Ticker</div><div class="qsc-h">Filled</div><div class="qsc-h">Cancel</div><div class="qsc-h">Fill%</div><div class="qsc-h">Gain</div></div>';
+    '<div class="qsc-head"><div class="qsc-h">Ticker</div><div class="qsc-h">Filled</div><div class="qsc-h">Cancel</div><div class="qsc-h">Open</div><div class="qsc-h">Fill%</div><div class="qsc-h">Gain</div></div>';
 
   html += rows.map(function(r){
     var rf = Number(r.filledContracts || r.contracts || 0);
     var rc = Number(r.cancelledContracts || 0);
+    var ro = Number(r.sameDayOpenContracts || 0);
     return '<div class="qsc-row">'+
       '<div class="qsc-t">'+basketEsc(r.ticker || '?')+'</div>'+
       '<div class="qsc-f">'+quickStoNum_(rf)+'</div>'+
       '<div class="qsc-c">'+quickStoNum_(rc)+'</div>'+
+      '<div class="qsc-o">'+quickStoNum_(ro)+'</div>'+
       '<div class="qsc-p">'+quickStoFillPctText_(r.fillPct)+'</div>'+
       '<div class="qsc-g">'+quickStoMoney0_(r.dayTradeGain || 0)+'</div>'+
     '</div>';
@@ -1329,7 +1334,7 @@ function quickStoFilledCount(){
       var gain = Number(d.totalDayTradeGain || 0);
       var openToday = Number(d.sameDayOpenContracts || 0);
       var fillPct = quickStoFillPctText_(d.overallFillPct);
-      if(val) val.textContent = quickStoMoney0_(gain) + ' · ' + fillPct;
+      if(val) val.textContent = quickStoMoney0_(gain) + ' · ' + fillPct + ' · O ' + openToday.toLocaleString('en-US');
       renderQuickStoScorecard_(d);
       var top = quickStoTopTickers_(d.tickerRows || []);
       var cap = d.maybeCapped ? ' · CHECK CAP' : '';

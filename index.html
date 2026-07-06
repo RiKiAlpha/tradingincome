@@ -710,6 +710,7 @@ function rebuildChurnerData(){
     CHURNER_REBUILD_INFLIGHT = false;
     setChurnerBusy_(false);
     if(j&&j.success){
+      try { CHURNER_LOAD_CACHE = {}; } catch(cacheErr) {}
       DATA.churner=j;
       DATA.churnerLoadedAtEt=j.generatedAt||'';
       DATA.churnerSource=j.source||'';
@@ -741,6 +742,7 @@ function backfillChurnerHistory(){
   fetch(url).then(function(r){return r.json();}).then(function(j){
     setChurnerBusy_(false);
     if(j&&j.success){
+      try { CHURNER_LOAD_CACHE = {}; } catch(cacheErr) {}
       toast('Backfilled '+(j.days||j.rebuilt||0)+' trading days');
       loadChurnerTicker((getChurnerTickerInput_()||{}).value||'', {quiet:true});
     }else{
@@ -882,6 +884,18 @@ function flashLogo(){
 }
 function doRefresh(){
   haptic();
+
+  // RIKI_V9_1_CHURNER_REFRESH_LOADS_SAVED_LEDGER_V1
+  // In Churner mode, the top refresh icon should read the saved Schwab-ledger
+  // ChurnerData/ticker ledgers. It must not call legacy refreshDashboard/TxCache.
+  if(isChurnerMode()){
+    try { CHURNER_LOAD_CACHE = {}; } catch(e) {}
+    var tEl = getChurnerTickerInput_();
+    var t = (tEl && tEl.value) ? String(tEl.value).trim().toUpperCase() : (localStorage.getItem('riki_churner_focus_ticker') || localStorage.getItem('riki_churner_ticker') || '');
+    toast('Loading saved Churner ledger…', 1800);
+    loadChurnerTicker(t || '', {quiet:false});
+    return;
+  }
 
   if(DATA && DATA.refreshDashboardPaused){
     toast('refreshDashboard is paused — resume in Settings first', 3500);
@@ -1310,7 +1324,7 @@ var chBusyAttr = chBusy ? ' disabled' : '';
   if(c && c.needsRebuild){
     var nb=document.createElement('div');
     nb.className='warn';
-    nb.innerHTML='<span>↻</span><div>'+(c.message||'No saved ChurnerData for this date/ticker — run Rebuild from TxCache.')+'</div>';
+    nb.innerHTML='<span>↻</span><div>'+(c.message||'No saved ChurnerData for this date/ticker — run Rebuild or Backfill.')+'</div>';
     dw.appendChild(nb);
   }
 
@@ -1868,7 +1882,7 @@ function renderSettings(d){
       '<div>' +
         '<div class="slbl" style="color:'+(isChurnerMode()?'var(--churner2)':'var(--text)')+'">View Mode</div>' +
         '<div class="ssub">' + (isChurnerMode()
-          ? 'Churner mode — TxCache FIFO day-trade banked gains'
+          ? 'Churner mode — saved Schwab ledger / FIFO history'
           : 'Legacy mode — current accounting dashboard') + '</div>' +
       '</div>' +
       '<div class="mode-switch">' +

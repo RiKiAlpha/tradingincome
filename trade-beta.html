@@ -67,16 +67,27 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     .quick-sto-val:active{background:rgba(61,156,255,.12);}
     .quick-sto-btn{height:18px;padding:0 6px;border-radius:999px;border:1px solid rgba(61,156,255,.32);background:rgba(61,156,255,.09);color:var(--blue);font-family:var(--sans);font-size:8px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;}
     .quick-sto-btn:disabled{opacity:.45;cursor:not-allowed;}
-    /* RIKI_V6_STO_SCORECARD_FILLRATE_HOVER_V1 */
-    .quick-sto-scorecard{position:absolute;right:0;top:calc(100% + 7px);z-index:70;min-width:172px;max-width:220px;padding:9px 10px;border-radius:11px;border:1px solid rgba(61,156,255,.24);background:rgba(12,17,24,.98);box-shadow:0 16px 38px rgba(0,0,0,.40);opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s ease,transform .15s ease;}
+    /* RIKI_V9_FAST_STO_CHECK_FILL_RATE_AND_GAIN_V1 */
+    .quick-sto-scorecard{position:absolute;right:0;top:calc(100% + 7px);z-index:70;min-width:342px;max-width:min(96vw,420px);padding:10px 11px;border-radius:11px;border:1px solid rgba(61,156,255,.24);background:rgba(12,17,24,.98);box-shadow:0 16px 38px rgba(0,0,0,.40);opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s ease,transform .15s ease;}
     .quick-sto-wrap:hover .quick-sto-scorecard,.quick-sto-wrap.open .quick-sto-scorecard{opacity:1;transform:translateY(0);pointer-events:auto;}
     .qsc-title{font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:7px;}
-    .qsc-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:4px 0;border-top:1px solid var(--border2);}
-    .qsc-row:first-of-type{border-top:none;}
+    .qsc-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:8px;}
+    .qsc-m{background:rgba(255,255,255,.025);border:1px solid var(--border2);border-radius:8px;padding:6px 6px;min-width:0;}
+    .qsc-mk{font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .qsc-mv{font-family:var(--mono);font-size:10px;font-weight:900;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .qsc-head,.qsc-row{display:grid;grid-template-columns:52px 54px 54px 52px 1fr;gap:7px;align-items:center;}
+    .qsc-head{padding:3px 0 4px;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);}
+    .qsc-h{font-size:7px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);text-align:right;}
+    .qsc-h:first-child{text-align:left;}
+    .qsc-row{padding:4px 0;border-bottom:1px solid var(--border2);}
+    .qsc-row:last-child{border-bottom:none;}
     .qsc-t{font-size:10px;font-weight:900;color:var(--text);}
     .qsc-f{font-size:10px;font-weight:900;color:var(--call);text-align:right;}
+    .qsc-c{font-size:10px;font-weight:900;color:var(--text2);text-align:right;}
     .qsc-p{font-size:10px;font-weight:900;color:var(--gold);text-align:right;}
+    .qsc-g{font-size:10px;font-weight:900;color:var(--blue);text-align:right;}
     .qsc-empty{font-size:9px;color:var(--text3);line-height:1.35;}
+    @media(max-width:520px){.quick-sto-scorecard{right:-78px;min-width:318px}.qsc-head,.qsc-row{grid-template-columns:48px 48px 48px 48px 1fr;gap:5px}.qsc-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
     .tkr-left{display:flex;align-items:center;gap:8px;}
     .ticker-badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:3px 8px;cursor:pointer;user-select:none;transition:border-color .18s,color .18s,box-shadow .18s,opacity .18s;}
     .ticker-badge.loading{opacity:.42;color:var(--text3);border-color:var(--border);box-shadow:none;}
@@ -1228,8 +1239,11 @@ function quickStoMoney0_(v){
 }
 function quickStoTopTickers_(rows){
   rows = Array.isArray(rows) ? rows.slice() : [];
-  rows.sort(function(a,b){ return Number(b.dayTradeGain||0)-Number(a.dayTradeGain||0); });
-  return rows.slice(0,3).map(function(r){ return String(r.ticker||'?')+':'+quickStoMoney0_(r.dayTradeGain||0); }).join(' · ');
+  rows.sort(function(a,b){ return Number(b.filledContracts||b.contracts||0)-Number(a.filledContracts||a.contracts||0); });
+  return rows.slice(0,3).map(function(r){
+    var fill = quickStoFillPctText_(r.fillPct);
+    return String(r.ticker||'?')+':'+Number(r.filledContracts||r.contracts||0).toLocaleString('en-US')+' @ '+fill;
+  }).join(' · ');
 }
 
 function quickStoFillPctText_(v){
@@ -1237,26 +1251,54 @@ function quickStoFillPctText_(v){
   if(isNaN(n)) return '—';
   return n.toFixed(1) + '%';
 }
-function renderQuickStoScorecard_(rows, generatedAt){
+function quickStoNum_(v){
+  var n = Number(v || 0);
+  return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+function renderQuickStoScorecard_(data){
   var box = ge('quick-sto-scorecard');
   if(!box) return;
-  rows = Array.isArray(rows) ? rows.slice() : [];
-  rows.sort(function(a,b){ return Number(b.dayTradeGain||0)-Number(a.dayTradeGain||0); });
+  data = data || {};
+  var rows = Array.isArray(data.tickerRows) ? data.tickerRows.slice() : [];
+  rows.sort(function(a,b){
+    var f = Number(b.filledContracts||b.contracts||0) - Number(a.filledContracts||a.contracts||0);
+    if(f) return f;
+    return String(a.ticker||'').localeCompare(String(b.ticker||''));
+  });
   S.quickStoScorecardRows = rows;
-  S.quickStoScorecardUpdatedAt = generatedAt || '';
+  S.quickStoScorecardUpdatedAt = data.generatedAt || '';
 
-  if(!rows.length){
-    box.innerHTML = '<div class="qsc-title">DT Gain Scorecard</div><div class="qsc-empty">No same-day STO/BTC activity found for today.</div>';
+  var filled = Number(data.stoFilledContracts || 0);
+  var cancelled = Number(data.stoCancelledContracts || 0);
+  var fillPct = quickStoFillPctText_(data.overallFillPct);
+  var gain = Number(data.totalDayTradeGain || 0);
+
+  if(!rows.length && !filled && !cancelled && !gain){
+    box.innerHTML = '<div class="qsc-title">STO Check · A1+A2</div><div class="qsc-empty">No STO fill/cancel activity found for today.</div>';
     return;
   }
 
-  box.innerHTML = '<div class="qsc-title">DT Gain · Open Today</div>' + rows.map(function(r){
+  var html = '<div class="qsc-title">STO Check · A1+A2</div>'+
+    '<div class="qsc-summary">'+
+      '<div class="qsc-m"><div class="qsc-mk">Filled</div><div class="qsc-mv">'+quickStoNum_(filled)+'</div></div>'+
+      '<div class="qsc-m"><div class="qsc-mk">Cancelled</div><div class="qsc-mv">'+quickStoNum_(cancelled)+'</div></div>'+
+      '<div class="qsc-m"><div class="qsc-mk">Fill Rate</div><div class="qsc-mv">'+fillPct+'</div></div>'+
+      '<div class="qsc-m"><div class="qsc-mk">DT Gain</div><div class="qsc-mv">'+quickStoMoney0_(gain)+'</div></div>'+
+    '</div>'+
+    '<div class="qsc-head"><div class="qsc-h">Ticker</div><div class="qsc-h">Filled</div><div class="qsc-h">Cancel</div><div class="qsc-h">Fill%</div><div class="qsc-h">Gain</div></div>';
+
+  html += rows.map(function(r){
+    var rf = Number(r.filledContracts || r.contracts || 0);
+    var rc = Number(r.cancelledContracts || 0);
     return '<div class="qsc-row">'+
       '<div class="qsc-t">'+basketEsc(r.ticker || '?')+'</div>'+
-      '<div class="qsc-f">'+quickStoMoney0_(r.dayTradeGain || 0)+'</div>'+
-      '<div class="qsc-p">Open '+Number(r.sameDayOpenContracts || 0).toLocaleString('en-US')+'</div>'+
+      '<div class="qsc-f">'+quickStoNum_(rf)+'</div>'+
+      '<div class="qsc-c">'+quickStoNum_(rc)+'</div>'+
+      '<div class="qsc-p">'+quickStoFillPctText_(r.fillPct)+'</div>'+
+      '<div class="qsc-g">'+quickStoMoney0_(r.dayTradeGain || 0)+'</div>'+
     '</div>';
   }).join('');
+  box.innerHTML = html;
 }
 function toggleQuickStoScorecard(ev){
   if(ev){ ev.stopPropagation(); }
@@ -1286,11 +1328,12 @@ function quickStoFilledCount(){
       var n = Number(d.stoFilledContracts || 0);
       var gain = Number(d.totalDayTradeGain || 0);
       var openToday = Number(d.sameDayOpenContracts || 0);
-      if(val) val.textContent = quickStoMoney0_(gain);
-      renderQuickStoScorecard_(d.tickerRows || [], d.generatedAt || '');
+      var fillPct = quickStoFillPctText_(d.overallFillPct);
+      if(val) val.textContent = quickStoMoney0_(gain) + ' · ' + fillPct;
+      renderQuickStoScorecard_(d);
       var top = quickStoTopTickers_(d.tickerRows || []);
       var cap = d.maybeCapped ? ' · CHECK CAP' : '';
-      toast('DT gain: ' + quickStoMoney0_(gain) + ' · STO ' + n.toLocaleString('en-US') + ' · Open ' + openToday.toLocaleString('en-US') + (top ? ' · ' + top : '') + cap + ' · ' + quickStoTimeLabel_(d.generatedAt), 3600);
+      toast('DT gain: ' + quickStoMoney0_(gain) + ' · Filled ' + n.toLocaleString('en-US') + ' · Fill ' + fillPct + ' · Open ' + openToday.toLocaleString('en-US') + (top ? ' · ' + top : '') + cap + ' · ' + quickStoTimeLabel_(d.generatedAt), 3900);
     })
     .catch(function(e){
       if(val) val.textContent='ERR';

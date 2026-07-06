@@ -704,8 +704,8 @@ function rebuildChurnerData(){
   localStorage.setItem('riki_churner_ticker',ticker);
   localStorage.setItem('riki_churner_focus_ticker',ticker);
   var focus=ticker?'1':'0';
-  var url=BACKEND+'?action=churnerRebuild&ticker='+encodeURIComponent(ticker)+'&focus='+focus+'&start=2026-06-01&fast=1'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
-  setChurnerBusy_(true,'Rebuilding selected date from TxCache…');
+  var url=BACKEND+'?action=churnerEodBuild&ticker='+encodeURIComponent(ticker)+'&focus='+focus+'&start=2026-06-01&fast=1'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
+  setChurnerBusy_(true,'Building selected-date Schwab ledger…');
   fetch(url).then(function(r){return r.json();}).then(function(j){
     CHURNER_REBUILD_INFLIGHT = false;
     setChurnerBusy_(false);
@@ -715,19 +715,19 @@ function rebuildChurnerData(){
       DATA.churnerSource=j.source||'';
       saveCache(DATA);
       renderAll(DATA);
-      toast('Churner rebuilt');
+      toast('Churner ledger saved');
     }else{
       if(j&&j.inProgress){
         toast(j.message||'Churner rebuild already running — duplicate blocked',4500);
       }else{
-        toast((j&&j.error)||'Churner rebuild failed');
+        toast((j&&j.error)||'Churner ledger failed');
       }
       renderAll(DATA);
     }
   }).catch(function(){
     CHURNER_REBUILD_INFLIGHT = false;
     setChurnerBusy_(false);
-    toast('Churner rebuild error');
+    toast('Churner ledger error');
     renderAll(DATA);
   });
 }
@@ -736,12 +736,12 @@ function backfillChurnerHistory(){
   var dateInput=getChurnerAsOfInput_();
   var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
   var endParam=asOf ? '&end='+encodeURIComponent(asOf) : '';
-  var url=BACKEND+'?action=churnerBackfillAll&start=2026-06-01'+endParam+'&_='+Date.now();
-  setChurnerBusy_(true,'Backfilling Churner history…');
+  var url=BACKEND+'?action=churnerEodBackfill&start=2026-06-01&resetLots=1'+endParam+'&_='+Date.now();
+  setChurnerBusy_(true,'Backfilling Schwab ledger history…');
   fetch(url).then(function(r){return r.json();}).then(function(j){
     setChurnerBusy_(false);
     if(j&&j.success){
-      toast('Backfilled '+(j.rebuilt||0)+' trading days');
+      toast('Backfilled '+(j.days||j.rebuilt||0)+' trading days');
       loadChurnerTicker((getChurnerTickerInput_()||{}).value||'', {quiet:true});
     }else{
       toast((j&&j.error)||'Churner backfill failed');

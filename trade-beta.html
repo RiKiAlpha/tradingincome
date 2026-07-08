@@ -888,7 +888,7 @@ Fallback: restore this Apps Script deployment version if future UI patches break
       </div>
       <div id="ibkrStatusLine" class="ibkr-status-line">IBKR diagnostics not checked yet.</div>
       <div id="ibkrDiagGrid" class="ibkr-diag-grid">
-        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Mode</div><div id="ibkrDiagMode" class="ibkr-diag-v dim">paper</div></div>
+        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Mode</div><div id="ibkrDiagMode" class="ibkr-diag-v dim">not checked</div></div>
         <div class="ibkr-diag-card"><div class="ibkr-diag-k">Read-only</div><div id="ibkrDiagReadonly" class="ibkr-diag-v good">ON</div></div>
         <div class="ibkr-diag-card"><div class="ibkr-diag-k">Bridge URL</div><div id="ibkrDiagBridge" class="ibkr-diag-v warn">placeholder</div></div>
         <div class="ibkr-diag-card"><div class="ibkr-diag-k">Token</div><div id="ibkrDiagToken" class="ibkr-diag-v dim">hidden</div></div>
@@ -1811,8 +1811,17 @@ function rikiSetIbkrDiagCell_(id, value, cls){
   var el = ge(id);
   if(!el) return;
   el.textContent = value === undefined || value === null || value === '' ? 'n/a' : String(value);
+  el.title = el.textContent;
   el.className = 'ibkr-diag-v ' + (cls || 'dim');
 }
+// RIKI_V7_IBKR_DISPLAY_LABEL_FRONTEND_V1
+// Display-only label helper. Does NOT enable IBKR order routing.
+function rikiIbkrDisplayLabel_(res){
+  res = res || {};
+  var cfg = res.config || {};
+  return cfg.displayLabel || res.displayLabel || res.modeDisplay || cfg.modeDisplay || cfg.displayMode || res.displayMode || cfg.mode || res.mode || 'unknown';
+}
+
 function rikiApplyIbkrDiagnostics_(res){
   res = res || {};
   var cfg = res.config || res;
@@ -1822,7 +1831,8 @@ function rikiApplyIbkrDiagnostics_(res){
   var tokenOk = !!(cfg.hasBridgeToken || cfg.tokenPresent);
   var adapter = cfg.adapterVersion || res.adapterVersion || 'V2.1';
 
-  rikiSetIbkrDiagCell_('ibkrDiagMode', cfg.mode || res.mode || 'paper', 'warn');
+  var displayModeLabel = rikiIbkrDisplayLabel_(res);
+  rikiSetIbkrDiagCell_('ibkrDiagMode', displayModeLabel, (String(displayModeLabel).indexOf('ORDERS BLOCKED') >= 0 ? 'good' : 'warn'));
   rikiSetIbkrDiagCell_('ibkrDiagReadonly', readOnly ? 'ON' : 'OFF', readOnly ? 'good' : 'bad');
   rikiSetIbkrDiagCell_('ibkrDiagBridge', bridgeOk ? 'configured' : (placeholder ? 'placeholder' : 'missing'), bridgeOk ? 'good' : 'warn');
   rikiSetIbkrDiagCell_('ibkrDiagToken', tokenOk ? 'set' : 'missing', tokenOk ? 'good' : 'warn');
@@ -1855,7 +1865,7 @@ function rikiIbkrLines_(title, res){
   var lines = [];
   lines.push(title);
   lines.push('Adapter: ' + (res.adapterVersion || cfg.adapterVersion || 'RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1'));
-  lines.push('Mode: ' + (cfg.mode || res.mode || 'unknown'));
+  lines.push('Mode: ' + rikiIbkrDisplayLabel_(res));
   lines.push('Read-only lock: ' + ((cfg.readOnly !== false) ? 'ON' : 'OFF'));
   lines.push('Order routing: BLOCKED');
   if(checks.bridgeUrlConfigured !== undefined) lines.push('Bridge URL configured: ' + (checks.bridgeUrlConfigured ? 'YES' : 'NO'));
@@ -1901,7 +1911,7 @@ function rikiBlockIbkrOrdersReadOnlyV1(actionName){
     'IBKR is read-only in this version.\n\n' +
     'Blocked action: ' + (actionName || 'Order action') + '\n\n' +
     'Switch Broker to TOS / Schwab to use current live RiKi order firing.\n\n' +
-    'IBKR live/paper order routing remains blocked until status, positions, paper BTC, paper STO, and exact order ID/cancel/verify are validated.'
+    'IBKR PROD/live-account order routing remains blocked until the isolated one-order test harness, exact order ID/cancel/verify, BTC micro-test, and STO micro-test are validated.'
   );
   return true;
 }

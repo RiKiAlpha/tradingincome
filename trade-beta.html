@@ -382,6 +382,23 @@ Fallback: restore this Apps Script deployment version if future UI patches break
 .ibkr-mini-btn.blue{border-color:rgba(61,156,255,.32);background:rgba(61,156,255,.08);color:var(--blue);}
 .ibkr-mini-btn.green{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
 .ibkr-mini-btn:active{opacity:.72;}
+/* RIKI_V7_IBKR_LIVE_ONE_ORDER_TEST_HARNESS_FRONTEND_V1 */
+.ibkr-test-box{margin-top:8px;border:1px solid rgba(229,83,83,.24);background:rgba(229,83,83,.045);border-radius:10px;padding:8px;}
+.ibkr-test-title{font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:5px;}
+.ibkr-test-note{font-size:8px;font-weight:800;line-height:1.35;color:var(--text3);margin-bottom:7px;}
+.ibkr-test-grid{display:grid;grid-template-columns:58px 58px 1fr;gap:5px;margin-bottom:6px;}
+.ibkr-test-grid.opt{grid-template-columns:58px 72px 44px 58px 1fr;}
+@media(max-width:720px){.ibkr-test-grid.opt{grid-template-columns:repeat(2,minmax(0,1fr));}.ibkr-test-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+.ibkr-test-inp{height:24px;border-radius:7px;border:1px solid var(--border);background:rgba(18,26,34,.82);color:var(--text);font-family:var(--mono);font-size:10px;font-weight:900;text-align:center;outline:none;}
+select.ibkr-test-inp{appearance:none;-webkit-appearance:none;}
+.ibkr-test-inp:focus{border-color:rgba(229,83,83,.38);}
+.ibkr-test-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.ibkr-test-btn{height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(229,83,83,.36);background:rgba(229,83,83,.08);color:var(--red);font-family:var(--sans);font-size:8px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
+.ibkr-test-btn.blue{border-color:rgba(61,156,255,.32);background:rgba(61,156,255,.08);color:var(--blue);}
+.ibkr-test-btn.green{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
+.ibkr-test-btn:disabled{opacity:.38;cursor:not-allowed;}
+.ibkr-test-last{font-family:var(--mono);font-size:8px;color:var(--text3);line-height:1.35;margin-top:6px;white-space:pre-wrap;}
+
 @media(max-width:720px){.ibkr-diag-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.ibkr-panel-head{align-items:flex-start;}.ibkr-mini-btn{flex:1;min-width:84px;}}
 
     .seg{display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px;}
@@ -902,6 +919,37 @@ Fallback: restore this Apps Script deployment version if future UI patches break
         <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrAccounts()">Accounts</button>
         <button type="button" class="ibkr-mini-btn green" onclick="rikiCheckIbkrPositions()">Positions</button>
         <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrOrders()">Orders</button>
+      </div>
+      <!-- RIKI_V7_IBKR_STOCK_OPTION_ONE_ORDER_TEST_HARNESS_FRONTEND_V2: isolated test-only controls. No Basket/STO/BTC wiring. -->
+      <div id="ibkrOneOrderBox" class="ibkr-test-box">
+        <div class="ibkr-test-title">Isolated live one-order test</div>
+        <div class="ibkr-test-note">Separate harness only: BUY 1 STK or OPT, LMT, DAY, outside RTH false, hard max qty 1. No SELL/STO/BTC. Requires exact live-confirm phrase. Production routing stays blocked.</div>
+        <div class="ibkr-test-grid">
+          <select id="ibkrTestAssetType" class="ibkr-test-inp" title="STK or OPT">
+            <option value="STK">STK</option>
+            <option value="OPT">OPT</option>
+          </select>
+          <input id="ibkrTestSymbol" class="ibkr-test-inp" value="AAPL" maxlength="6" title="Stock symbol or option underlying. Defaults allow AAPL/SPY.">
+          <input id="ibkrTestPrice" class="ibkr-test-inp" type="number" step="0.01" min="0.01" max="5" value="1.00" title="STK default cap $5; OPT default cap $0.05">
+          <input id="ibkrTestAccount" class="ibkr-test-inp" value="U5009644" title="Allowlisted account">
+        </div>
+        <div class="ibkr-test-grid opt">
+          <input id="ibkrTestExpiry" class="ibkr-test-inp" value="" placeholder="YYYYMMDD" title="Option expiry, e.g. 20260717">
+          <select id="ibkrTestRight" class="ibkr-test-inp" title="Option right">
+            <option value="C">CALL</option>
+            <option value="P">PUT</option>
+          </select>
+          <input id="ibkrTestStrike" class="ibkr-test-inp" type="number" step="0.01" min="0.01" value="" placeholder="Strike" title="Option strike">
+          <input id="ibkrTestConid" class="ibkr-test-inp" type="number" step="1" min="1" value="" placeholder="Conid?" title="Optional only; contract lookup still validates underlying/expiry/right/strike">
+          <span class="ibkr-test-last" style="margin-top:0">OPT fields ignored for STK.</span>
+        </div>
+        <div class="ibkr-test-actions">
+          <button type="button" class="ibkr-test-btn blue" onclick="rikiIbkrTestHarnessAudit()">Harness Audit</button>
+          <button type="button" class="ibkr-test-btn" onclick="rikiIbkrLiveOneOrderTest()">Submit Test BUY 1</button>
+          <button type="button" class="ibkr-test-btn blue" onclick="rikiIbkrTestOrderStatus()">Status</button>
+          <button type="button" class="ibkr-test-btn green" onclick="rikiIbkrTestCancelOrder()">Cancel</button>
+        </div>
+        <div id="ibkrTestLast" class="ibkr-test-last">No test order submitted.</div>
       </div>
     </div>
     <div class="ctrl-row">
@@ -1875,6 +1923,11 @@ function rikiIbkrLines_(title, res){
   if(res.error || res.message) lines.push('Reason: ' + (res.error || res.message));
   if(res.httpCode) lines.push('HTTP: ' + res.httpCode);
   if(res.accountId) lines.push('Account: ' + res.accountId);
+  if(res.orderId || res.order_id || res.ibkrOrderId) lines.push('OrderId: ' + (res.orderId || res.order_id || res.ibkrOrderId));
+  if(res.orderStatus || res.order_status || res.status) lines.push('Order status: ' + (res.orderStatus || res.order_status || res.status));
+  if(res.readyForOneOrderTest !== undefined) lines.push('Harness ready: ' + (res.readyForOneOrderTest ? 'YES' : 'NO'));
+  if(res.testHarnessEnabled !== undefined) lines.push('Test harness: ' + (res.testHarnessEnabled ? 'ON' : 'OFF'));
+  if(res.requiresReply) lines.push('IBKR reply required: YES — not auto-confirmed');
   if(res.accountCount !== undefined) lines.push('Accounts: ' + res.accountCount);
   if(res.positionsCount !== undefined) lines.push('Positions: ' + res.positionsCount);
   if(res.ordersCount !== undefined) lines.push('Orders: ' + res.ordersCount);
@@ -1904,7 +1957,155 @@ function rikiCheckIbkrDiagnostics(){ return rikiRunIbkrGet_('ibkrDiagnostics', '
 function rikiCheckIbkrStatus(){ return rikiRunIbkrGet_('ibkrStatus', 'status'); }
 function rikiCheckIbkrAccounts(){ return rikiRunIbkrGet_('ibkrAccounts', 'accounts'); }
 function rikiCheckIbkrPositions(){ return rikiRunIbkrGet_('ibkrPositions', 'positions'); }
+
 function rikiCheckIbkrOrders(){ return rikiRunIbkrGet_('ibkrOrders', 'orders'); }
+
+/* RIKI_V7_IBKR_STOCK_OPTION_ONE_ORDER_TEST_HARNESS_FRONTEND_V2
+   Isolated one-order route only for BUY 1 STK/OPT. No Basket/STO/BTC production wiring. */
+function rikiBackendPostJson_(action, payload){
+  var body = new URLSearchParams();
+  body.set('payload', JSON.stringify(payload || {}));
+  body.set('_', String(Date.now()));
+  return fetch(BACKEND + '?action=' + encodeURIComponent(action), {
+    method:'POST',
+    cache:'no-store',
+    headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
+    body: body.toString()
+  }).then(function(r){ return r.text(); }).then(function(raw){
+    try { return JSON.parse(raw); }
+    catch(e){ return { success:false, ok:false, action:action, error:'Backend returned non-JSON response: ' + e.message, raw:String(raw || '').substring(0,240) }; }
+  });
+}
+function rikiIbkrConfirmText_(){ return 'I_UNDERSTAND_THIS_IS_LIVE_IBKR_ONE_ORDER_TEST'; }
+function rikiIbkrNormExpiry_(v){
+  v = String(v || '').trim();
+  var m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m) return m[1] + m[2] + m[3];
+  m = v.match(/^(\d{8})$/);
+  return m ? m[1] : '';
+}
+function rikiIbkrTestPayload_(includeOrderId){
+  var assetEl = ge('ibkrTestAssetType'), symEl = ge('ibkrTestSymbol'), priceEl = ge('ibkrTestPrice'), acctEl = ge('ibkrTestAccount');
+  var expEl = ge('ibkrTestExpiry'), rightEl = ge('ibkrTestRight'), strikeEl = ge('ibkrTestStrike'), conidEl = ge('ibkrTestConid');
+  var assetType = assetEl && assetEl.value ? assetEl.value.trim().toUpperCase() : 'STK';
+  var sym = symEl && symEl.value ? symEl.value.trim().toUpperCase() : 'AAPL';
+  var p = {
+    accountId: acctEl && acctEl.value ? acctEl.value.trim() : 'U5009644',
+    symbol: sym,
+    underlying: sym,
+    assetType: assetType,
+    side: 'BUY',
+    quantity: 1,
+    orderType: 'LMT',
+    price: Number(priceEl && priceEl.value ? priceEl.value : (assetType === 'OPT' ? 0.01 : 1)),
+    tif: 'DAY',
+    outsideRth: false,
+    confirmText: rikiIbkrConfirmText_()
+  };
+  if(assetType === 'OPT'){
+    p.expiry = rikiIbkrNormExpiry_(expEl && expEl.value ? expEl.value : '');
+    p.right = rightEl && rightEl.value ? rightEl.value.trim().toUpperCase() : 'C';
+    p.strike = Number(strikeEl && strikeEl.value ? strikeEl.value : 0);
+    var conid = Number(conidEl && conidEl.value ? conidEl.value : 0);
+    if(conid > 0) p.conid = conid;
+  }
+  if(includeOrderId){
+    var oid = '';
+    try{ oid = (S.ibkrOneOrderTest && S.ibkrOneOrderTest.orderId) || ''; }catch(e){}
+    if(!oid) oid = prompt('Enter IBKR test orderId to check/cancel:', '') || '';
+    p.orderId = String(oid || '').trim();
+  }
+  return p;
+}
+function rikiIbkrSetTestLast_(res){
+  var el = ge('ibkrTestLast');
+  if(!el) return;
+  var orderId = (res && (res.orderId || res.order_id || res.ibkrOrderId)) || '';
+  var status = (res && (res.orderStatus || res.order_status || res.status || res.finalStatus)) || '';
+  var line = [];
+  line.push((res && (res.action || 'IBKR test')) + ': ' + ((res && res.success !== false && res.ok !== false) ? 'OK' : 'NOT OK'));
+  if(orderId) line.push('orderId: ' + orderId);
+  if(status) line.push('status: ' + status);
+  if(res && res.requiresReply) line.push('requiresReply: YES — not auto-confirmed');
+  if(res && res.error) line.push('error: ' + res.error);
+  if(res && res.message) line.push('message: ' + res.message);
+  if(res && res.httpCode) line.push('HTTP: ' + res.httpCode);
+  el.textContent = line.join('\n');
+}
+function rikiIbkrRememberTestOrder_(res){
+  try{
+    if(typeof S === 'undefined' || !S) return;
+    var oid = (res && (res.orderId || res.order_id || res.ibkrOrderId)) || '';
+    if(!oid && res && Array.isArray(res.data) && res.data[0]) oid = res.data[0].order_id || res.data[0].orderId || '';
+    if(!oid && res && res.detail && Array.isArray(res.detail) && res.detail[0]) oid = res.detail[0].order_id || res.detail[0].orderId || '';
+    if(oid){
+      S.ibkrOneOrderTest = S.ibkrOneOrderTest || {};
+      S.ibkrOneOrderTest.orderId = String(oid);
+      S.ibkrOneOrderTest.last = res;
+    }
+  }catch(e){}
+}
+function rikiIbkrTestHarnessAudit(){
+  rikiSetIbkrStatusText('Checking IBKR one-order harness audit...');
+  return rikiBackendGetJson_('ibkrTestHarnessAudit').then(function(res){
+    rikiApplyIbkrDiagnostics_(res);
+    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR one-order harness audit: ' + ((res && res.readyForOneOrderTest) ? 'READY' : 'NOT READY'), res));
+    rikiIbkrSetTestLast_(res);
+    console.log('RIKI IBKR TEST HARNESS AUDIT', res);
+    return res;
+  });
+}
+function rikiIbkrLiveOneOrderTest(){
+  if(rikiGetBrokerMode() !== 'IBKR') { alert('Switch Broker to IBKR first.'); return; }
+  var phrase = prompt('LIVE IBKR TEST ORDER. Type exact confirmation phrase:\n\n' + rikiIbkrConfirmText_(), '');
+  if(String(phrase || '').trim() !== rikiIbkrConfirmText_()) { toast('IBKR test order aborted — confirmation mismatch', 2600); return; }
+  var p = rikiIbkrTestPayload_(false);
+  p.confirmText = phrase.trim();
+  if(p.assetType !== 'STK' && p.assetType !== 'OPT') { alert('Asset type must be STK or OPT.'); return; }
+  if(p.symbol !== 'AAPL' && p.symbol !== 'SPY') { alert('Harness allowlist defaults to AAPL or SPY for both stock and option tests.'); return; }
+  if(p.assetType === 'STK' && (Number(p.price) <= 0 || Number(p.price) > 5)) { alert('STK test price must be between $0.01 and $5.00.'); return; }
+  if(p.assetType === 'OPT') {
+    if(!p.expiry || (p.right !== 'C' && p.right !== 'P') || !p.strike || p.strike <= 0) { alert('OPT test requires underlying, expiry YYYYMMDD, C/P, and strike.'); return; }
+    if(Number(p.price) <= 0 || Number(p.price) > 0.05) { alert('OPT test price must be between $0.01 and $0.05 by default.'); return; }
+  }
+  rikiSetIbkrStatusText('Submitting isolated IBKR live one-order test...');
+  return rikiBackendPostJson_('ibkrLiveOneOrderTest', p).then(function(res){
+    rikiApplyIbkrDiagnostics_(res);
+    rikiIbkrRememberTestOrder_(res);
+    rikiIbkrSetTestLast_(res);
+    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR isolated stock/option one-order test: ' + ((res && res.success !== false && res.ok !== false) ? 'RESPONSE RECEIVED' : 'NOT READY/REJECTED'), res));
+    console.log('RIKI IBKR LIVE ONE ORDER TEST', res);
+    return res;
+  });
+}
+function rikiIbkrTestOrderStatus(){
+  var p = rikiIbkrTestPayload_(true);
+  if(!p.orderId){ alert('No test orderId known yet.'); return; }
+  rikiSetIbkrStatusText('Checking isolated IBKR test order status...');
+  return rikiBackendPostJson_('ibkrTestOrderStatus', p).then(function(res){
+    rikiApplyIbkrDiagnostics_(res);
+    rikiIbkrSetTestLast_(res);
+    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR test order status: ' + ((res && res.success !== false && res.ok !== false) ? 'READY' : 'NOT READY'), res));
+    console.log('RIKI IBKR TEST ORDER STATUS', res);
+    return res;
+  });
+}
+function rikiIbkrTestCancelOrder(){
+  var p = rikiIbkrTestPayload_(true);
+  if(!p.orderId){ alert('No test orderId known yet.'); return; }
+  var phrase = prompt('Cancel isolated IBKR test order. Type exact confirmation phrase:\n\n' + rikiIbkrConfirmText_(), '');
+  if(String(phrase || '').trim() !== rikiIbkrConfirmText_()) { toast('IBKR cancel aborted — confirmation mismatch', 2600); return; }
+  p.confirmText = phrase.trim();
+  rikiSetIbkrStatusText('Cancelling isolated IBKR test order...');
+  return rikiBackendPostJson_('ibkrTestCancelOrder', p).then(function(res){
+    rikiApplyIbkrDiagnostics_(res);
+    rikiIbkrSetTestLast_(res);
+    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR test cancel: ' + ((res && res.success !== false && res.ok !== false) ? 'SENT/READY' : 'NOT READY'), res));
+    console.log('RIKI IBKR TEST CANCEL', res);
+    return res;
+  });
+}
+
 function rikiBlockIbkrOrdersReadOnlyV1(actionName){
   if(rikiGetBrokerMode() !== 'IBKR') return false;
   alert(

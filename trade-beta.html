@@ -921,36 +921,38 @@ select.ibkr-test-inp{appearance:none;-webkit-appearance:none;}
         <button type="button" class="ibkr-mini-btn green" onclick="rikiCheckIbkrPositions()">Positions</button>
         <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrOrders()">Orders</button>
       </div>
-      <!-- RIKI_V7_IBKR_STOCK_OPTION_ONE_ORDER_TEST_HARNESS_FRONTEND_V2: isolated test-only controls. No Basket/STO/BTC wiring. -->
+      <!-- RIKI_V7_IBKR_FRONTEND_ONLY_LIVE_TEST_GATE_V4: isolated test-only controls. No Basket/STO/BTC wiring. -->
       <div id="ibkrOneOrderBox" class="ibkr-test-box">
-        <div class="ibkr-test-title">Isolated live one-order test</div>
-        <div class="ibkr-test-note">Separate harness only: BUY 1 STK or OPT, LMT, DAY, outside RTH false, hard max qty 1. No SELL/STO/BTC. Requires exact live-confirm phrase. Production routing stays blocked.</div>
+        <div class="ibkr-test-title">IBKR frontend live test gate</div>
+        <div class="ibkr-test-note">Frontend-only test controls: BUY 1 STK/OPT, LMT, DAY, outside RTH false, hard max qty 1. Use Submit + Cancel + Poll for live testing. Known IBKR warnings auto-confirm only when backend env flag is ON and this checkbox is enabled. Basket/STO/BTC stays blocked until this gate passes cleanly.</div>
         <div class="ibkr-test-grid">
           <select id="ibkrTestAssetType" class="ibkr-test-inp" title="STK or OPT">
             <option value="STK">STK</option>
-            <option value="OPT">OPT</option>
+            <option value="OPT" selected>OPT</option>
           </select>
           <input id="ibkrTestSymbol" class="ibkr-test-inp" value="AAPL" maxlength="6" title="Stock symbol or option underlying. Defaults allow AAPL/SPY.">
-          <input id="ibkrTestPrice" class="ibkr-test-inp" type="number" step="0.01" min="0.01" max="5" value="1.00" title="STK default cap $5; OPT default cap $0.05">
+          <input id="ibkrTestPrice" class="ibkr-test-inp" type="number" step="0.01" min="0.01" max="5" value="0.05" title="STK cap $5; OPT cap $0.05">
           <input id="ibkrTestAccount" class="ibkr-test-inp" value="U5009644" title="Allowlisted account">
         </div>
         <div class="ibkr-test-grid opt">
-          <input id="ibkrTestExpiry" class="ibkr-test-inp" value="" placeholder="YYYYMMDD" title="Option expiry, e.g. 20260717">
+          <input id="ibkrTestExpiry" class="ibkr-test-inp" value="20260717" placeholder="YYYYMMDD" title="Option expiry, e.g. 20260717">
           <select id="ibkrTestRight" class="ibkr-test-inp" title="Option right">
             <option value="C">CALL</option>
             <option value="P">PUT</option>
           </select>
-          <input id="ibkrTestStrike" class="ibkr-test-inp" type="number" step="0.01" min="0.01" value="" placeholder="Strike" title="Option strike">
+          <input id="ibkrTestStrike" class="ibkr-test-inp" type="number" step="0.01" min="0.01" value="300" placeholder="Strike" title="Option strike">
           <input id="ibkrTestConid" class="ibkr-test-inp" type="number" step="1" min="1" value="" placeholder="Conid?" title="Optional only; contract lookup still validates underlying/expiry/right/strike">
           <span class="ibkr-test-last" style="margin-top:0">OPT fields ignored for STK.</span>
         </div>
         <div class="ibkr-test-actions">
           <button type="button" class="ibkr-test-btn blue" onclick="rikiIbkrTestHarnessAudit()">Harness Audit</button>
-          <button type="button" class="ibkr-test-btn" onclick="rikiIbkrLiveOneOrderTest()">Submit Test BUY 1</button>
+          <label class="ibkr-test-last" style="display:inline-flex;align-items:center;gap:5px;margin-top:0"><input id="ibkrTestAllowKnownWarning" type="checkbox" checked> Known warning auto-confirm</label>
+          <button type="button" class="ibkr-test-btn green" onclick="rikiIbkrLiveOneOrderAutoCancelTest()">Submit + Cancel + Poll</button>
           <button type="button" class="ibkr-test-btn blue" onclick="rikiIbkrTestOrderStatus()">Status</button>
           <button type="button" class="ibkr-test-btn green" onclick="rikiIbkrTestCancelOrder()">Cancel</button>
+          <button type="button" class="ibkr-test-btn blue" onclick="rikiCheckIbkrOrders()">Open Orders</button>
         </div>
-        <div id="ibkrTestLast" class="ibkr-test-last">No test order submitted.</div>
+        <div id="ibkrTestLast" class="ibkr-test-last">Frontend-only gate ready. Use Harness Audit, then Submit + Cancel + Poll. No curl needed for order testing.</div>
       </div>
     </div>
     <div class="ctrl-row">
@@ -1961,7 +1963,7 @@ function rikiCheckIbkrPositions(){ return rikiRunIbkrGet_('ibkrPositions', 'posi
 
 function rikiCheckIbkrOrders(){ return rikiRunIbkrGet_('ibkrOrders', 'orders'); }
 
-/* RIKI_V7_IBKR_STOCK_OPTION_ONE_ORDER_TEST_HARNESS_FRONTEND_V2
+/* RIKI_V7_IBKR_FRONTEND_ONLY_LIVE_TEST_GATE_V4
    Isolated one-order route only for BUY 1 STK/OPT. No Basket/STO/BTC production wiring. */
 function rikiBackendPostJson_(action, payload){
   var body = new URLSearchParams();
@@ -2001,6 +2003,7 @@ function rikiIbkrTestPayload_(includeOrderId){
     price: Number(priceEl && priceEl.value ? priceEl.value : (assetType === 'OPT' ? 0.01 : 1)),
     tif: 'DAY',
     outsideRth: false,
+    allowWarningAutoConfirm: !!(ge('ibkrTestAllowKnownWarning') && ge('ibkrTestAllowKnownWarning').checked),
     confirmText: rikiIbkrConfirmText_()
   };
   if(assetType === 'OPT'){
@@ -2027,7 +2030,14 @@ function rikiIbkrSetTestLast_(res){
   line.push((res && (res.action || 'IBKR test')) + ': ' + ((res && res.success !== false && res.ok !== false) ? 'OK' : 'NOT OK'));
   if(orderId) line.push('orderId: ' + orderId);
   if(status) line.push('status: ' + status);
-  if(res && res.requiresReply) line.push('requiresReply: YES — not auto-confirmed');
+  if(res && res.replyId) line.push('replyId: ' + res.replyId);
+  if(res && res.requiresReply) line.push('requiresReply: YES — warning not auto-confirmed / second warning blocked');
+  if(res && res.autoConfirm) {
+    try { line.push('autoConfirm: ' + JSON.stringify(res.autoConfirm)); } catch(e) { line.push('autoConfirm: present'); }
+  }
+  if(res && res.finalVerify) {
+    try { line.push('finalVerify: ' + JSON.stringify(res.finalVerify)); } catch(e) { line.push('finalVerify: present'); }
+  }
   if(res && res.error) line.push('error: ' + res.error);
   if(res && res.message) line.push('message: ' + res.message);
   if(res && res.httpCode) line.push('HTTP: ' + res.httpCode);
@@ -2056,28 +2066,93 @@ function rikiIbkrTestHarnessAudit(){
     return res;
   });
 }
-function rikiIbkrLiveOneOrderTest(){
+function rikiIbkrSleep_(ms){ return new Promise(function(resolve){ setTimeout(resolve, ms || 1000); }); }
+function rikiIbkrCompactOrderState_(res){
+  if(!res) return '';
+  var parts=[];
+  var d0 = (res.data && res.data[0]) || {};
+  var oid = res.orderId || res.order_id || d0.order_id || d0.orderId || '';
+  var st = res.orderStatus || res.order_status || res.status || d0.order_status || d0.status || '';
+  var desc = res.orderStatusDescription || res.order_status_description || d0.order_status_description || '';
+  var fills = res.sizeAndFills || res.size_and_fills || d0.size_and_fills || d0.sizeAndFills || '';
+  var cum = res.cum_fill || res.cumFill || d0.cum_fill || d0.cumFill || '';
+  var err = res.error || '';
+  if(oid) parts.push('orderId=' + oid);
+  if(st) parts.push('status=' + st);
+  if(desc) parts.push(desc);
+  if(fills) parts.push('fills=' + fills);
+  if(cum !== '') parts.push('cum=' + cum);
+  if(err) parts.push('error=' + err);
+  return parts.join(' · ');
+}
+async function rikiIbkrLiveOneOrderAutoCancelTest(){
   if(rikiGetBrokerMode() !== 'IBKR') { alert('Switch Broker to IBKR first.'); return; }
-  var phrase = prompt('LIVE IBKR TEST ORDER. Type exact confirmation phrase:\n\n' + rikiIbkrConfirmText_(), '');
+  var phrase = prompt('LIVE IBKR TEST ORDER WITH AUTO-CANCEL. Type exact confirmation phrase:\n\n' + rikiIbkrConfirmText_(), '');
   if(String(phrase || '').trim() !== rikiIbkrConfirmText_()) { toast('IBKR test order aborted — confirmation mismatch', 2600); return; }
   var p = rikiIbkrTestPayload_(false);
   p.confirmText = phrase.trim();
+  p.allowWarningAutoConfirm = true;
   if(p.assetType !== 'STK' && p.assetType !== 'OPT') { alert('Asset type must be STK or OPT.'); return; }
-  if(p.symbol !== 'AAPL' && p.symbol !== 'SPY') { alert('Harness allowlist defaults to AAPL or SPY for both stock and option tests.'); return; }
+  if(p.symbol !== 'AAPL' && p.symbol !== 'SPY') { alert('Harness allowlist defaults to AAPL or SPY.'); return; }
   if(p.assetType === 'STK' && (Number(p.price) <= 0 || Number(p.price) > 5)) { alert('STK test price must be between $0.01 and $5.00.'); return; }
   if(p.assetType === 'OPT') {
     if(!p.expiry || (p.right !== 'C' && p.right !== 'P') || !p.strike || p.strike <= 0) { alert('OPT test requires underlying, expiry YYYYMMDD, C/P, and strike.'); return; }
     if(Number(p.price) <= 0 || Number(p.price) > 0.05) { alert('OPT test price must be between $0.01 and $0.05 by default.'); return; }
   }
-  rikiSetIbkrStatusText('Submitting isolated IBKR live one-order test...');
-  return rikiBackendPostJson_('ibkrLiveOneOrderTest', p).then(function(res){
-    rikiApplyIbkrDiagnostics_(res);
-    rikiIbkrRememberTestOrder_(res);
-    rikiIbkrSetTestLast_(res);
-    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR isolated stock/option one-order test: ' + ((res && res.success !== false && res.ok !== false) ? 'RESPONSE RECEIVED' : 'NOT READY/REJECTED'), res));
-    console.log('RIKI IBKR LIVE ONE ORDER TEST', res);
-    return res;
-  });
+  var log=[];
+  function show(msg, obj){
+    log.push(msg + (obj ? ('\n' + rikiIbkrCompactOrderState_(obj)) : ''));
+    var el=ge('ibkrTestLast'); if(el) el.textContent = log.join('\n\n');
+    rikiSetIbkrStatusText(log[log.length-1]);
+  }
+  show('Submitting IBKR one-order test with known-warning auto-confirm...');
+  try{
+    var submit = await rikiBackendPostJson_('ibkrLiveOneOrderTest', p);
+    rikiApplyIbkrDiagnostics_(submit);
+    rikiIbkrRememberTestOrder_(submit);
+    rikiIbkrSetTestLast_(submit);
+    show('Submit response', submit);
+    if(submit && submit.requiresReply){
+      show('STOP: IBKR still requires reply. Unknown/second warning blocked. No auto-cancel because there is no real orderId.', submit);
+      return submit;
+    }
+    var oid = (submit && (submit.orderId || submit.order_id || submit.ibkrOrderId)) || '';
+    if(!oid && submit && Array.isArray(submit.data) && submit.data[0]) oid = submit.data[0].order_id || submit.data[0].orderId || '';
+    oid = String(oid || '').trim();
+    if(!oid){ show('No real orderId returned; nothing to cancel.', submit); return submit; }
+    S.ibkrOneOrderTest = S.ibkrOneOrderTest || {}; S.ibkrOneOrderTest.orderId = oid; S.ibkrOneOrderTest.last = submit;
+    show('Real orderId captured. Sending cancel now: ' + oid);
+    var cancelPayload = rikiIbkrTestPayload_(false);
+    cancelPayload.orderId = oid;
+    cancelPayload.confirmText = phrase.trim();
+    var cancel = await rikiBackendPostJson_('ibkrTestCancelOrder', cancelPayload);
+    show('Cancel response', cancel);
+    var finalVerify = null;
+    for(var i=1;i<=30;i++){
+      await rikiIbkrSleep_(2000);
+      var statusPayload = rikiIbkrTestPayload_(false);
+      statusPayload.orderId = oid;
+      statusPayload.confirmText = phrase.trim();
+      var stat = await rikiBackendPostJson_('ibkrTestOrderStatus', statusPayload);
+      finalVerify = stat;
+      show('Poll ' + i + '/30', stat);
+      var st = String((stat && (stat.orderStatus || stat.order_status || stat.status || (stat.data && stat.data[0] && stat.data[0].order_status))) || '').toUpperCase();
+      var err = String((stat && stat.error) || '').toUpperCase();
+      // Do NOT stop on PendingCancel. Keep polling until a terminal cancel/inactive/not-found state.
+      var terminalCancel = st.indexOf('CANCELLED') >= 0 || st.indexOf('CANCELED') >= 0 || st.indexOf('INACTIVE') >= 0 || err.indexOf('NOT FOUND') >= 0 || err.indexOf('DOESN') >= 0;
+      if(terminalCancel) break;
+    }
+    var out = {ok:true, action:'ibkrLiveOneOrderAutoCancelTest', submit:submit, cancel:cancel, finalVerify:finalVerify, orderId:oid};
+    show('AUTO-CANCEL TEST DONE', out);
+    return out;
+  }catch(e){
+    show('AUTO-CANCEL TEST ERROR: ' + (e && e.message ? e.message : String(e)));
+    throw e;
+  }
+}
+function rikiIbkrLiveOneOrderTest(){
+  alert('Direct submit is disabled in V4 frontend test gate. Use Submit + Cancel + Poll so every accepted order is immediately cancelled and polled from RiKi.');
+  return rikiIbkrLiveOneOrderAutoCancelTest();
 }
 function rikiIbkrTestOrderStatus(){
   var p = rikiIbkrTestPayload_(true);

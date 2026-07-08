@@ -1860,13 +1860,13 @@ function rikiRefreshBrokerUi(){
   if(schwabBtn) schwabBtn.classList.toggle('active', mode === 'SCHWAB');
   if(ibkrBtn) ibkrBtn.classList.toggle('active', mode === 'IBKR');
   if(ibkrPanel) ibkrPanel.style.display = mode === 'IBKR' ? 'block' : 'none';
-  rikiApplyBrokerAccountUiV5_3();
+  rikiApplyBrokerAccountUiV5_4();
 }
 
-// RIKI_V7_IBKR_CHAIN_LOADER_ALL_TICKERS_QUOTE_WARMUP_V5_3
+// RIKI_V7_IBKR_CHAIN_LOADER_ALL_TICKERS_STABLE_QUOTES_V5_4
 // IBKR has one live account in this RiKi setup. Keep Schwab A1/A2 unchanged,
 // but collapse the account UI to a single IBKR account when Broker=IBKR.
-function rikiApplyBrokerAccountUiV5_3(){
+function rikiApplyBrokerAccountUiV5_4(){
   var isIbkr = rikiGetBrokerMode() === 'IBKR';
 
   var hdrCols = document.querySelectorAll('.bp-hdr-col');
@@ -1901,9 +1901,9 @@ function rikiApplyBrokerAccountUiV5_3(){
   if(aq2) aq2.style.display = isIbkr ? 'none' : '';
 }
 
-function rikiIbkrReadOnlyChainToastV5_3(){
+function rikiIbkrReadOnlyChainToastV5_4(){
   haptic();
-  toast('IBKR chain is read-only in V5.3. Any typed ticker can load chain/quotes; order firing remains blocked until micro-STO gate.', 3600);
+  toast('IBKR chain is read-only in V5.4. Any typed ticker can load chain/quotes; order firing remains blocked until micro-STO gate.', 3600);
 }
 function rikiSetIbkrStatusText(text){
   var el = ge('ibkrStatusLine');
@@ -4098,12 +4098,12 @@ function updateRatioPreview(){
   if(rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR'){
     var qIbkr = calcQty(S.base1, true);
     ge('ratio-preview').innerHTML='IBKR: <b>'+qIbkr+'</b> · U5009644';
-    rikiApplyBrokerAccountUiV5_3();
+    rikiApplyBrokerAccountUiV5_4();
     return;
   }
   var q1=calcQty(S.base1,S.en1),q2=calcQty(S.base2,S.en2);
   ge('ratio-preview').innerHTML='A1: <b>'+q1+'</b> &middot; A2: <b>'+q2+'</b>';
-  rikiApplyBrokerAccountUiV5_3();
+  rikiApplyBrokerAccountUiV5_4();
 }
 
 function adjBase(acct,amt){
@@ -4121,7 +4121,7 @@ function toggleAcct(acct){
   haptic();
   if(rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR'){
     toast('IBKR uses single account U5009644 here — A1/A2 toggles are disabled.', 3000);
-    rikiApplyBrokerAccountUiV5_3();
+    rikiApplyBrokerAccountUiV5_4();
     return;
   }
   if(acct===1){ S.en1=!S.en1; ge('a1-tog').className='acct-tog '+(S.en1?'on':''); ge('a1-block').className='acct-block '+(S.en1?'':'disabled'); }
@@ -4499,7 +4499,7 @@ function doFetch(firstTime, opts){
 
       S.bpMap = d.bpMap || {};
       S.data = d.chains || {};
-      rikiApplyBrokerAccountUiV5_3();
+      rikiApplyBrokerAccountUiV5_4();
       S._lastMissingFetch = '';
 
       var fTime = '--:--';
@@ -4665,7 +4665,7 @@ function renderRow(o,type){
   var btnText = S.basketMode ? (isSelected ? '✓' : '+') : (isIbkrReadOnlyChain ? 'RO' : defPrice.toFixed(2));
   var btnAction = S.basketMode
     ? 'basketToggleSymbol(\''+cl+'\',\''+sKey+'\')'
-    : (isIbkrReadOnlyChain ? 'rikiIbkrReadOnlyChainToastV5_3()' : 'openOrderSheet(\''+cl+'\',\''+sKey+'\')');
+    : (isIbkrReadOnlyChain ? 'rikiIbkrReadOnlyChainToastV5_4()' : 'openOrderSheet(\''+cl+'\',\''+sKey+'\')');
 
   return '<tr'+trCls+' data-opt-symbol="'+basketEsc(o.symbol)+'" data-opt-type="'+type+'">'+
     '<td style="font-weight:700;color:var(--'+(cl==='c'?'call':'put')+')">$'+fmtStrike(o.strike)+'</td>'+
@@ -4762,7 +4762,7 @@ function openOrderSheet(type,sKey){
   ge('aq1').value=S.qtyA1; ge('aq2').value=S.qtyA2;
   ge('aq1-col').className='aqcol '+((rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR') || S.en1?'':'off');
   ge('aq2-col').className='aqcol '+(S.en2?'':'off');
-  rikiApplyBrokerAccountUiV5_3();
+  rikiApplyBrokerAccountUiV5_4();
   
   S.price=Math.max(0.02,Math.round(o.mid*100)/100);
   ge('pi').value=S.price.toFixed(2);

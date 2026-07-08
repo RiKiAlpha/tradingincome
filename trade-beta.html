@@ -1507,9 +1507,16 @@ function collectActiveBidAskSymbols_(){
     puts = filterRange(puts);
   }
   var seen = {}, out = [];
+  var isIbkr = rikiGetBrokerMode() === 'IBKR';
   calls.concat(puts).forEach(function(o){
     var sym = String(o && o.symbol || '').trim();
-    if(sym && !seen[sym]){ seen[sym] = true; out.push(sym); }
+    if(!sym || seen[sym]) return;
+    seen[sym] = true;
+    if(isIbkr && (o.conid || o.ibkrConid)){
+      out.push({ symbol:sym, conid:(o.conid || o.ibkrConid) });
+    } else {
+      out.push(sym);
+    }
   });
   return out;
 }
@@ -1581,6 +1588,7 @@ function refreshBidAskNow(reason, quiet){
 
   postBackendForm('optionBidAsk', {
     ticker: S.ticker || '',
+    broker: rikiGetBrokerMode(),
     symbols: JSON.stringify(symbols)
   })
     .then(function(r){ return r.json(); })
@@ -4304,6 +4312,7 @@ function doFetch(firstTime, opts){
     '&rangeMin=' + encodeURIComponent(S.rangeMin) +
     '&rangeMax=' + encodeURIComponent(S.rangeMax) +
     '&all=' + (S.expanded ? '1' : '0') +
+    '&broker=' + encodeURIComponent(rikiGetBrokerMode()) +
     '&_=' + Date.now();
 
   console.log('[RiKi] doFetch: fetching URL='+url+' seq='+seq+' ticker='+reqTicker);
@@ -4591,7 +4600,8 @@ function renderRow(o,type){
   var isSelected = !!(S.basketSelected && S.basketSelected[basketSymbolKey(o.symbol)]);
   var trCls = isSelected ? ' class="basket-row-selected '+cl+'"' : '';
   var btnCls = 'sto '+cl+(isSelected ? ' sel' : '');
-  var btnText = S.basketMode ? (isSelected ? '✓' : '+') : defPrice.toFixed(2);
+  var isIbkrReadOnlyChain = rikiGetBrokerMode() === 'IBKR';
+  var btnText = S.basketMode ? (isSelected ? '✓' : '+') : (isIbkrReadOnlyChain ? 'RO' : defPrice.toFixed(2));
   var btnAction = S.basketMode
     ? 'basketToggleSymbol(\''+cl+'\',\''+sKey+'\')'
     : 'openOrderSheet(\''+cl+'\',\''+sKey+'\')';

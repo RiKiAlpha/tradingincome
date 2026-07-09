@@ -1766,7 +1766,58 @@ function postBackendForm(action, fields){
   });
 }
 
-
+// RIKI_V11_1_TRADIER_BACKEND_FETCH_HELPERS_FIX_V1
+// Shared JSON helpers for Tradier setup/diagnostics/test routes.
+// Fixes the Setup Props button getting stuck at "Checking Tradier setup..." when
+// the Tradier panel called helper functions that were not present in the page.
+function rikiBackendJsonFetch_(url, options, label){
+  label = label || 'backend';
+  var controller = null;
+  var timer = null;
+  try {
+    if (typeof AbortController !== 'undefined') {
+      controller = new AbortController();
+      options = options || {};
+      options.signal = controller.signal;
+      timer = setTimeout(function(){ try { controller.abort(); } catch(e){} }, 45000);
+    }
+  } catch(ctrlErr) {}
+  return fetch(url, options || {}).then(function(r){
+    return r.text().then(function(txt){
+      if(timer) clearTimeout(timer);
+      var parsed = {};
+      try { parsed = txt ? JSON.parse(txt) : {}; }
+      catch(jsonErr){
+        throw new Error(label + ' returned non-JSON: ' + String(txt || '').substring(0, 220));
+      }
+      if(!r.ok){
+        var msg = parsed.error || parsed.message || ('HTTP ' + r.status);
+        throw new Error(label + ' failed: ' + msg);
+      }
+      return parsed;
+    });
+  }).catch(function(err){
+    if(timer) clearTimeout(timer);
+    throw err;
+  });
+}
+function rikiBackendGetJson_(action, params){
+  params = params || {};
+  var qs = new URLSearchParams();
+  qs.set('action', action);
+  Object.keys(params).forEach(function(k){
+    if(params[k] !== undefined && params[k] !== null) qs.set(k, String(params[k]));
+  });
+  qs.set('_', String(Date.now()));
+  return rikiBackendJsonFetch_(BACKEND + '?' + qs.toString(), { method:'GET', cache:'no-store' }, action);
+}
+function rikiBackendPostJson_(action, payload){
+  var body = new URLSearchParams();
+  body.set('action', action);
+  body.set('payload', JSON.stringify(payload || {}));
+  body.set('_', String(Date.now()));
+  return rikiBackendJsonFetch_(BACKEND, { method:'POST', body:body, cache:'no-store' }, action);
+}
 
 /* === RIKI_V11_TRADIER_RETAIL_ROUTING_API_TEST_V1: frontend broker functions === */
 function rikiGetBrokerMode(){

@@ -358,48 +358,47 @@ Fallback: restore this Apps Script deployment version if future UI patches break
 
 @media(max-width:720px){.pr-summary{grid-template-columns:repeat(2,1fr);}.pr-card{max-height:92vh;}.pr-title{font-size:12px;}.ctrl-basket-row{flex-wrap:wrap}.basket-line{flex-wrap:wrap}}
 
-/* === RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1: IBKR broker toggle + diagnostics === */
-.broker-toggle-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 7px;background:rgba(244,197,66,.035);border:1px solid rgba(244,197,66,.18);border-radius:9px;padding:6px 8px;}
+
+/* === RIKI_V11_TRADIER_RETAIL_ROUTING_API_TEST_V1: Tradier broker toggle + diagnostics === */
+.broker-toggle-wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 7px;background:rgba(61,156,255,.035);border:1px solid rgba(61,156,255,.18);border-radius:9px;padding:6px 8px;}
 .broker-toggle-label{font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
 .broker-pill{height:24px;padding:0 10px;border-radius:999px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--sans);font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;white-space:nowrap;}
-.broker-pill.active{border-color:rgba(244,197,66,.50);background:rgba(244,197,66,.10);color:var(--gold);box-shadow:0 0 10px rgba(244,197,66,.07);}
-.ibkr-panel{display:none;margin:0 0 7px;background:linear-gradient(135deg,rgba(12,17,24,.96),rgba(244,197,66,.035));border:1px solid rgba(244,197,66,.28);border-radius:12px;padding:9px 10px;box-shadow:0 8px 22px rgba(0,0,0,.16);}
-.ibkr-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px;}
-.ibkr-panel-title{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);line-height:1.25;}
-.ibkr-panel-sub{font-size:8px;font-weight:800;color:var(--text3);line-height:1.35;margin-top:2px;}
-.ibkr-lock-pill{font-family:var(--mono);font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;border:1px solid rgba(0,212,166,.26);background:rgba(0,212,166,.08);color:var(--call);padding:4px 8px;white-space:nowrap;}
-.ibkr-lock-pill.warn{border-color:rgba(244,197,66,.30);background:rgba(244,197,66,.08);color:var(--gold);}
-.ibkr-lock-pill.bad{border-color:rgba(229,83,83,.32);background:rgba(229,83,83,.08);color:var(--red);}
-.ibkr-status-line{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text2);line-height:1.45;white-space:pre-wrap;background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.045);border-radius:9px;padding:8px;}
-.ibkr-diag-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:7px;}
-.ibkr-diag-card{background:rgba(18,26,34,.74);border:1px solid var(--border);border-radius:9px;padding:7px 8px;min-width:0;}
-.ibkr-diag-k{font-size:7px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ibkr-diag-v{font-family:var(--mono);font-size:9px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ibkr-diag-v.good{color:var(--call);}.ibkr-diag-v.warn{color:var(--gold);}.ibkr-diag-v.bad{color:var(--red);}.ibkr-diag-v.dim{color:var(--text3);}
-.ibkr-warning-line{font-size:8px;font-weight:800;color:var(--put);line-height:1.35;margin-top:7px;}
-.ibkr-mini-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;}
-.ibkr-mini-btn{height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(244,197,66,.35);background:rgba(244,197,66,.08);color:var(--gold);font-family:var(--sans);font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
-.ibkr-mini-btn.blue{border-color:rgba(61,156,255,.32);background:rgba(61,156,255,.08);color:var(--blue);}
-.ibkr-mini-btn.green{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
-.ibkr-mini-btn:active{opacity:.72;}
-/* RIKI_V7_IBKR_LIVE_ONE_ORDER_TEST_HARNESS_FRONTEND_V1 */
-.ibkr-test-box{margin-top:8px;border:1px solid rgba(229,83,83,.24);background:rgba(229,83,83,.045);border-radius:10px;padding:8px;}
-.ibkr-test-title{font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:5px;}
-.ibkr-test-note{font-size:8px;font-weight:800;line-height:1.35;color:var(--text3);margin-bottom:7px;}
-.ibkr-test-grid{display:grid;grid-template-columns:58px 58px 1fr;gap:5px;margin-bottom:6px;}
-.ibkr-test-grid.opt{grid-template-columns:58px 72px 44px 58px 1fr;}
-@media(max-width:720px){.ibkr-test-grid.opt{grid-template-columns:repeat(2,minmax(0,1fr));}.ibkr-test-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
-.ibkr-test-inp{height:24px;border-radius:7px;border:1px solid var(--border);background:rgba(18,26,34,.82);color:var(--text);font-family:var(--mono);font-size:10px;font-weight:900;text-align:center;outline:none;}
-select.ibkr-test-inp{appearance:none;-webkit-appearance:none;}
-.ibkr-test-inp:focus{border-color:rgba(229,83,83,.38);}
-.ibkr-test-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.ibkr-test-btn{height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(229,83,83,.36);background:rgba(229,83,83,.08);color:var(--red);font-family:var(--sans);font-size:8px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
-.ibkr-test-btn.blue{border-color:rgba(61,156,255,.32);background:rgba(61,156,255,.08);color:var(--blue);}
-.ibkr-test-btn.green{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
-.ibkr-test-btn:disabled{opacity:.38;cursor:not-allowed;}
-.ibkr-test-last{font-family:var(--mono);font-size:8px;color:var(--text3);line-height:1.35;margin-top:6px;white-space:pre-wrap;}
+.broker-pill.active{border-color:rgba(61,156,255,.50);background:rgba(61,156,255,.10);color:var(--blue);box-shadow:0 0 10px rgba(61,156,255,.07);}
+.tradier-panel{display:none;margin:0 0 7px;background:linear-gradient(135deg,rgba(12,17,24,.96),rgba(61,156,255,.035));border:1px solid rgba(61,156,255,.28);border-radius:12px;padding:9px 10px;box-shadow:0 8px 22px rgba(0,0,0,.16);}
+.tradier-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px;}
+.tradier-panel-title{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);line-height:1.25;}
+.tradier-panel-sub{font-size:8px;font-weight:800;color:var(--text3);line-height:1.35;margin-top:2px;}
+.tradier-lock-pill{font-family:var(--mono);font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;border:1px solid rgba(0,212,166,.26);background:rgba(0,212,166,.08);color:var(--call);padding:4px 8px;white-space:nowrap;}
+.tradier-lock-pill.warn{border-color:rgba(244,197,66,.30);background:rgba(244,197,66,.08);color:var(--gold);}
+.tradier-lock-pill.bad{border-color:rgba(229,83,83,.32);background:rgba(229,83,83,.08);color:var(--red);}
+.tradier-status-line{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text2);line-height:1.45;white-space:pre-wrap;background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.045);border-radius:9px;padding:8px;}
+.tradier-diag-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:7px;}
+.tradier-diag-card{background:rgba(18,26,34,.74);border:1px solid var(--border);border-radius:9px;padding:7px 8px;min-width:0;}
+.tradier-diag-k{font-size:7px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tradier-diag-v{font-family:var(--mono);font-size:9px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tradier-diag-v.good{color:var(--call);}.tradier-diag-v.warn{color:var(--gold);}.tradier-diag-v.bad{color:var(--red);}.tradier-diag-v.dim{color:var(--text3);}
+.tradier-warning-line{font-size:8px;font-weight:800;color:var(--put);line-height:1.35;margin-top:7px;}
+.tradier-mini-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;}
+.tradier-mini-btn{height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(61,156,255,.35);background:rgba(61,156,255,.08);color:var(--blue);font-family:var(--sans);font-size:9px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
+.tradier-mini-btn.green{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
+.tradier-mini-btn.red{border-color:rgba(229,83,83,.36);background:rgba(229,83,83,.08);color:var(--red);}
+.tradier-mini-btn:active{opacity:.72;}
+.tradier-test-box{margin-top:8px;border:1px solid rgba(229,83,83,.24);background:rgba(229,83,83,.045);border-radius:10px;padding:8px;}
+.tradier-test-title{font-size:8px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:5px;}
+.tradier-test-note{font-size:8px;font-weight:800;line-height:1.35;color:var(--text3);margin-bottom:7px;}
+.tradier-test-grid{display:grid;grid-template-columns:64px 84px 44px 58px 1fr;gap:5px;margin-bottom:6px;}
+@media(max-width:720px){.tradier-test-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.tradier-test-inp{height:24px;border-radius:7px;border:1px solid var(--border);background:rgba(18,26,34,.82);color:var(--text);font-family:var(--mono);font-size:10px;font-weight:900;text-align:center;outline:none;}
+select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
+.tradier-test-inp:focus{border-color:rgba(229,83,83,.38);}
+.tradier-test-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.tradier-test-btn{height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(229,83,83,.36);background:rgba(229,83,83,.08);color:var(--red);font-family:var(--sans);font-size:8px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;}
+.tradier-test-btn.blue{border-color:rgba(61,156,255,.32);background:rgba(61,156,255,.08);color:var(--blue);}
+.tradier-test-btn.green{border-color:rgba(0,212,166,.32);background:rgba(0,212,166,.08);color:var(--call);}
+.tradier-test-btn:disabled{opacity:.38;cursor:not-allowed;}
+.tradier-test-last{font-family:var(--mono);font-size:8px;color:var(--text3);line-height:1.35;margin-top:6px;white-space:pre-wrap;}
+@media(max-width:720px){.tradier-diag-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.tradier-panel-head{align-items:flex-start;}.tradier-mini-btn{flex:1;min-width:84px;}}
 
-@media(max-width:720px){.ibkr-diag-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.ibkr-panel-head{align-items:flex-start;}.ibkr-mini-btn{flex:1;min-width:84px;}}
 
     .seg{display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px;}
     .sbtn{flex:1;padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--text3);cursor:pointer;touch-action:manipulation;white-space:nowrap;}
@@ -889,69 +888,56 @@ select.ibkr-test-inp{appearance:none;-webkit-appearance:none;}
     </div>
   </div>
   <div id="ctrl">
-    <!-- === RIKI_V7_BROKER_SWITCH_CLEAR_STATE_GUARD_V1 + RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1: IBKR broker toggle === -->
+    <!-- === RIKI_V11_TRADIER_RETAIL_ROUTING_API_TEST_V1: Tradier broker toggle === -->
     <div class="broker-toggle-wrap">
       <span class="broker-toggle-label">Broker</span>
       <button id="brokerSchwabBtn" type="button" class="broker-pill active" onclick="rikiSetBrokerMode('SCHWAB')">TOS / Schwab</button>
-      <button id="brokerIbkrBtn" type="button" class="broker-pill" onclick="rikiSetBrokerMode('IBKR')">IBKR</button>
+      <button id="brokerTradierBtn" type="button" class="broker-pill" onclick="rikiSetBrokerMode('TRADIER')">Tradier</button>
     </div>
-    <div id="ibkrPanel" class="ibkr-panel">
-      <div class="ibkr-panel-head">
+    <div id="tradierPanel" class="tradier-panel">
+      <div class="tradier-panel-head">
         <div>
-          <div class="ibkr-panel-title">IBKR Web API</div>
-          <div class="ibkr-panel-sub">Bridge contract + diagnostics only. Schwab/TOS flow is unchanged.</div>
+          <div class="tradier-panel-title">Tradier API</div>
+          <div class="tradier-panel-sub">Retail-routing candidate. One account only. Basket and live tests stay locked until config is enabled.</div>
         </div>
-        <div id="ibkrLockPill" class="ibkr-lock-pill">READ-ONLY</div>
+        <div id="tradierLockPill" class="tradier-lock-pill">READ-ONLY</div>
       </div>
-      <div id="ibkrStatusLine" class="ibkr-status-line">IBKR diagnostics not checked yet.</div>
-      <div id="ibkrDiagGrid" class="ibkr-diag-grid">
-        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Mode</div><div id="ibkrDiagMode" class="ibkr-diag-v dim">not checked</div></div>
-        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Read-only</div><div id="ibkrDiagReadonly" class="ibkr-diag-v good">ON</div></div>
-        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Bridge URL</div><div id="ibkrDiagBridge" class="ibkr-diag-v warn">placeholder</div></div>
-        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Token</div><div id="ibkrDiagToken" class="ibkr-diag-v dim">hidden</div></div>
-        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Orders</div><div id="ibkrDiagOrders" class="ibkr-diag-v bad">blocked</div></div>
-        <div class="ibkr-diag-card"><div class="ibkr-diag-k">Adapter</div><div id="ibkrDiagAdapter" class="ibkr-diag-v dim">V2.1</div></div>
+      <div id="tradierStatusLine" class="tradier-status-line">Tradier diagnostics not checked yet.</div>
+      <div id="tradierDiagGrid" class="tradier-diag-grid">
+        <div class="tradier-diag-card"><div class="tradier-diag-k">Mode</div><div id="tradierDiagMode" class="tradier-diag-v dim">not checked</div></div>
+        <div class="tradier-diag-card"><div class="tradier-diag-k">Read-only</div><div id="tradierDiagReadonly" class="tradier-diag-v good">ON</div></div>
+        <div class="tradier-diag-card"><div class="tradier-diag-k">Account</div><div id="tradierDiagAccount" class="tradier-diag-v warn">placeholder</div></div>
+        <div class="tradier-diag-card"><div class="tradier-diag-k">Token</div><div id="tradierDiagToken" class="tradier-diag-v dim">hidden</div></div>
+        <div class="tradier-diag-card"><div class="tradier-diag-k">Orders</div><div id="tradierDiagOrders" class="tradier-diag-v bad">locked</div></div>
+        <div class="tradier-diag-card"><div class="tradier-diag-k">Adapter</div><div id="tradierDiagAdapter" class="tradier-diag-v dim">V11</div></div>
       </div>
-      <div class="ibkr-warning-line">Hard lock: IBKR order/cancel routes stay blocked until status, positions, paper BTC, paper STO, and exact order ID/cancel/verify are validated.</div>
-      <div class="ibkr-mini-actions">
-        <button type="button" class="ibkr-mini-btn blue" onclick="rikiCheckIbkrDiagnostics()">Diagnostics</button>
-        <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrStatus()">Status</button>
-        <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrAccounts()">Accounts</button>
-        <button type="button" class="ibkr-mini-btn green" onclick="rikiCheckIbkrPositions()">Positions</button>
-        <button type="button" class="ibkr-mini-btn" onclick="rikiCheckIbkrOrders()">Orders</button>
+      <div class="tradier-warning-line">Hard lock: Tradier live orders require readOnly=OFF, orderRoutingEnabled=ON, and liveOrdersEnabled=ON in TRADIER_CONFIG_JSON. Start with 20–50 orders only after approval.</div>
+      <div class="tradier-mini-actions">
+        <button type="button" class="tradier-mini-btn" onclick="rikiCheckTradierDiagnostics()">Diagnostics</button>
+        <button type="button" class="tradier-mini-btn" onclick="rikiSetupTradierPlaceholders()">Setup Props</button>
+        <button type="button" class="tradier-mini-btn" onclick="rikiCheckTradierBalances()">Balances</button>
+        <button type="button" class="tradier-mini-btn green" onclick="rikiCheckTradierPositions()">Positions</button>
+        <button type="button" class="tradier-mini-btn" onclick="rikiCheckTradierOrders()">Orders</button>
       </div>
-      <!-- RIKI_V7_IBKR_FRONTEND_ONLY_LIVE_TEST_GATE_V4: isolated test-only controls. No Basket/STO/BTC wiring. -->
-      <div id="ibkrOneOrderBox" class="ibkr-test-box">
-        <div class="ibkr-test-title">IBKR frontend live test gate</div>
-        <div class="ibkr-test-note">Frontend-only test controls: BUY 1 STK/OPT, LMT, DAY, outside RTH false, hard max qty 1. Use Submit + Cancel + Poll for live testing. Known IBKR warnings auto-confirm only when backend env flag is ON and this checkbox is enabled. Basket/STO/BTC stays blocked until this gate passes cleanly.</div>
-        <div class="ibkr-test-grid">
-          <select id="ibkrTestAssetType" class="ibkr-test-inp" title="STK or OPT">
-            <option value="STK">STK</option>
-            <option value="OPT" selected>OPT</option>
-          </select>
-          <input id="ibkrTestSymbol" class="ibkr-test-inp" value="AAPL" maxlength="6" title="Stock symbol or option underlying. Defaults allow AAPL/SPY.">
-          <input id="ibkrTestPrice" class="ibkr-test-inp" type="number" step="0.01" min="0.01" max="5" value="0.05" title="STK cap $5; OPT cap $0.05">
-          <input id="ibkrTestAccount" class="ibkr-test-inp" value="U5009644" title="Allowlisted account">
+      <div id="tradierOneOrderBox" class="tradier-test-box">
+        <div class="tradier-test-title">Tradier one-order STO harness</div>
+        <div class="tradier-test-note">Single-leg option only: STO, qty 1, LMT, DAY, no AON. Preview can run first; live place/cancel stays locked until backend config is explicitly enabled.</div>
+        <div class="tradier-test-grid">
+          <input id="tradierTestSymbol" class="tradier-test-inp" value="GOOGL" maxlength="6" title="Underlying">
+          <input id="tradierTestExpiry" class="tradier-test-inp" value="20260717" placeholder="YYYYMMDD" title="Option expiry">
+          <select id="tradierTestRight" class="tradier-test-inp" title="Option right"><option value="P" selected>PUT</option><option value="C">CALL</option></select>
+          <input id="tradierTestStrike" class="tradier-test-inp" type="number" step="0.01" min="0.01" value="100" placeholder="Strike" title="Option strike">
+          <input id="tradierTestPrice" class="tradier-test-inp" type="number" step="0.01" min="0.01" max="2" value="0.13" title="STO limit price">
         </div>
-        <div class="ibkr-test-grid opt">
-          <input id="ibkrTestExpiry" class="ibkr-test-inp" value="20260717" placeholder="YYYYMMDD" title="Option expiry, e.g. 20260717">
-          <select id="ibkrTestRight" class="ibkr-test-inp" title="Option right">
-            <option value="C">CALL</option>
-            <option value="P">PUT</option>
-          </select>
-          <input id="ibkrTestStrike" class="ibkr-test-inp" type="number" step="0.01" min="0.01" value="300" placeholder="Strike" title="Option strike">
-          <input id="ibkrTestConid" class="ibkr-test-inp" type="number" step="1" min="1" value="" placeholder="Conid?" title="Optional only; contract lookup still validates underlying/expiry/right/strike">
-          <span class="ibkr-test-last" style="margin-top:0">OPT fields ignored for STK.</span>
+        <div class="tradier-test-actions">
+          <button type="button" class="tradier-test-btn blue" onclick="rikiTradierTestHarnessAudit()">Harness Audit</button>
+          <button type="button" class="tradier-test-btn blue" onclick="rikiTradierPreviewOneOrder()">Preview</button>
+          <button type="button" class="tradier-test-btn green" onclick="rikiTradierPlaceOneOrder()">Place 1</button>
+          <button type="button" class="tradier-test-btn blue" onclick="rikiTradierTestOrderStatus()">Status</button>
+          <button type="button" class="tradier-test-btn green" onclick="rikiTradierTestCancelOrder()">Cancel</button>
+          <button type="button" class="tradier-test-btn blue" onclick="rikiCheckTradierOrders()">Open Orders</button>
         </div>
-        <div class="ibkr-test-actions">
-          <button type="button" class="ibkr-test-btn blue" onclick="rikiIbkrTestHarnessAudit()">Harness Audit</button>
-          <label class="ibkr-test-last" style="display:inline-flex;align-items:center;gap:5px;margin-top:0"><input id="ibkrTestAllowKnownWarning" type="checkbox" checked> Known warning auto-confirm</label>
-          <button type="button" class="ibkr-test-btn green" onclick="rikiIbkrLiveOneOrderAutoCancelTest()">Submit + Cancel + Poll</button>
-          <button type="button" class="ibkr-test-btn blue" onclick="rikiIbkrTestOrderStatus()">Status</button>
-          <button type="button" class="ibkr-test-btn green" onclick="rikiIbkrTestCancelOrder()">Cancel</button>
-          <button type="button" class="ibkr-test-btn blue" onclick="rikiCheckIbkrOrders()">Open Orders</button>
-        </div>
-        <div id="ibkrTestLast" class="ibkr-test-last">Frontend-only gate ready. Use Harness Audit, then Submit + Cancel + Poll. No curl needed for order testing.</div>
+        <div id="tradierTestLast" class="tradier-test-last">Tradier gate ready. Use Setup Props, Diagnostics, then Preview after account/token approval.</div>
       </div>
     </div>
     <div class="ctrl-row">
@@ -1006,7 +992,7 @@ select.ibkr-test-inp{appearance:none;-webkit-appearance:none;}
   <div class="quick-btc-top">
     <div>
       <div class="quick-btc-title">Quick BTC</div>
-      <div class="quick-btc-sub">Entered tickers only · Schwab A1/A2 only · IBKR blocked</div>
+      <div class="quick-btc-sub">Entered tickers only · Schwab A1/A2 only · Tradier blocked</div>
     </div>
     <label class="panic-lbl">
       <input type="checkbox" id="panic-slice-cb" class="panic-cb">
@@ -1255,7 +1241,7 @@ var S = {
   basketPendingPayload:null,
   basketLastPayload:null,
   basketLastResult:null,
-  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:'', churnerInlineReviewActive:false, churnerCloseAfterBasketResult:false, brokerMode:localStorage.getItem('riki_broker_mode') || 'SCHWAB', ibkrStatus:null, ibkrDiagnostics:null, ibkrLastAction:''};
+  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:'', churnerInlineReviewActive:false, churnerCloseAfterBasketResult:false, brokerMode:localStorage.getItem('riki_broker_mode') || 'SCHWAB', tradierStatus:null, tradierDiagnostics:null, tradierLastAction:''};
 
 // ==========================================================
 // RIKI_V6_2_BIDASK_JSON_AND_ANALYZE_MODAL_CLOSE_FIX_V1
@@ -1506,16 +1492,11 @@ function collectActiveBidAskSymbols_(){
     puts = filterRange(puts);
   }
   var seen = {}, out = [];
-  var isIbkr = rikiGetBrokerMode() === 'IBKR';
   calls.concat(puts).forEach(function(o){
     var sym = String(o && o.symbol || '').trim();
     if(!sym || seen[sym]) return;
     seen[sym] = true;
-    if(isIbkr && (o.conid || o.ibkrConid)){
-      out.push({ symbol:sym, conid:(o.conid || o.ibkrConid) });
-    } else {
-      out.push(sym);
-    }
+    out.push(sym);
   });
   return out;
 }
@@ -1786,467 +1767,191 @@ function postBackendForm(action, fields){
 }
 
 
-/* === RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1: frontend broker functions === */
+
+/* === RIKI_V11_TRADIER_RETAIL_ROUTING_API_TEST_V1: frontend broker functions === */
 function rikiGetBrokerMode(){
   try{ if(typeof S !== 'undefined' && S.brokerMode) return S.brokerMode; }catch(e){}
   return localStorage.getItem('riki_broker_mode') || 'SCHWAB';
 }
 function rikiSetBrokerMode(mode){
-  if(mode !== 'SCHWAB' && mode !== 'IBKR') return;
-
+  if(mode !== 'SCHWAB' && mode !== 'TRADIER') return;
   var prev = rikiGetBrokerMode();
   var changed = prev !== mode;
-
   try{ if(typeof S !== 'undefined') S.brokerMode = mode; }catch(e){}
   localStorage.setItem('riki_broker_mode', mode);
-
-  if(changed){
-    rikiBrokerSwitchClearStateGuardV1_(prev, mode);
-  }
-
+  if(changed) rikiBrokerSwitchClearStateGuardV1_(prev, mode);
   rikiRefreshBrokerUi();
-  if(mode === 'IBKR') rikiCheckIbkrDiagnostics();
+  if(mode === 'TRADIER') rikiCheckTradierDiagnostics();
 }
-
-/* === RIKI_V7_BROKER_SWITCH_CLEAR_STATE_GUARD_V1 ===
-   Sequential broker workflow guard. When switching TOS/Schwab <-> IBKR, clear
-   any basket/review/fire state so an old staged basket cannot be fired under
-   the newly selected broker. Frontend-only safety; Schwab backend/order engine
-   is untouched. */
 function rikiBrokerSwitchClearStateGuardV1_(fromBroker, toBroker){
   try{
     if(typeof S === 'undefined' || !S) return;
-
     S.basketSelected = {};
     S.basketPendingPayload = null;
     S.basketLastPayload = null;
     S.basketLastResult = null;
     S.basketResumeCanContinue = false;
-
-    if(S.basketRetryTimerId){
-      clearInterval(S.basketRetryTimerId);
-      S.basketRetryTimerId = null;
-    }
-
+    if(S.basketRetryTimerId){ clearInterval(S.basketRetryTimerId); S.basketRetryTimerId = null; }
     S.churnerInlineReviewed = false;
     S.churnerInlineReviewActive = false;
     S.churnerCloseAfterBasketResult = false;
-
-    // Close any review/result/order sheet that could contain the previous broker state.
-    var pr = ge('panic-result-modal');
-    if(pr) pr.classList.remove('on');
-
-    var sh = ge('sh');
-    if(sh) sh.classList.remove('open');
-
-    var bd = ge('bd');
-    if(bd) bd.classList.remove('on');
-
+    var pr = ge('panic-result-modal'); if(pr) pr.classList.remove('on');
+    var sh = ge('sh'); if(sh) sh.classList.remove('open');
+    var bd = ge('bd'); if(bd) bd.classList.remove('on');
     if(typeof resetPanicModalActions === 'function') resetPanicModalActions();
     if(typeof paintBasketControls === 'function') paintBasketControls();
     if(typeof renderChain === 'function') renderChain();
-
-    toast('Broker changed to ' + (toBroker === 'IBKR' ? 'IBKR' : 'TOS / Schwab') + ' — basket cleared', 2200);
-  }catch(e){
-    console.warn('RIKI broker switch clear guard failed', e);
-    toast('Broker changed — clear basket before firing', 2600);
-  }
+    toast('Broker changed to ' + (toBroker === 'TRADIER' ? 'Tradier' : 'TOS / Schwab') + ' — basket cleared', 2200);
+  }catch(e){ console.warn('RIKI broker switch clear guard failed', e); toast('Broker changed — clear basket before firing', 2600); }
 }
 function rikiRefreshBrokerUi(){
   var mode = rikiGetBrokerMode();
   var schwabBtn = ge('brokerSchwabBtn');
-  var ibkrBtn = ge('brokerIbkrBtn');
-  var ibkrPanel = ge('ibkrPanel');
+  var tradierBtn = ge('brokerTradierBtn');
+  var tradierPanel = ge('tradierPanel');
   if(schwabBtn) schwabBtn.classList.toggle('active', mode === 'SCHWAB');
-  if(ibkrBtn) ibkrBtn.classList.toggle('active', mode === 'IBKR');
-  if(ibkrPanel) ibkrPanel.style.display = mode === 'IBKR' ? 'block' : 'none';
+  if(tradierBtn) tradierBtn.classList.toggle('active', mode === 'TRADIER');
+  if(tradierPanel) tradierPanel.style.display = mode === 'TRADIER' ? 'block' : 'none';
   rikiApplyBrokerAccountUiV5_4();
 }
-
-// RIKI_V7_IBKR_CHAIN_LOADER_ALL_TICKERS_STABLE_QUOTES_V5_4
-// IBKR has one live account in this RiKi setup. Keep Schwab A1/A2 unchanged,
-// but collapse the account UI to a single IBKR account when Broker=IBKR.
 function rikiApplyBrokerAccountUiV5_4(){
-  var isIbkr = rikiGetBrokerMode() === 'IBKR';
-
-  var hdrCols = document.querySelectorAll('.bp-hdr-col');
+  var isTradier = rikiGetBrokerMode() === 'TRADIER';
   var hdrLbls = document.querySelectorAll('.bp-hdr-lbl');
-  if(hdrLbls && hdrLbls[0]) hdrLbls[0].textContent = isIbkr ? 'IBKR Buying Power' : 'A1 Buying Power';
-  if(hdrLbls && hdrLbls[1]) hdrLbls[1].textContent = 'A2 Buying Power';
-  if(hdrCols && hdrCols[1]) hdrCols[1].style.display = isIbkr ? 'none' : '';
-
-  var a1 = ge('a1-block'), a2 = ge('a2-block');
-  var sep = document.querySelector('.ratio-sep');
-  var a1Lbl = a1 ? a1.querySelector('.base-row span') : null;
-  var a2Lbl = a2 ? a2.querySelector('.base-row span') : null;
-  if(a1Lbl) a1Lbl.textContent = isIbkr ? 'IBKR' : 'A1';
-  if(a2Lbl) a2Lbl.textContent = 'A2';
-  if(a2) a2.style.display = isIbkr ? 'none' : '';
-  if(sep) sep.style.display = isIbkr ? 'none' : '';
-
-  var a1Tog = ge('a1-tog'), a2Tog = ge('a2-tog');
-  if(isIbkr){
-    if(a1){ a1.className = 'acct-block'; a1.title = 'IBKR single account U5009644'; }
-    if(a1Tog){ a1Tog.className = 'acct-tog on'; a1Tog.style.pointerEvents = 'none'; a1Tog.title = 'IBKR single account locked on'; }
-    if(a2Tog){ a2Tog.style.pointerEvents = 'none'; }
-    var hdr2 = ge('hdr-bp2'); if(hdr2) hdr2.textContent = '—';
+  if(hdrLbls && hdrLbls[0]) hdrLbls[0].textContent = isTradier ? 'Tradier Buying Power' : 'A1 Buying Power';
+  if(hdrLbls && hdrLbls[1]) hdrLbls[1].textContent = isTradier ? 'Unused' : 'A2 Buying Power';
+  if(isTradier){ var hdr2 = ge('hdr-bp2'); if(hdr2) hdr2.textContent = '—'; }
+  var a1 = ge('a1-block'), a2 = ge('a2-block'), a1Tog = ge('a1-tog'), a2Tog = ge('a2-tog');
+  var a1Lbl = a1 ? a1.querySelector('span') : null;
+  var a2Lbl = a2 ? a2.querySelector('span') : null;
+  if(a1Lbl) a1Lbl.textContent = isTradier ? 'TRADIER' : 'A1';
+  if(a2Lbl) a2Lbl.textContent = isTradier ? '—' : 'A2';
+  if(isTradier){
+    if(typeof S !== 'undefined'){ S.en1 = true; S.en2 = false; }
+    if(a1){ a1.className = 'acct-block'; a1.title = 'Tradier single account'; }
+    if(a2){ a2.className = 'acct-block disabled'; a2.title = 'Tradier uses one account in RiKi V11'; }
+    if(a1Tog){ a1Tog.className = 'acct-tog on'; a1Tog.style.pointerEvents = 'none'; a1Tog.title = 'Tradier single account locked on'; }
+    if(a2Tog){ a2Tog.className = 'acct-tog'; a2Tog.style.pointerEvents = 'none'; a2Tog.title = 'Tradier single-account mode'; }
   } else {
     if(a1){ a1.title = ''; a1.className = 'acct-block ' + (S.en1 ? '' : 'disabled'); }
     if(a2){ a2.title = ''; a2.className = 'acct-block ' + (S.en2 ? '' : 'disabled'); }
     if(a1Tog){ a1Tog.style.pointerEvents = ''; a1Tog.title = ''; a1Tog.className = 'acct-tog ' + (S.en1 ? 'on' : ''); }
     if(a2Tog){ a2Tog.style.pointerEvents = ''; a2Tog.title = ''; a2Tog.className = 'acct-tog ' + (S.en2 ? 'on' : ''); }
   }
-
-  var aq2 = ge('aq2-col');
-  if(aq2) aq2.style.display = isIbkr ? 'none' : '';
 }
-
-function rikiIbkrReadOnlyChainToastV5_4(){
-  haptic();
-  toast('IBKR chain is read-only in V5.4. Any typed ticker can load chain/quotes; order firing remains blocked until micro-STO gate.', 3600);
-}
-function rikiSetIbkrStatusText(text){
-  var el = ge('ibkrStatusLine');
-  if(el) el.textContent = text || 'No IBKR status.';
-}
-function rikiSetIbkrDiagCell_(id, value, cls){
-  var el = ge(id);
-  if(!el) return;
-  el.textContent = value === undefined || value === null || value === '' ? 'n/a' : String(value);
-  el.title = el.textContent;
-  el.className = 'ibkr-diag-v ' + (cls || 'dim');
-}
-// RIKI_V7_IBKR_DISPLAY_LABEL_FRONTEND_V1
-// Display-only label helper. Does NOT enable IBKR order routing.
-function rikiIbkrDisplayLabel_(res){
-  res = res || {};
-  var cfg = res.config || {};
-  return cfg.displayLabel || res.displayLabel || res.modeDisplay || cfg.modeDisplay || cfg.displayMode || res.displayMode || cfg.mode || res.mode || 'unknown';
-}
-
-function rikiApplyIbkrDiagnostics_(res){
+function rikiSetTradierStatusText(txt){ var el = ge('tradierStatusLine'); if(el) el.textContent = String(txt || ''); }
+function rikiSetTradierDiagCell_(id, val, cls){ var el = ge(id); if(!el) return; el.textContent = String(val === undefined || val === null || val === '' ? '—' : val); el.className = 'tradier-diag-v ' + (cls || 'dim'); }
+function rikiApplyTradierDiagnostics_(res){
   res = res || {};
   var cfg = res.config || res;
   var readOnly = cfg.readOnly !== false;
-  var placeholder = !!(cfg.placeholder || cfg.isPlaceholder || cfg.bridgeStatus === 'PLACEHOLDER');
-  var bridgeOk = !!(cfg.bridgeUrlConfigured || cfg.hasBridgeUrl) && !placeholder;
-  var tokenOk = !!(cfg.hasBridgeToken || cfg.tokenPresent);
-  var adapter = cfg.adapterVersion || res.adapterVersion || 'V2.1';
-
-  var displayModeLabel = rikiIbkrDisplayLabel_(res);
-  rikiSetIbkrDiagCell_('ibkrDiagMode', displayModeLabel, (String(displayModeLabel).indexOf('ORDERS BLOCKED') >= 0 ? 'good' : 'warn'));
-  rikiSetIbkrDiagCell_('ibkrDiagReadonly', readOnly ? 'ON' : 'OFF', readOnly ? 'good' : 'bad');
-  rikiSetIbkrDiagCell_('ibkrDiagBridge', bridgeOk ? 'configured' : (placeholder ? 'placeholder' : 'missing'), bridgeOk ? 'good' : 'warn');
-  rikiSetIbkrDiagCell_('ibkrDiagToken', tokenOk ? 'set' : 'missing', tokenOk ? 'good' : 'warn');
-  rikiSetIbkrDiagCell_('ibkrDiagOrders', 'blocked', 'bad');
-  rikiSetIbkrDiagCell_('ibkrDiagAdapter', adapter.replace('RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1','V2.1'), 'dim');
-
-  var pill = ge('ibkrLockPill');
-  if(pill){
-    pill.textContent = readOnly ? 'READ-ONLY' : 'ORDER LOCK?';
-    pill.className = readOnly ? 'ibkr-lock-pill' : 'ibkr-lock-pill bad';
-  }
+  var ordersUnlocked = !!cfg.ordersUnlocked;
+  rikiSetTradierDiagCell_('tradierDiagMode', cfg.mode || res.mode || '—', (cfg.mode === 'live' ? 'warn' : 'good'));
+  rikiSetTradierDiagCell_('tradierDiagReadonly', readOnly ? 'ON' : 'OFF', readOnly ? 'good' : 'warn');
+  rikiSetTradierDiagCell_('tradierDiagAccount', cfg.accountConfigured ? (cfg.maskedAccountId || 'set') : 'placeholder', cfg.accountConfigured ? 'good' : 'warn');
+  rikiSetTradierDiagCell_('tradierDiagToken', cfg.hasAccessToken ? 'set' : 'missing', cfg.hasAccessToken ? 'good' : 'warn');
+  rikiSetTradierDiagCell_('tradierDiagOrders', ordersUnlocked ? 'enabled' : 'locked', ordersUnlocked ? 'warn' : 'bad');
+  rikiSetTradierDiagCell_('tradierDiagAdapter', 'V11', 'dim');
+  var pill = ge('tradierLockPill');
+  if(pill){ pill.textContent = ordersUnlocked ? 'LIVE ORDERS ON' : (readOnly ? 'READ-ONLY' : 'ROUTING OFF'); pill.className = ordersUnlocked ? 'tradier-lock-pill bad' : (readOnly ? 'tradier-lock-pill' : 'tradier-lock-pill warn'); }
 }
-function rikiBackendGetJson_(action, params){
-  params = params || {};
-  var qs = new URLSearchParams();
-  qs.set('action', action);
-  Object.keys(params).forEach(function(k){ qs.set(k, String(params[k])); });
-  qs.set('_', String(Date.now()));
-  return fetch(BACKEND + '?' + qs.toString(), { method:'GET', cache:'no-store' })
-    .then(function(r){ return r.text(); })
-    .then(function(raw){
-      try { return JSON.parse(raw); }
-      catch(e){ return { success:false, ok:false, error:'Backend returned non-JSON response: ' + e.message, raw:String(raw || '').substring(0,240) }; }
-    });
-}
-function rikiIbkrLines_(title, res){
+function rikiTradierLines_(title, res){
   res = res || {};
-  var cfg = res.config || res;
-  var checks = res.checks || {};
-  var lines = [];
-  lines.push(title);
-  lines.push('Adapter: ' + (res.adapterVersion || cfg.adapterVersion || 'RIKI_V7_IBKR_BRIDGE_CONTRACT_DIAGNOSTICS_READONLY_V1'));
-  lines.push('Mode: ' + rikiIbkrDisplayLabel_(res));
-  lines.push('Read-only lock: ' + ((cfg.readOnly !== false) ? 'ON' : 'OFF'));
-  lines.push('Order routing: BLOCKED');
-  if(checks.bridgeUrlConfigured !== undefined) lines.push('Bridge URL configured: ' + (checks.bridgeUrlConfigured ? 'YES' : 'NO'));
-  else if(cfg.bridgeUrlConfigured !== undefined) lines.push('Bridge URL configured: ' + (cfg.bridgeUrlConfigured ? 'YES' : 'NO'));
-  if(cfg.placeholder || cfg.isPlaceholder) lines.push('Bridge URL: PLACEHOLDER');
-  if(cfg.bridgeStatus || res.bridgeStatus) lines.push('Bridge status: ' + (cfg.bridgeStatus || res.bridgeStatus));
-  if(res.error || res.message) lines.push('Reason: ' + (res.error || res.message));
-  if(res.httpCode) lines.push('HTTP: ' + res.httpCode);
-  if(res.accountId) lines.push('Account: ' + res.accountId);
-  if(res.orderId || res.order_id || res.ibkrOrderId) lines.push('OrderId: ' + (res.orderId || res.order_id || res.ibkrOrderId));
-  if(res.orderStatus || res.order_status || res.status) lines.push('Order status: ' + (res.orderStatus || res.order_status || res.status));
-  if(res.readyForOneOrderTest !== undefined) lines.push('Harness ready: ' + (res.readyForOneOrderTest ? 'YES' : 'NO'));
-  if(res.testHarnessEnabled !== undefined) lines.push('Test harness: ' + (res.testHarnessEnabled ? 'ON' : 'OFF'));
-  if(res.requiresReply) lines.push('IBKR reply required: YES — not auto-confirmed');
-  if(res.accountCount !== undefined) lines.push('Accounts: ' + res.accountCount);
-  if(res.positionsCount !== undefined) lines.push('Positions: ' + res.positionsCount);
-  if(res.ordersCount !== undefined) lines.push('Orders: ' + res.ordersCount);
-  if(res.asOf || res.checkedAtEt) lines.push('As of: ' + (res.asOf || res.checkedAtEt));
-  return lines.join('\n');
+  var cfg = res.config || {};
+  var lines = [title || 'Tradier'];
+  if(res.message) lines.push(res.message);
+  if(res.error) lines.push('Error: ' + res.error);
+  if(cfg.mode) lines.push('Mode: ' + cfg.mode);
+  if(cfg.maskedAccountId) lines.push('Account: ' + cfg.maskedAccountId);
+  lines.push('Read-only: ' + (cfg.readOnly !== false ? 'ON' : 'OFF'));
+  lines.push('Orders: ' + (cfg.ordersUnlocked ? 'ENABLED' : 'LOCKED'));
+  if(res.orderId) lines.push('OrderId: ' + res.orderId);
+  if(res.status) lines.push('Status: ' + res.status);
+  if(res.filledQty !== undefined) lines.push('Filled: ' + res.filledQty + ' · Remaining: ' + (res.remainingQty || 0));
+  return lines.join('\\n');
 }
-function rikiRunIbkrGet_(action, label){
-  rikiSetIbkrStatusText('Checking IBKR ' + label + '...');
-  try{ if(typeof S !== 'undefined') S.ibkrLastAction = action; }catch(e){}
-  return rikiBackendGetJson_(action)
-    .then(function(res){
-      try{ if(typeof S !== 'undefined'){ S.ibkrStatus = res; if(action === 'ibkrDiagnostics' || action === 'ibkrAudit') S.ibkrDiagnostics = res; } }catch(e){}
-      rikiApplyIbkrDiagnostics_(res);
-      var ok = !!(res && res.success !== false && res.ok !== false);
-      var title = ok ? ('IBKR ' + label + ': READY') : ('IBKR ' + label + ': NOT READY');
-      rikiSetIbkrStatusText(rikiIbkrLines_(title, res));
-      console.log('RIKI IBKR ' + label.toUpperCase(), res);
-      return res;
-    })
-    .catch(function(err){
-      var msg = err && err.message ? err.message : String(err || 'Unknown error');
-      rikiSetIbkrStatusText('IBKR ' + label + ' backend call failed.\n' + msg);
-      return { success:false, ok:false, error:msg };
-    });
-}
-function rikiCheckIbkrDiagnostics(){ return rikiRunIbkrGet_('ibkrDiagnostics', 'diagnostics'); }
-function rikiCheckIbkrStatus(){ return rikiRunIbkrGet_('ibkrStatus', 'status'); }
-function rikiCheckIbkrAccounts(){ return rikiRunIbkrGet_('ibkrAccounts', 'accounts'); }
-function rikiCheckIbkrPositions(){ return rikiRunIbkrGet_('ibkrPositions', 'positions'); }
-
-function rikiCheckIbkrOrders(){ return rikiRunIbkrGet_('ibkrOrders', 'orders'); }
-
-/* RIKI_V7_IBKR_FRONTEND_ONLY_LIVE_TEST_GATE_V4
-   Isolated one-order route only for BUY 1 STK/OPT. No Basket/STO/BTC production wiring. */
-function rikiBackendPostJson_(action, payload){
-  var body = new URLSearchParams();
-  body.set('payload', JSON.stringify(payload || {}));
-  body.set('_', String(Date.now()));
-  return fetch(BACKEND + '?action=' + encodeURIComponent(action), {
-    method:'POST',
-    cache:'no-store',
-    headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
-    body: body.toString()
-  }).then(function(r){ return r.text(); }).then(function(raw){
-    try { return JSON.parse(raw); }
-    catch(e){ return { success:false, ok:false, action:action, error:'Backend returned non-JSON response: ' + e.message, raw:String(raw || '').substring(0,240) }; }
+function rikiRunTradierGet_(action, label){
+  rikiSetTradierStatusText('Checking Tradier ' + (label || action) + '...');
+  return rikiBackendGetJson_(action).then(function(res){
+    try{ if(typeof S !== 'undefined'){ S.tradierStatus = res; if(action === 'tradierDiagnostics') S.tradierDiagnostics = res; } }catch(e){}
+    rikiApplyTradierDiagnostics_(res);
+    rikiSetTradierStatusText(rikiTradierLines_('Tradier ' + (label || action), res));
+    return res;
+  }).catch(function(err){
+    rikiSetTradierStatusText('Tradier ' + (label || action) + ' failed: ' + (err.message || String(err)));
   });
 }
-function rikiIbkrConfirmText_(){ return 'I_UNDERSTAND_THIS_IS_LIVE_IBKR_ONE_ORDER_TEST'; }
-function rikiIbkrNormExpiry_(v){
-  v = String(v || '').trim();
-  var m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if(m) return m[1] + m[2] + m[3];
-  m = v.match(/^(\d{8})$/);
-  return m ? m[1] : '';
-}
-function rikiIbkrTestPayload_(includeOrderId){
-  var assetEl = ge('ibkrTestAssetType'), symEl = ge('ibkrTestSymbol'), priceEl = ge('ibkrTestPrice'), acctEl = ge('ibkrTestAccount');
-  var expEl = ge('ibkrTestExpiry'), rightEl = ge('ibkrTestRight'), strikeEl = ge('ibkrTestStrike'), conidEl = ge('ibkrTestConid');
-  var assetType = assetEl && assetEl.value ? assetEl.value.trim().toUpperCase() : 'STK';
-  var sym = symEl && symEl.value ? symEl.value.trim().toUpperCase() : 'AAPL';
+function rikiCheckTradierDiagnostics(){ return rikiRunTradierGet_('tradierDiagnostics', 'diagnostics'); }
+function rikiSetupTradierPlaceholders(){ return rikiRunTradierGet_('tradierSetupPlaceholders', 'setup'); }
+function rikiCheckTradierBalances(){ return rikiRunTradierGet_('tradierBalances', 'balances'); }
+function rikiCheckTradierPositions(){ return rikiRunTradierGet_('tradierPositions', 'positions'); }
+function rikiCheckTradierOrders(){ return rikiRunTradierGet_('tradierOrders', 'orders'); }
+function rikiTradierConfirmText_(){ return 'I_UNDERSTAND_THIS_IS_LIVE_TRADIER_ONE_ORDER_TEST'; }
+function rikiTradierPayload_(includeOrderId){
+  var symEl = ge('tradierTestSymbol'), priceEl = ge('tradierTestPrice'), expEl = ge('tradierTestExpiry'), rightEl = ge('tradierTestRight'), strikeEl = ge('tradierTestStrike');
   var p = {
-    accountId: acctEl && acctEl.value ? acctEl.value.trim() : 'U5009644',
-    symbol: sym,
-    underlying: sym,
-    assetType: assetType,
-    side: 'BUY',
-    quantity: 1,
-    orderType: 'LMT',
-    price: Number(priceEl && priceEl.value ? priceEl.value : (assetType === 'OPT' ? 0.01 : 1)),
-    tif: 'DAY',
-    outsideRth: false,
-    allowWarningAutoConfirm: !!(ge('ibkrTestAllowKnownWarning') && ge('ibkrTestAllowKnownWarning').checked),
-    confirmText: rikiIbkrConfirmText_()
+    ticker: symEl && symEl.value ? symEl.value.trim().toUpperCase() : 'GOOGL',
+    expiry: expEl && expEl.value ? expEl.value.trim() : '',
+    right: rightEl && rightEl.value ? rightEl.value : 'P',
+    strike: strikeEl && strikeEl.value ? Number(strikeEl.value) : 0,
+    price: priceEl && priceEl.value ? Number(priceEl.value) : 0.13,
+    side: 'sell_to_open',
+    quantity: 1
   };
-  if(assetType === 'OPT'){
-    p.expiry = rikiIbkrNormExpiry_(expEl && expEl.value ? expEl.value : '');
-    p.right = rightEl && rightEl.value ? rightEl.value.trim().toUpperCase() : 'C';
-    p.strike = Number(strikeEl && strikeEl.value ? strikeEl.value : 0);
-    var conid = Number(conidEl && conidEl.value ? conidEl.value : 0);
-    if(conid > 0) p.conid = conid;
-  }
   if(includeOrderId){
     var oid = '';
-    try{ oid = (S.ibkrOneOrderTest && S.ibkrOneOrderTest.orderId) || ''; }catch(e){}
-    if(!oid) oid = prompt('Enter IBKR test orderId to check/cancel:', '') || '';
-    p.orderId = String(oid || '').trim();
+    try{ oid = (S.tradierOneOrderTest && S.tradierOneOrderTest.orderId) || ''; }catch(e){}
+    p.orderId = oid;
   }
   return p;
 }
-function rikiIbkrSetTestLast_(res){
-  var el = ge('ibkrTestLast');
-  if(!el) return;
-  var orderId = (res && (res.orderId || res.order_id || res.ibkrOrderId)) || '';
-  var status = (res && (res.orderStatus || res.order_status || res.status || res.finalStatus)) || '';
-  var line = [];
-  line.push((res && (res.action || 'IBKR test')) + ': ' + ((res && res.success !== false && res.ok !== false) ? 'OK' : 'NOT OK'));
-  if(orderId) line.push('orderId: ' + orderId);
-  if(status) line.push('status: ' + status);
-  if(res && res.replyId) line.push('replyId: ' + res.replyId);
-  if(res && res.requiresReply) line.push('requiresReply: YES — warning not auto-confirmed / second warning blocked');
-  if(res && res.autoConfirm) {
-    try { line.push('autoConfirm: ' + JSON.stringify(res.autoConfirm)); } catch(e) { line.push('autoConfirm: present'); }
-  }
-  if(res && res.finalVerify) {
-    try { line.push('finalVerify: ' + JSON.stringify(res.finalVerify)); } catch(e) { line.push('finalVerify: present'); }
-  }
-  if(res && res.error) line.push('error: ' + res.error);
-  if(res && res.message) line.push('message: ' + res.message);
-  if(res && res.httpCode) line.push('HTTP: ' + res.httpCode);
-  el.textContent = line.join('\n');
+function rikiTradierSetTestLast_(res){
+  var el = ge('tradierTestLast'); if(!el) return;
+  el.textContent = rikiTradierLines_('Tradier result', res || {});
+  var orderId = (res && (res.orderId || res.id)) || '';
+  if(orderId){ S.tradierOneOrderTest = S.tradierOneOrderTest || {}; S.tradierOneOrderTest.orderId = String(orderId); S.tradierOneOrderTest.last = res; }
 }
-function rikiIbkrRememberTestOrder_(res){
-  try{
-    if(typeof S === 'undefined' || !S) return;
-    var oid = (res && (res.orderId || res.order_id || res.ibkrOrderId)) || '';
-    if(!oid && res && Array.isArray(res.data) && res.data[0]) oid = res.data[0].order_id || res.data[0].orderId || '';
-    if(!oid && res && res.detail && Array.isArray(res.detail) && res.detail[0]) oid = res.detail[0].order_id || res.detail[0].orderId || '';
-    if(oid){
-      S.ibkrOneOrderTest = S.ibkrOneOrderTest || {};
-      S.ibkrOneOrderTest.orderId = String(oid);
-      S.ibkrOneOrderTest.last = res;
-    }
-  }catch(e){}
+function rikiTradierTestHarnessAudit(){
+  return rikiBackendGetJson_('tradierTestHarnessAudit').then(function(res){ rikiApplyTradierDiagnostics_(res); rikiTradierSetTestLast_(res); rikiSetTradierStatusText(rikiTradierLines_('Tradier harness audit', res)); return res; });
 }
-function rikiIbkrTestHarnessAudit(){
-  rikiSetIbkrStatusText('Checking IBKR one-order harness audit...');
-  return rikiBackendGetJson_('ibkrTestHarnessAudit').then(function(res){
-    rikiApplyIbkrDiagnostics_(res);
-    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR one-order harness audit: ' + ((res && res.readyForOneOrderTest) ? 'READY' : 'NOT READY'), res));
-    rikiIbkrSetTestLast_(res);
-    console.log('RIKI IBKR TEST HARNESS AUDIT', res);
-    return res;
-  });
+function rikiTradierPreviewOneOrder(){
+  var p = rikiTradierPayload_(false);
+  rikiSetTradierStatusText('Previewing Tradier one-order STO...');
+  return rikiBackendPostJson_('tradierPreviewSingleOptionOrder', p).then(function(res){ rikiApplyTradierDiagnostics_(res); rikiTradierSetTestLast_(res); rikiSetTradierStatusText(rikiTradierLines_('Tradier preview', res)); return res; });
 }
-function rikiIbkrSleep_(ms){ return new Promise(function(resolve){ setTimeout(resolve, ms || 1000); }); }
-function rikiIbkrCompactOrderState_(res){
-  if(!res) return '';
-  var parts=[];
-  var d0 = (res.data && res.data[0]) || {};
-  var oid = res.orderId || res.order_id || d0.order_id || d0.orderId || '';
-  var st = res.orderStatus || res.order_status || res.status || d0.order_status || d0.status || '';
-  var desc = res.orderStatusDescription || res.order_status_description || d0.order_status_description || '';
-  var fills = res.sizeAndFills || res.size_and_fills || d0.size_and_fills || d0.sizeAndFills || '';
-  var cum = res.cum_fill || res.cumFill || d0.cum_fill || d0.cumFill || '';
-  var err = res.error || '';
-  if(oid) parts.push('orderId=' + oid);
-  if(st) parts.push('status=' + st);
-  if(desc) parts.push(desc);
-  if(fills) parts.push('fills=' + fills);
-  if(cum !== '') parts.push('cum=' + cum);
-  if(err) parts.push('error=' + err);
-  return parts.join(' · ');
+function rikiTradierPlaceOneOrder(){
+  var phrase = prompt('LIVE Tradier one-order STO test. Type exact confirmation phrase:\\n\\n' + rikiTradierConfirmText_(), '');
+  if(String(phrase || '').trim() !== rikiTradierConfirmText_()){ toast('Tradier live order aborted — confirmation mismatch', 2600); return; }
+  var p = rikiTradierPayload_(false); p.confirmText = phrase.trim();
+  rikiSetTradierStatusText('Placing one live Tradier STO order...');
+  return rikiBackendPostJson_('tradierPlaceSingleOptionOrder', p).then(function(res){ rikiApplyTradierDiagnostics_(res); rikiTradierSetTestLast_(res); rikiSetTradierStatusText(rikiTradierLines_('Tradier live place', res)); return res; });
 }
-async function rikiIbkrLiveOneOrderAutoCancelTest(){
-  if(rikiGetBrokerMode() !== 'IBKR') { alert('Switch Broker to IBKR first.'); return; }
-  var phrase = prompt('LIVE IBKR TEST ORDER WITH AUTO-CANCEL. Type exact confirmation phrase:\n\n' + rikiIbkrConfirmText_(), '');
-  if(String(phrase || '').trim() !== rikiIbkrConfirmText_()) { toast('IBKR test order aborted — confirmation mismatch', 2600); return; }
-  var p = rikiIbkrTestPayload_(false);
+function rikiTradierTestOrderStatus(){
+  var p = rikiTradierPayload_(true); if(!p.orderId){ alert('No Tradier test orderId known yet.'); return; }
+  return rikiBackendPostJson_('tradierTestOrderStatus', p).then(function(res){ rikiApplyTradierDiagnostics_(res); rikiTradierSetTestLast_(res); rikiSetTradierStatusText(rikiTradierLines_('Tradier order status', res)); return res; });
+}
+function rikiTradierTestCancelOrder(){
+  var p = rikiTradierPayload_(true); if(!p.orderId){ alert('No Tradier test orderId known yet.'); return; }
+  var phrase = prompt('Cancel live Tradier test order. Type exact confirmation phrase:\\n\\n' + rikiTradierConfirmText_(), '');
+  if(String(phrase || '').trim() !== rikiTradierConfirmText_()){ toast('Tradier cancel aborted — confirmation mismatch', 2600); return; }
   p.confirmText = phrase.trim();
-  p.allowWarningAutoConfirm = true;
-  if(p.assetType !== 'STK' && p.assetType !== 'OPT') { alert('Asset type must be STK or OPT.'); return; }
-  if(p.symbol !== 'AAPL' && p.symbol !== 'SPY') { alert('Harness allowlist defaults to AAPL or SPY.'); return; }
-  if(p.assetType === 'STK' && (Number(p.price) <= 0 || Number(p.price) > 5)) { alert('STK test price must be between $0.01 and $5.00.'); return; }
-  if(p.assetType === 'OPT') {
-    if(!p.expiry || (p.right !== 'C' && p.right !== 'P') || !p.strike || p.strike <= 0) { alert('OPT test requires underlying, expiry YYYYMMDD, C/P, and strike.'); return; }
-    if(Number(p.price) <= 0 || Number(p.price) > 0.05) { alert('OPT test price must be between $0.01 and $0.05 by default.'); return; }
-  }
-  var log=[];
-  function show(msg, obj){
-    log.push(msg + (obj ? ('\n' + rikiIbkrCompactOrderState_(obj)) : ''));
-    var el=ge('ibkrTestLast'); if(el) el.textContent = log.join('\n\n');
-    rikiSetIbkrStatusText(log[log.length-1]);
-  }
-  show('Submitting IBKR one-order test with known-warning auto-confirm...');
-  try{
-    var submit = await rikiBackendPostJson_('ibkrLiveOneOrderTest', p);
-    rikiApplyIbkrDiagnostics_(submit);
-    rikiIbkrRememberTestOrder_(submit);
-    rikiIbkrSetTestLast_(submit);
-    show('Submit response', submit);
-    if(submit && submit.requiresReply){
-      show('STOP: IBKR still requires reply. Unknown/second warning blocked. No auto-cancel because there is no real orderId.', submit);
-      return submit;
-    }
-    var oid = (submit && (submit.orderId || submit.order_id || submit.ibkrOrderId)) || '';
-    if(!oid && submit && Array.isArray(submit.data) && submit.data[0]) oid = submit.data[0].order_id || submit.data[0].orderId || '';
-    oid = String(oid || '').trim();
-    if(!oid){ show('No real orderId returned; nothing to cancel.', submit); return submit; }
-    S.ibkrOneOrderTest = S.ibkrOneOrderTest || {}; S.ibkrOneOrderTest.orderId = oid; S.ibkrOneOrderTest.last = submit;
-    show('Real orderId captured. Sending cancel now: ' + oid);
-    var cancelPayload = rikiIbkrTestPayload_(false);
-    cancelPayload.orderId = oid;
-    cancelPayload.confirmText = phrase.trim();
-    var cancel = await rikiBackendPostJson_('ibkrTestCancelOrder', cancelPayload);
-    show('Cancel response', cancel);
-    var finalVerify = null;
-    for(var i=1;i<=30;i++){
-      await rikiIbkrSleep_(2000);
-      var statusPayload = rikiIbkrTestPayload_(false);
-      statusPayload.orderId = oid;
-      statusPayload.confirmText = phrase.trim();
-      var stat = await rikiBackendPostJson_('ibkrTestOrderStatus', statusPayload);
-      finalVerify = stat;
-      show('Poll ' + i + '/30', stat);
-      var st = String((stat && (stat.orderStatus || stat.order_status || stat.status || (stat.data && stat.data[0] && stat.data[0].order_status))) || '').toUpperCase();
-      var err = String((stat && stat.error) || '').toUpperCase();
-      // Do NOT stop on PendingCancel. Keep polling until a terminal cancel/inactive/not-found state.
-      var terminalCancel = st.indexOf('CANCELLED') >= 0 || st.indexOf('CANCELED') >= 0 || st.indexOf('INACTIVE') >= 0 || err.indexOf('NOT FOUND') >= 0 || err.indexOf('DOESN') >= 0;
-      if(terminalCancel) break;
-    }
-    var out = {ok:true, action:'ibkrLiveOneOrderAutoCancelTest', submit:submit, cancel:cancel, finalVerify:finalVerify, orderId:oid};
-    show('AUTO-CANCEL TEST DONE', out);
-    return out;
-  }catch(e){
-    show('AUTO-CANCEL TEST ERROR: ' + (e && e.message ? e.message : String(e)));
-    throw e;
-  }
-}
-function rikiIbkrLiveOneOrderTest(){
-  alert('Direct submit is disabled in V4 frontend test gate. Use Submit + Cancel + Poll so every accepted order is immediately cancelled and polled from RiKi.');
-  return rikiIbkrLiveOneOrderAutoCancelTest();
-}
-function rikiIbkrTestOrderStatus(){
-  var p = rikiIbkrTestPayload_(true);
-  if(!p.orderId){ alert('No test orderId known yet.'); return; }
-  rikiSetIbkrStatusText('Checking isolated IBKR test order status...');
-  return rikiBackendPostJson_('ibkrTestOrderStatus', p).then(function(res){
-    rikiApplyIbkrDiagnostics_(res);
-    rikiIbkrSetTestLast_(res);
-    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR test order status: ' + ((res && res.success !== false && res.ok !== false) ? 'READY' : 'NOT READY'), res));
-    console.log('RIKI IBKR TEST ORDER STATUS', res);
-    return res;
-  });
-}
-function rikiIbkrTestCancelOrder(){
-  var p = rikiIbkrTestPayload_(true);
-  if(!p.orderId){ alert('No test orderId known yet.'); return; }
-  var phrase = prompt('Cancel isolated IBKR test order. Type exact confirmation phrase:\n\n' + rikiIbkrConfirmText_(), '');
-  if(String(phrase || '').trim() !== rikiIbkrConfirmText_()) { toast('IBKR cancel aborted — confirmation mismatch', 2600); return; }
-  p.confirmText = phrase.trim();
-  rikiSetIbkrStatusText('Cancelling isolated IBKR test order...');
-  return rikiBackendPostJson_('ibkrTestCancelOrder', p).then(function(res){
-    rikiApplyIbkrDiagnostics_(res);
-    rikiIbkrSetTestLast_(res);
-    rikiSetIbkrStatusText(rikiIbkrLines_('IBKR test cancel: ' + ((res && res.success !== false && res.ok !== false) ? 'SENT/READY' : 'NOT READY'), res));
-    console.log('RIKI IBKR TEST CANCEL', res);
-    return res;
-  });
+  return rikiBackendPostJson_('tradierTestCancelOrder', p).then(function(res){ rikiApplyTradierDiagnostics_(res); rikiTradierSetTestLast_(res); rikiSetTradierStatusText(rikiTradierLines_('Tradier cancel', res)); return res; });
 }
 
-function rikiBlockIbkrOrdersReadOnlyV1(actionName){
-  if(rikiGetBrokerMode() !== 'IBKR') return false;
-  alert(
-    'IBKR is read-only in this version.\n\n' +
-    'Blocked action: ' + (actionName || 'Order action') + '\n\n' +
-    'Switch Broker to TOS / Schwab to use current live RiKi order firing.\n\n' +
-    'IBKR PROD/live-account order routing remains blocked until the isolated one-order test harness, exact order ID/cancel/verify, BTC micro-test, and STO micro-test are validated.'
-  );
+function rikiTradierReadOnlyChainToastV5_4(){
+  toast('Tradier normal row fire is locked. Use Basket selection or the one-order harness after approval.', 3000);
+}
+function rikiBlockTradierOrdersIfLockedV11_(actionName){
+  if(rikiGetBrokerMode() !== 'TRADIER') return false;
+  var cfg = (S.tradierDiagnostics && S.tradierDiagnostics.config) || (S.tradierStatus && S.tradierStatus.config) || null;
+  if(cfg && cfg.ordersUnlocked) return false;
+  alert('Tradier live order routing is locked in this build.\\n\\nBlocked action: ' + (actionName || 'Order action') + '\\n\\nRun Tradier Diagnostics after account approval. Live orders require readOnly=OFF, orderRoutingEnabled=ON, and liveOrdersEnabled=ON in TRADIER_CONFIG_JSON.');
   return true;
 }
 document.addEventListener('DOMContentLoaded', function(){
   rikiRefreshBrokerUi();
-  if(rikiGetBrokerMode() === 'IBKR') rikiCheckIbkrDiagnostics();
+  if(rikiGetBrokerMode() === 'TRADIER') rikiCheckTradierDiagnostics();
 });
+
 
 function panicFetchRun_(run){
   return postBackendForm('panicBtc', {
@@ -2991,9 +2696,14 @@ function basketSelectedList(){
 function buildBasketPayloadFromContracts(contracts, existingRows, keepBasketId){
   syncBasketPrices();
 
+  var brokerMode = rikiGetBrokerMode();
   var accounts = [];
-  if(S.en1) accounts.push('5260');
-  if(S.en2) accounts.push('4987');
+  if(brokerMode === 'TRADIER') {
+    accounts.push('TRADIER');
+  } else {
+    if(S.en1) accounts.push('5260');
+    if(S.en2) accounts.push('4987');
+  }
 
   if(accounts.length === 0) throw new Error('Turn on Account 1, Account 2, or both.');
   if(Number(S.basketCallPrice || 0) <= 0 || Number(S.basketPutPrice || 0) <= 0) throw new Error('Call and Put prices must be greater than zero.');
@@ -3032,6 +2742,7 @@ function buildBasketPayloadFromContracts(contracts, existingRows, keepBasketId){
   }
 
   return {
+    broker: brokerMode,
     basketId: basketId,
     ticker: S.ticker,
     expiry: expDate || '',
@@ -3152,7 +2863,7 @@ function showBasketRunning(payload){
 }
 
 function basketFireCurrent(){
-  if(rikiBlockIbkrOrdersReadOnlyV1('Basket Fire')) return;
+  if(rikiBlockTradierOrdersIfLockedV11_('Basket Fire')) return;
   var payload = S.basketPendingPayload;
   if(!payload || !payload.rows || !payload.rows.length){
     alert('No basket payload ready.');
@@ -3899,7 +3610,7 @@ function abortPanicResume() {
 }
 
 function continuePanicNextRound() {
-  if(rikiBlockIbkrOrdersReadOnlyV1('Panic BTC Continue')) return;
+  if(rikiBlockTradierOrdersIfLockedV11_('Panic BTC Continue')) return;
   if (!panicLastRun) {
     alert('No saved panic context found.');
     return;
@@ -3972,7 +3683,7 @@ function continuePanicNextRound() {
 }
 // EMERGENCY FRONTEND CONTROLLER FUNCTION
 function triggerPanicClose() {
-  if(rikiBlockIbkrOrdersReadOnlyV1('Quick BTC')) return;
+  if(rikiBlockTradierOrdersIfLockedV11_('Quick BTC')) return;
   var btn = ge('panic-close-btn');
 
   var rows;
@@ -4095,9 +3806,9 @@ function triggerPanicClose() {
 }
 
 function updateRatioPreview(){
-  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR'){
-    var qIbkr = calcQty(S.base1, true);
-    ge('ratio-preview').innerHTML='IBKR: <b>'+qIbkr+'</b> · U5009644';
+  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
+    var qTradier = calcQty(S.base1, true);
+    ge('ratio-preview').innerHTML='Tradier: <b>'+qTradier+'</b> · single acct';
     rikiApplyBrokerAccountUiV5_4();
     return;
   }
@@ -4119,8 +3830,8 @@ function onBaseInput(acct,v){
 }
 function toggleAcct(acct){
   haptic();
-  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR'){
-    toast('IBKR uses single account U5009644 here — A1/A2 toggles are disabled.', 3000);
+  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
+    toast('Tradier uses one account here — A1/A2 toggles are disabled.', 3000);
     rikiApplyBrokerAccountUiV5_4();
     return;
   }
@@ -4489,8 +4200,8 @@ function doFetch(firstTime, opts){
       ge('market-pill').textContent = d.marketOpen ? 'LIVE' : 'CLOSED';
       ge('market-pill').className = d.marketOpen ? 'live' : 'closed';
 
-      if(rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR'){
-        ge('hdr-bp1').textContent = fmtM(d.bpMap && (d.bpMap['U5009644'] || d.bpMap['IBKR'] || d.bpMap['5260']));
+      if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
+        ge('hdr-bp1').textContent = fmtM(d.bpMap && (d.bpMap['TRADIER'] || d.bpMap['5260']));
         ge('hdr-bp2').textContent = '—';
       } else {
         ge('hdr-bp1').textContent = fmtM(d.bpMap && d.bpMap['5260']);
@@ -4661,11 +4372,11 @@ function renderRow(o,type){
   var isSelected = !!(S.basketSelected && S.basketSelected[basketSymbolKey(o.symbol)]);
   var trCls = isSelected ? ' class="basket-row-selected '+cl+'"' : '';
   var btnCls = 'sto '+cl+(isSelected ? ' sel' : '');
-  var isIbkrReadOnlyChain = rikiGetBrokerMode() === 'IBKR';
-  var btnText = S.basketMode ? (isSelected ? '✓' : '+') : (isIbkrReadOnlyChain ? 'RO' : defPrice.toFixed(2));
+  var isTradierReadOnlyChain = rikiGetBrokerMode() === 'TRADIER';
+  var btnText = S.basketMode ? (isSelected ? '✓' : '+') : (isTradierReadOnlyChain ? 'RO' : defPrice.toFixed(2));
   var btnAction = S.basketMode
     ? 'basketToggleSymbol(\''+cl+'\',\''+sKey+'\')'
-    : (isIbkrReadOnlyChain ? 'rikiIbkrReadOnlyChainToastV5_4()' : 'openOrderSheet(\''+cl+'\',\''+sKey+'\')');
+    : (isTradierReadOnlyChain ? 'rikiTradierReadOnlyChainToastV5_4()' : 'openOrderSheet(\''+cl+'\',\''+sKey+'\')');
 
   return '<tr'+trCls+' data-opt-symbol="'+basketEsc(o.symbol)+'" data-opt-type="'+type+'">'+
     '<td style="font-weight:700;color:var(--'+(cl==='c'?'call':'put')+')">$'+fmtStrike(o.strike)+'</td>'+
@@ -4752,7 +4463,7 @@ function openOrderSheet(type,sKey){
   ge('st-exp-lbl').textContent=expDate;
   ge('st-mid').textContent='Mid: $'+(o.mid).toFixed(2);
   
-  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR'){
+  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
     S.qtyA1=calcQty(S.base1,true);
     S.qtyA2=0;
   } else {
@@ -4760,7 +4471,7 @@ function openOrderSheet(type,sKey){
     S.qtyA2=calcQty(S.base2,S.en2);
   }
   ge('aq1').value=S.qtyA1; ge('aq2').value=S.qtyA2;
-  ge('aq1-col').className='aqcol '+((rikiGetBrokerMode && rikiGetBrokerMode() === 'IBKR') || S.en1?'':'off');
+  ge('aq1-col').className='aqcol '+((rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER') || S.en1?'':'off');
   ge('aq2-col').className='aqcol '+(S.en2?'':'off');
   rikiApplyBrokerAccountUiV5_4();
   
@@ -4782,7 +4493,11 @@ function updateSheetCalcs(){
   ge('st-exp-val').textContent=fmtM(totalCredit);
   ge('st-exp-sub').textContent=totalContracts+' contract'+(totalContracts===1?'':'s')+' total @ $'+S.price.toFixed(2);
   
-  ge('bp1').textContent=fmtM(S.bpMap['5260']); ge('bp2').textContent=fmtM(S.bpMap['4987']);
+  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
+    ge('bp1').textContent=fmtM(S.bpMap['TRADIER'] || S.bpMap['5260']); ge('bp2').textContent='—';
+  } else {
+    ge('bp1').textContent=fmtM(S.bpMap['5260']); ge('bp2').textContent=fmtM(S.bpMap['4987']);
+  }
 }
 
 function adjAQ(acct,amt){
@@ -4810,7 +4525,7 @@ function closeSheet(){ ge('bd').className=''; ge('sh').className=''; clearInterv
 function doBack(){ haptic(); clearInterval(S.cdTimer); setState('stage'); }
 
 function doStage(){
-  if(rikiBlockIbkrOrdersReadOnlyV1('Normal STO Stage')) return;
+  if(rikiBlockTradierOrdersIfLockedV11_('Normal STO Stage')) return;
   haptic();
   if((S.qtyA1+S.qtyA2)<=0){ alert('Total allocation count must be greater than zero.'); return; }
   if(S.price<=0.01){ alert('Minimum limit price field constraint is $0.02.'); return; }
@@ -4818,15 +4533,23 @@ function doStage(){
   var o=S.activeContract;
   var html='<div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;font-family:var(--mono);">SELL '+S.activeType.toUpperCase()+' '+S.ticker+' $'+fmtStrike(o.strike)+'</div>';
   html+='<div style="display:flex;flex-direction:column;gap:5px;">';
-  if(S.qtyA1>0) html+='<div class="sr"><span class="sk">Account 1 (5260)</span><span class="sv">'+S.qtyA1+' short contract'+(S.qtyA1===1?'':'s')+'</span></div>';
-  if(S.qtyA2>0) html+='<div class="sr"><span class="sk">Account 2 (4987)</span><span class="sv">'+S.qtyA2+' short contract'+(S.qtyA2===1?'':'s')+'</span></div>';
+  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
+    if(S.qtyA1>0) html+='<div class="sr"><span class="sk">Tradier</span><span class="sv">'+S.qtyA1+' short contract'+(S.qtyA1===1?'':'s')+'</span></div>';
+  } else {
+    if(S.qtyA1>0) html+='<div class="sr"><span class="sk">Account 1 (5260)</span><span class="sv">'+S.qtyA1+' short contract'+(S.qtyA1===1?'':'s')+'</span></div>';
+    if(S.qtyA2>0) html+='<div class="sr"><span class="sk">Account 2 (4987)</span><span class="sv">'+S.qtyA2+' short contract'+(S.qtyA2===1?'':'s')+'</span></div>';
+  }
   html+='<div class="sr"><span class="sk">Limit Price Execution</span><span class="sv" style="color:var(--gold); font-family:var(--mono);">$'+S.price.toFixed(2)+'</span></div>';
   var totalContracts=S.qtyA1+S.qtyA2;
   html+='<div class="sr" style="margin-top:4px;padding-top:8px;border-top:1px dashed var(--border);"><span class="sk" style="font-weight:700;color:var(--text);">Net Premium Inflow</span><span class="sv" style="color:var(--call);font-size:14px;">'+fmtM(totalContracts*S.price*100)+'</span></div>';
   html+='</div>';
   ge('sumbox').innerHTML=html;
   
-  ge('cf-bp1').textContent=fmtM(S.bpMap['5260']); ge('cf-bp2').textContent=fmtM(S.bpMap['4987']);
+  if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
+    ge('cf-bp1').textContent=fmtM(S.bpMap['TRADIER'] || S.bpMap['5260']); ge('cf-bp2').textContent='—';
+  } else {
+    ge('cf-bp1').textContent=fmtM(S.bpMap['5260']); ge('cf-bp2').textContent=fmtM(S.bpMap['4987']);
+  }
   
   var btn=ge('cfbtn'); btn.className='cfbtn '+S.activeType;
   S.cdSecs=10; ge('cdb').textContent='10s'; ge('cdf').style.width='100%'; ge('cdf').style.transition='none'; void ge('cdf').offsetWidth; ge('cdf').style.transition='width 10s linear'; ge('cdf').style.width='0%';
@@ -4840,7 +4563,7 @@ function doStage(){
 }
 
 function doFire(){
-  if(rikiBlockIbkrOrdersReadOnlyV1('Normal STO Fire')) return;
+  if(rikiBlockTradierOrdersIfLockedV11_('Normal STO Fire')) return;
   haptic();
   clearInterval(S.cdTimer);
 
@@ -4880,7 +4603,7 @@ function doFire(){
 
   setState('firing');
 
-  var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2;
+  var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2+'&broker='+encodeURIComponent(rikiGetBrokerMode());
   fetch(BACKEND+'?action=placeOrder'+params).then(function(r){return r.json();}).then(function(d){
     if(d.error){ showErr(d.error); return; }
     console.log('[RiKi] NORMAL STO placeOrder result', d);

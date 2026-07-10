@@ -1905,12 +1905,28 @@ function rikiApplyTradierDiagnostics_(res){
   var pill = ge('tradierLockPill');
   if(pill){ pill.textContent = ordersUnlocked ? 'LIVE ORDERS ON' : (readOnly ? 'READ-ONLY' : 'ROUTING OFF'); pill.className = ordersUnlocked ? 'tradier-lock-pill bad' : (readOnly ? 'tradier-lock-pill' : 'tradier-lock-pill warn'); }
 }
+function rikiTradierMoney_(v){
+  var n = Number(v || 0);
+  var sign = n < 0 ? '-$' : '$';
+  return sign + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
 function rikiTradierLines_(title, res){
   res = res || {};
   var cfg = res.config || {};
   var lines = [title || 'Tradier'];
   if(res.message) lines.push(res.message);
   if(res.error) lines.push('Error: ' + res.error);
+  if(res.balanceSummary){
+    var b = res.balanceSummary || {};
+    lines.push('Balance type: ' + (b.accountType || 'account'));
+    lines.push('Option BP: ' + rikiTradierMoney_(b.optionBuyingPower));
+    lines.push('Stock BP: ' + rikiTradierMoney_(b.stockBuyingPower));
+    lines.push('Cash available: ' + rikiTradierMoney_(b.cashAvailable));
+    lines.push('Total cash: ' + rikiTradierMoney_(b.totalCash));
+    lines.push('Total equity: ' + rikiTradierMoney_(b.totalEquity || b.accountValue));
+  }
+  if(res.positionsCount !== undefined) lines.push('Positions: ' + res.positionsCount);
+  if(res.ordersCount !== undefined) lines.push('Orders count: ' + res.ordersCount);
   if(cfg.mode) lines.push('Mode: ' + cfg.mode);
   if(cfg.maskedAccountId) lines.push('Account: ' + cfg.maskedAccountId);
   lines.push('Read-only: ' + (cfg.readOnly !== false ? 'ON' : 'OFF'));

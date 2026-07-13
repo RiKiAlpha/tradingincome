@@ -921,9 +921,26 @@ function doRefresh(){
     .catch(function(e){ hideOverlay(); toast('Error: '+errMsg(e)); });
 }
 function doAuth(){
-  haptic();toast('Authenticating…');
-  try{ localStorage.setItem('riki_auth_pending','1'); }catch(x){}
-  fetch(BACKEND+'?action=authUrl').then(function(r){return r.json();}).then(function(d){if(d.url)window.open(d.url,'_blank');else toast('No URL returned');}).catch(function(e){toast('Auth error: '+errMsg(e));});
+  haptic();
+  toast('Authenticating…');
+  try{
+    localStorage.setItem('riki_auth_pending','1');
+    localStorage.setItem('riki_auth_started_at', String(Date.now()));
+  }catch(x){}
+
+  fetch(BACKEND+'?action=authUrl&_='+Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.url){
+        toast('No Schwab authorization URL returned');
+        return;
+      }
+      var authWindow = window.open(d.url, 'riki_schwab_auth');
+      if(!authWindow){
+        window.location.assign(d.url);
+      }
+    })
+    .catch(function(e){ toast('Auth error: '+errMsg(e)); });
 }
 
 function toggleRefreshDashboardPause(pause, btn){
@@ -2217,19 +2234,119 @@ function rikiRefreshTokenStatusOnly_(reason){
     .then(function(r){ return r.json(); })
     .then(function(tok){
       rikiApplyTokenStatus_(tok);
-      try{ localStorage.removeItem('riki_auth_pending'); }catch(x){}
       return tok;
     })
     .catch(function(e){ try{ console.warn('tokenStatus refresh failed', e); }catch(x){} });
 }
 
+// RIKI_SCHWAB_OAUTH_ATOMIC_CALLBACK_FRONTEND_V1
+// Schwab redirects to this GitHub frontend with ?code=... . The previous
+// frontend only refreshed token metadata and never sent that code to Apps Script.
+// This flow sends the complete untouched callback URL to the backend exactly once.
+var rikiSchwabExchangeInFlight_ = false;
+var rikiSchwabExchangeComplete_ = false;
+
+function rikiDecodeCallbackProbe_(value){
+  var s = String(value || '');
+  for(var i=0;i<3;i++){
+    try{
+      var d = decodeURIComponent(s);
+      if(d === s) break;
+      s = d;
+    }catch(e){ break; }
+  }
+  return s;
+}
+
+function rikiLocationHasSchwabCode_(){
+  var raw = '';
+  try{ raw = String(window.location.href || ''); }catch(e){}
+  for(var i=0;i<4;i++){
+    if(/(?:^|[?&#])code=[^&#]+/i.test(raw)) return true;
+    var decoded = rikiDecodeCallbackProbe_(raw);
+    if(decoded === raw) break;
+    raw = decoded;
+  }
+  return false;
+}
+
+function rikiCleanSchwabCallbackUrl_(){
+  try{
+    var clean = window.location.origin + window.location.pathname;
+    history.replaceState({}, document.title, clean);
+  }catch(e){}
+}
+
+function rikiSignalSchwabAuthComplete_(){
+  var stamp = String(Date.now());
+  try{ localStorage.setItem('riki_schwab_auth_completed_at', stamp); }catch(e){}
+  try{
+    if(window.opener && !window.opener.closed){
+      window.opener.postMessage({ type:'RIKI_SCHWAB_AUTH_COMPLETE', at:stamp }, window.location.origin);
+    }
+  }catch(e){}
+}
+
+function rikiExchangeSchwabCallback_(reason){
+  if(rikiSchwabExchangeComplete_) return Promise.resolve({ success:true, alreadyComplete:true });
+  if(rikiSchwabExchangeInFlight_) return Promise.resolve({ success:true, inProgress:true });
+  if(!rikiLocationHasSchwabCode_()) return Promise.resolve({ success:false, noCode:true });
+
+  rikiSchwabExchangeInFlight_ = true;
+  toast('Completing Schwab authentication…', 4000);
+
+  var callbackUrl = '';
+  try{ callbackUrl = String(window.location.href || ''); }catch(e){}
+
+  return fetch(
+    BACKEND + '?action=exchangeCode&url=' + encodeURIComponent(callbackUrl) +
+    '&reason=' + encodeURIComponent(reason || 'auth-return') + '&_=' + Date.now()
+  )
+    .then(function(r){ return r.json(); })
+    .then(function(tok){
+      if(!tok || tok.success===false || tok.ok===false){
+        throw new Error((tok && tok.error) || 'Schwab token exchange failed');
+      }
+
+      rikiSchwabExchangeComplete_ = true;
+      rikiApplyTokenStatus_(tok);
+      try{
+        localStorage.removeItem('riki_auth_pending');
+        localStorage.removeItem('riki_auth_started_at');
+      }catch(e){}
+      rikiCleanSchwabCallbackUrl_();
+      rikiSignalSchwabAuthComplete_();
+      toast(tok.idempotent ? '✓ Schwab already connected' : '✓ Schwab connected — token updated', 5000);
+      return tok;
+    })
+    .catch(function(e){
+      // Keep the callback code in the address bar so a temporary backend failure
+      // can be retried by one reload. The backend independently blocks duplicates.
+      toast('Schwab auth failed: ' + errMsg(e), 7000);
+      try{ console.error('Schwab callback exchange failed', e); }catch(x){}
+      return { success:false, error:errMsg(e) };
+    })
+    .then(function(result){
+      rikiSchwabExchangeInFlight_ = false;
+      return result;
+    }, function(e){
+      rikiSchwabExchangeInFlight_ = false;
+      throw e;
+    });
+}
+
 function rikiMaybeRefreshAuthDisplay_(reason){
-  var pending=false;
-  try{ pending = localStorage.getItem('riki_auth_pending') === '1'; }catch(x){}
-  var qs='';
-  try{ qs = window.location.search || ''; }catch(x){}
-  if(pending || /[?&](code|auth|oauth|state)=/i.test(qs)){
-    setTimeout(function(){ rikiRefreshTokenStatusOnly_(reason||'auth-return'); }, 250);
+  if(rikiLocationHasSchwabCode_()){
+    setTimeout(function(){ rikiExchangeSchwabCallback_(reason || 'auth-return'); }, 100);
+    return;
+  }
+
+  // A successful callback may have completed in the separate OAuth tab.
+  // Metadata-only status reads are safe and do not consume the authorization code.
+  var completedAt = '';
+  try{ completedAt = localStorage.getItem('riki_schwab_auth_completed_at') || ''; }catch(e){}
+  if(completedAt){
+    setTimeout(function(){ rikiRefreshTokenStatusOnly_(reason || 'auth-complete'); }, 100);
   }
 }
 
@@ -2288,6 +2405,20 @@ document.addEventListener('visibilitychange', function(){
   if(!isAuthed()){ showAuthScreen(); return; }
   if(checkLock()) return;
   rikiMaybeRefreshAuthDisplay_('visibility');
+});
+
+// Update the original RiKi tab as soon as the separate Schwab callback tab finishes.
+window.addEventListener('storage', function(e){
+  if(e && e.key === 'riki_schwab_auth_completed_at' && e.newValue){
+    rikiRefreshTokenStatusOnly_('auth-storage-event');
+  }
+});
+
+window.addEventListener('message', function(e){
+  if(!e || e.origin !== window.location.origin) return;
+  if(e.data && e.data.type === 'RIKI_SCHWAB_AUTH_COMPLETE'){
+    rikiRefreshTokenStatusOnly_('auth-window-message');
+  }
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

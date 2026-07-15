@@ -334,6 +334,25 @@ body.overlaying #tabs-wrap{display:none !important;}
 ::-webkit-scrollbar{width:0;height:0;}
 @-webkit-keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+.buying-power-card{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;}
+.bp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.bp-title{font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;}
+.bp-sub{font-size:9px;color:var(--text3);margin-top:2px;}
+.bp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.bp-account{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px;}
+.bp-label{font-size:10px;color:var(--text2);font-weight:800;text-transform:uppercase;}
+.bp-value{font-size:18px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums;}
+.bp-line{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:5px;gap:8px;}
+.bp-line b{color:var(--text2);font-weight:700;}
+.ticker-detail-head{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:6px;padding:8px 0 5px;font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.ticker-week{padding:10px 0;border-top:1px solid var(--border2);}
+.ticker-week-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;}
+.ticker-week-title strong{font-size:11px;color:var(--text);}.ticker-week-title span{font-size:9px;color:var(--text3);}
+.ticker-account-row{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:6px;padding:5px 0;font-size:10px;color:var(--text2);}
+.ticker-account-row b{text-align:right;color:var(--text);font-weight:750;}.ticker-account-name{font-weight:800;color:var(--text2);}
+.ticker-account-pc{font-size:8px;color:var(--text3);margin-top:1px;}
+
 </style>
 <link rel="apple-touch-icon" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
@@ -1740,13 +1759,26 @@ function renderDash(d){
  dc.appendChild(card);
  });
  var dcp=ge('dcp');dcp.innerHTML='';
+ var bp=d.accountBuyingPower||{};
+ if(bp.accounts&&bp.accounts.length){
+  var bpc=document.createElement('div');bpc.className='buying-power-card';
+  var bph='<div class="bp-head"><div><div class="bp-title">Schwab Buying Power</div><div class="bp-sub">Actual account totals returned by Schwab · not allocated by ticker</div></div><div class="bp-value">'+fmtS(bp.totalBuyingPower||0)+'</div></div><div class="bp-grid">';
+  bp.accounts.forEach(function(a){
+   bph+='<div class="bp-account"><div class="bp-label">'+escHtml(a.account||'Account')+'</div><div class="bp-value">'+fmtS(a.buyingPower||0)+'</div>'+
+    '<div class="bp-line"><span>Available funds</span><b>'+fmtS(a.availableFunds||0)+'</b></div>'+
+    '<div class="bp-line"><span>Maintenance req.</span><b>'+fmtS(a.maintenanceRequirement||0)+'</b></div>'+
+    (Number(a.dayTradingBuyingPower||0)?'<div class="bp-line"><span>Day-trading BP</span><b>'+fmtS(a.dayTradingBuyingPower||0)+'</b></div>':'')+'</div>';
+  });
+  bph+='</div>';
+  bpc.innerHTML=bph;dcp.appendChild(bpc);
+ }
  var tickerRows=d.tickerBreakdown||[];
  if(tickerRows.length){
  var scope=document.createElement('div');scope.className='ticker-scope';
  var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
- scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Breakdown</div><div class="ticker-scope-sub">'+configured.map(escHtml).join(' · ')+'</div></div><span class="pill pb">'+tickerRows.length+'</span></div>';
+ scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Account 1 + Account 2 · This Week, Next Week, Week After</div></div><span class="pill pb">'+tickerRows.length+'</span></div>';
  tickerRows.forEach(function(r){
- var item=document.createElement('div');item.className='ticker-item';
+ var item=document.createElement('div');item.className='ticker-item open';
  var total=money(r.total),banked=money(r.banked),potential=money(r.potential),contracts=Number(r.contracts||0);
  item.innerHTML='<div class="ticker-summary">'+
  '<div><div class="ticker-name">'+escHtml(r.ticker)+'</div><div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
@@ -1755,13 +1787,17 @@ function renderDash(d){
  '<div><div class="ticker-metric">Total</div><div class="ticker-value '+cc(total)+'">'+fmtS(total)+'</div></div>'+
  '</div><div class="ticker-detail"></div>';
  var detail=item.querySelector('.ticker-detail');
- (r.expiries||[]).forEach(function(x){
- var row=document.createElement('div');row.className='ticker-exp-row';
- row.innerHTML='<span>'+escHtml(x.expiry)+' · '+Number(x.openCalls||0)+'C/'+Number(x.openPuts||0)+'P</span>'+
- '<b class="'+cc(x.banked)+'">'+fmtS(x.banked||0)+'</b>'+
- '<b class="'+cc(x.potential)+'">'+fmtS(x.potential||0)+'</b>'+
- '<b class="'+cc(x.total)+'">'+fmtS(x.total||0)+'</b>';
- detail.appendChild(row);
+ (r.expiries||[]).filter(function(x){return ['This Week','Next Week','Week After'].indexOf(x.weekLabel)>=0;}).forEach(function(x){
+  var week=document.createElement('div');week.className='ticker-week';
+  var body='<div class="ticker-week-title"><strong>'+escHtml(x.weekLabel||x.expiry)+'</strong><span>'+escHtml(x.expiry)+' · '+Number(x.openCalls||0)+'C/'+Number(x.openPuts||0)+'P</span></div>'+
+   '<div class="ticker-detail-head"><span>Account</span><span style="text-align:right">Banked</span><span style="text-align:right">Potential</span><span style="text-align:right">Total</span></div>';
+  (x.accounts||[]).forEach(function(a){
+   var at=money(a.total);
+   body+='<div class="ticker-account-row"><div class="ticker-account-name">'+escHtml(a.account||'')+'<div class="ticker-account-pc">'+Number(a.openCalls||0)+'C / '+Number(a.openPuts||0)+'P · '+Number(a.contracts||0)+' ct</div></div>'+
+    '<b class="'+cc(a.banked)+'">'+fmtS(a.banked||0)+'</b><b class="'+cc(a.potential)+'">'+fmtS(a.potential||0)+'</b><b class="'+cc(at)+'">'+fmtS(at)+'</b></div>';
+  });
+  body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(x.potential||0)+'</b><b>'+fmtS(money(x.total))+'</b></div>';
+  week.innerHTML=body;detail.appendChild(week);
  });
  item.querySelector('.ticker-summary').onclick=function(){item.classList.toggle('open');};
  scope.appendChild(item);

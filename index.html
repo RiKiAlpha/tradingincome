@@ -10,6 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <title>RiKi Trading</title>
+<!-- RIKI TICKER DETAIL CORRECTION UI V2.8.4 -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -254,8 +255,8 @@ body.churner-mode .tab.on .tlabel{color:var(--churner2)!important;}
 .ticker-name{font-size:14px;font-weight:900;}
 .ticker-metric{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;}
 .ticker-value{font-size:12px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;}
-.ticker-detail{display:none;padding:0 16px 12px;}
-.ticker-item.open .ticker-detail{display:block;}
+.ticker-detail{display:block!important;padding:0 16px 12px;}
+.ticker-item.open .ticker-detail{display:block!important;}
 .ticker-exp-row{display:grid;grid-template-columns:1.3fr repeat(3,1fr);gap:6px;padding:7px 0;border-top:1px solid var(--border2);font-size:10px;color:var(--text2);}
 .ticker-exp-row b{color:var(--text);font-weight:750;text-align:right;}
 @media(max-width:430px){.ticker-summary{grid-template-columns:56px repeat(3,minmax(0,1fr));padding:12px}.ticker-value{font-size:11px}.ticker-exp-row{grid-template-columns:1.2fr repeat(3,1fr);font-size:9px;}}
@@ -1762,12 +1763,10 @@ function renderDash(d){
  var bp=d.accountBuyingPower||{};
  if(bp.accounts&&bp.accounts.length){
   var bpc=document.createElement('div');bpc.className='buying-power-card';
-  var bph='<div class="bp-head"><div><div class="bp-title">Schwab Buying Power</div><div class="bp-sub">Actual account totals returned by Schwab · not allocated by ticker</div></div><div class="bp-value">'+fmtS(bp.totalBuyingPower||0)+'</div></div><div class="bp-grid">';
+  var availableTotal=bp.accounts.reduce(function(sum,a){return sum+money(a.availableFunds||0);},0);
+  var bph='<div class="bp-head"><div><div class="bp-title">Available Funds</div><div class="bp-sub">Actual Schwab account values</div></div><div class="bp-value">'+fmtS(availableTotal)+'</div></div><div class="bp-grid">';
   bp.accounts.forEach(function(a){
-   bph+='<div class="bp-account"><div class="bp-label">'+escHtml(a.account||'Account')+'</div><div class="bp-value">'+fmtS(a.buyingPower||0)+'</div>'+
-    '<div class="bp-line"><span>Available funds</span><b>'+fmtS(a.availableFunds||0)+'</b></div>'+
-    '<div class="bp-line"><span>Maintenance req.</span><b>'+fmtS(a.maintenanceRequirement||0)+'</b></div>'+
-    (Number(a.dayTradingBuyingPower||0)?'<div class="bp-line"><span>Day-trading BP</span><b>'+fmtS(a.dayTradingBuyingPower||0)+'</b></div>':'')+'</div>';
+   bph+='<div class="bp-account"><div class="bp-label">'+escHtml(a.account||'Account')+'</div><div class="bp-value">'+fmtS(a.availableFunds||0)+'</div></div>';
   });
   bph+='</div>';
   bpc.innerHTML=bph;dcp.appendChild(bpc);
@@ -1776,7 +1775,7 @@ function renderDash(d){
  if(tickerRows.length){
  var scope=document.createElement('div');scope.className='ticker-scope';
  var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
- scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Account 1 + Account 2 · This Week, Next Week, Week After</div></div><span class="pill pb">'+tickerRows.length+'</span></div>';
+ scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Account 1 + Account 2 · This Week, Next Week, Week After · v2.8.4</div></div><span class="pill pb">'+tickerRows.length+'</span></div>';
  tickerRows.forEach(function(r){
  var item=document.createElement('div');item.className='ticker-item open';
  var total=money(r.total),banked=money(r.banked),potential=money(r.potential),contracts=Number(r.contracts||0);
@@ -1799,7 +1798,7 @@ function renderDash(d){
   body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(x.potential||0)+'</b><b>'+fmtS(money(x.total))+'</b></div>';
   week.innerHTML=body;detail.appendChild(week);
  });
- item.querySelector('.ticker-summary').onclick=function(){item.classList.toggle('open');};
+ // Always expanded; scroll through ticker cards.
  scope.appendChild(item);
  });
  dcp.appendChild(scope);

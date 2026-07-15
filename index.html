@@ -375,6 +375,11 @@ body.overlaying #tabs-wrap{display:none !important;}
 .ticker-account-row{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:6px;padding:5px 0;font-size:10px;color:var(--text2);}
 .ticker-account-row b{text-align:right;color:var(--text);font-weight:750;}.ticker-account-name{font-weight:800;color:var(--text2);}
 .ticker-account-pc{font-size:8px;color:var(--text3);margin-top:1px;}
+.ticker-total-cell{text-align:right;min-width:0;}
+.ticker-total-cell .ticker-total-value{font-size:10px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.ticker-row-margin{font-size:7.5px;color:var(--text3);font-weight:700;margin-top:2px;white-space:nowrap;}
+.ticker-row-margin strong{color:var(--text2);font-weight:800;}
+@media(max-width:600px){.ticker-row-margin{font-size:7px;white-space:normal;line-height:1.2}.ticker-total-cell .ticker-total-value{font-size:9px}}
 
 </style>
 <link rel="apple-touch-icon" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
@@ -1795,7 +1800,7 @@ function renderDash(d){
  var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
  var configuredLookup={};configured.forEach(function(t){configuredLookup[String(t||'').trim().toUpperCase()]=true;});
  var totalTickerMargin=tickerRows.reduce(function(sum,row){var t=String(row.ticker||'').trim().toUpperCase();return sum+(configuredLookup[t]?Math.max(0,money(row.maintenanceRequirement||0)):0);},0);
- scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Consolidated scorecards · click a ticker for weekly detail · v3.0.2</div></div><div class="ticker-scope-head-right"><div class="ticker-scope-deployed"><span>Option margin deployed</span><b>'+fmtS(totalTickerMargin)+'</b></div><span class="pill pb">'+tickerRows.length+'</span></div></div>';
+ scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Consolidated scorecards · click a ticker for weekly detail · v3.0.3</div></div><div class="ticker-scope-head-right"><div class="ticker-scope-deployed"><span>Option margin deployed</span><b>'+fmtS(totalTickerMargin)+'</b></div><span class="pill pb">'+tickerRows.length+'</span></div></div>';
  tickerRows.forEach(function(r){
  var item=document.createElement('div');item.className='ticker-item';
  var total=money(r.total),banked=money(r.banked),potential=money(r.potential),contracts=Number(r.contracts||0);
@@ -1831,10 +1836,15 @@ function renderDash(d){
    '<div class="ticker-detail-head"><span>Account</span><span style="text-align:right">Banked</span><span style="text-align:right">Potential</span><span style="text-align:right">Total</span></div>';
   (x.accounts||[]).forEach(function(a){
    var at=money(a.total);
-   body+='<div class="ticker-account-row"><div class="ticker-account-name">'+escHtml(a.account||'')+'<div class="ticker-account-pc">'+Number(a.openCalls||0)+'C / '+Number(a.openPuts||0)+'P · '+Number(a.contracts||0)+' ct</div></div>'+
-    '<b class="'+cc(a.banked)+'">'+fmtS(a.banked||0)+'</b><b class="'+cc(a.potential)+'">'+fmtS(a.potential||0)+'</b><b class="'+cc(at)+'">'+fmtS(at)+'</b></div>';
+   var accountWeekMargin=Math.max(0,money(a.maintenanceRequirement||0));
+   var accountWeekMarginPct=totalTickerMargin>0?(accountWeekMargin/totalTickerMargin*100):0;
+   body+='<div class="ticker-account-row"><div class="ticker-account-name">'+escHtml(a.account||'')+'<div class="ticker-account-pc">'+Number(a.openCalls||0)+'C / '+Number(a.openPuts||0)+'P · '+Number(a.contracts||0)+' ct</div></div>'+ 
+    '<b class="'+cc(a.banked)+'">'+fmtS(a.banked||0)+'</b><b class="'+cc(a.potential)+'">'+fmtS(a.potential||0)+'</b>'+ 
+    '<div class="ticker-total-cell"><div class="ticker-total-value '+cc(at)+'">'+fmtS(at)+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(accountWeekMargin)+' ('+accountWeekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
   });
-  body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(x.potential||0)+'</b><b>'+fmtS(money(x.total))+'</b></div>';
+  var weekMargin=Math.max(0,money(x.maintenanceRequirement||0));
+  var weekMarginPct=totalTickerMargin>0?(weekMargin/totalTickerMargin*100):0;
+  body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(x.potential||0)+'</b><div class="ticker-total-cell"><div class="ticker-total-value">'+fmtS(money(x.total))+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(weekMargin)+' ('+weekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
   week.innerHTML=body;detail.appendChild(week);
  });
  // Consolidated by default; click a ticker scorecard to open weekly detail.

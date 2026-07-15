@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <title>RiKi Trading</title>
-<!-- RIKI OPTION MAINTENANCE UI V2.8.5 -->
+<!-- RIKI MARGIN ALLOCATION SCORECARDS UI V3.0.2 -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -251,15 +251,27 @@ body.churner-mode .tab.on .tlabel{color:var(--churner2)!important;}
 .ticker-scope-sub{font-size:10px;color:var(--text2);margin-top:2px;}
 .ticker-item{border-bottom:1px solid var(--border2);}
 .ticker-item:last-child{border-bottom:none;}
-.ticker-summary{padding:13px 16px;display:grid;grid-template-columns:minmax(58px,.8fr) repeat(3,minmax(0,1fr));gap:8px;align-items:center;cursor:pointer;}
+.ticker-summary{padding:13px 16px;display:grid;grid-template-columns:minmax(72px,1.05fr) repeat(4,minmax(0,.9fr));gap:8px;align-items:center;cursor:pointer;position:relative;transition:background-color .14s ease,box-shadow .14s ease,transform .14s ease;outline:none;}
+.ticker-summary::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:2px;background:transparent;transition:background-color .14s ease;}
+@media(hover:hover){.ticker-summary:hover{background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);transform:translateY(-1px);}.ticker-summary:hover::before{background:rgba(255,255,255,.22);}}
+.ticker-summary:focus-visible{background:rgba(255,255,255,.055);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 0 2px rgba(61,156,255,.16);}
+.ticker-summary:active{background:rgba(255,255,255,.07);transform:none;}
+.ticker-item.open .ticker-summary{background:rgba(255,255,255,.032);box-shadow:inset 0 -1px 0 var(--border2);}
+.ticker-item.open .ticker-summary::before{background:rgba(255,255,255,.18);}
+[data-theme="light"] .ticker-summary:hover,[data-theme="light"] .ticker-summary:focus-visible,[data-theme="light"] .ticker-item.open .ticker-summary{background:rgba(0,0,0,.035);box-shadow:inset 0 0 0 1px rgba(0,0,0,.035);}
 .ticker-name{font-size:14px;font-weight:900;}
 .ticker-metric{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;}
-.ticker-value{font-size:12px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;}
+.ticker-value{font-size:12px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.ticker-margin-pct{font-size:9px;font-weight:750;color:var(--text2);margin-left:2px;}
 .ticker-detail{display:none;padding:0 16px 12px;}
 .ticker-item.open .ticker-detail{display:block;}
 .ticker-exp-row{display:grid;grid-template-columns:1.3fr repeat(3,1fr);gap:6px;padding:7px 0;border-top:1px solid var(--border2);font-size:10px;color:var(--text2);}
 .ticker-exp-row b{color:var(--text);font-weight:750;text-align:right;}
-@media(max-width:430px){.ticker-summary{grid-template-columns:56px repeat(3,minmax(0,1fr));padding:12px}.ticker-value{font-size:11px}.ticker-exp-row{grid-template-columns:1.2fr repeat(3,1fr);font-size:9px;}}
+.ticker-scope-head-right{display:flex;align-items:center;gap:10px;}
+.ticker-scope-deployed{text-align:right;}
+.ticker-scope-deployed span{display:block;font-size:8px;font-weight:750;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.ticker-scope-deployed b{display:block;margin-top:2px;font-size:12px;font-weight:900;font-variant-numeric:tabular-nums;}
+@media(max-width:600px){.ticker-summary{grid-template-columns:minmax(58px,.92fr) repeat(4,minmax(0,1fr));gap:5px;padding:12px}.ticker-value{font-size:10px}.ticker-metric{font-size:7.5px}.ticker-margin-pct{display:block;margin-left:0;margin-top:1px;font-size:8px}.ticker-exp-row{grid-template-columns:1.2fr repeat(3,1fr);font-size:9px}.ticker-scope-deployed span{font-size:7px}.ticker-scope-deployed b{font-size:10px}}
 .cap-title{font-size:17px;font-weight:700;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:18px;}
 .cap-rows{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:0;position:relative;}
 .cap-row{display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch;}
@@ -1781,20 +1793,26 @@ function renderDash(d){
  if(tickerRows.length){
  var scope=document.createElement('div');scope.className='ticker-scope';
  var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
- scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Account 1 + Account 2 · This Week, Next Week, Week After · v3.0.1</div></div><span class="pill pb">'+tickerRows.length+'</span></div>';
+ var configuredLookup={};configured.forEach(function(t){configuredLookup[String(t||'').trim().toUpperCase()]=true;});
+ var totalTickerMargin=tickerRows.reduce(function(sum,row){var t=String(row.ticker||'').trim().toUpperCase();return sum+(configuredLookup[t]?Math.max(0,money(row.maintenanceRequirement||0)):0);},0);
+ scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Consolidated scorecards · click a ticker for weekly detail · v3.0.2</div></div><div class="ticker-scope-head-right"><div class="ticker-scope-deployed"><span>Option margin deployed</span><b>'+fmtS(totalTickerMargin)+'</b></div><span class="pill pb">'+tickerRows.length+'</span></div></div>';
  tickerRows.forEach(function(r){
- var item=document.createElement('div');item.className='ticker-item open';
+ var item=document.createElement('div');item.className='ticker-item';
  var total=money(r.total),banked=money(r.banked),potential=money(r.potential),contracts=Number(r.contracts||0);
- item.innerHTML='<div class="ticker-summary">'+
- '<div><div class="ticker-name">'+escHtml(r.ticker)+'</div><div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
- '<div><div class="ticker-metric">Banked</div><div class="ticker-value '+cc(banked)+'">'+fmtS(banked)+'</div></div>'+
- '<div><div class="ticker-metric">Potential</div><div class="ticker-value '+cc(potential)+'">'+fmtS(potential)+'</div></div>'+
- '<div><div class="ticker-metric">Total</div><div class="ticker-value '+cc(total)+'">'+fmtS(total)+'</div></div>'+
+ var maintReq=Math.max(0,money(r.maintenanceRequirement||0));
+ var maintPct=totalTickerMargin>0?(maintReq/totalTickerMargin*100):0;
+ item.innerHTML='<div class="ticker-summary" role="button" tabindex="0" aria-expanded="false">'+
+ '<div><div class="ticker-name">'+escHtml(r.ticker)+'</div><div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+ 
+ '<div><div class="ticker-metric">Banked</div><div class="ticker-value '+cc(banked)+'">'+fmtS(banked)+'</div></div>'+ 
+ '<div><div class="ticker-metric">Potential</div><div class="ticker-value '+cc(potential)+'">'+fmtS(potential)+'</div></div>'+ 
+ '<div><div class="ticker-metric">Total</div><div class="ticker-value '+cc(total)+'">'+fmtS(total)+'</div></div>'+ 
+ '<div><div class="ticker-metric">Margin used</div><div class="ticker-value">'+fmtS(maintReq)+' <span class="ticker-margin-pct">('+maintPct.toFixed(1)+'%)</span></div></div>'+ 
  '</div><div class="ticker-detail"></div>';
  var summaryEl=item.querySelector('.ticker-summary');
- summaryEl.addEventListener('click',function(){haptic();item.classList.toggle('open');});
+ function toggleTickerDetail(){haptic();var isOpen=item.classList.toggle('open');summaryEl.setAttribute('aria-expanded',isOpen?'true':'false');}
+ summaryEl.addEventListener('click',toggleTickerDetail);
+ summaryEl.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();toggleTickerDetail();}});
  var detail=item.querySelector('.ticker-detail');
- var maintReq=money(r.maintenanceRequirement||0);
  var maintContracts=Number(r.maintenanceContracts||0);
  var maintPer=money(r.maintenancePerContract||0);
  var maintAccounts=Array.isArray(r.maintenanceAccounts)?r.maintenanceAccounts:[];
@@ -1819,7 +1837,7 @@ function renderDash(d){
   body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(x.potential||0)+'</b><b>'+fmtS(money(x.total))+'</b></div>';
   week.innerHTML=body;detail.appendChild(week);
  });
- // Always expanded; scroll through ticker cards.
+ // Consolidated by default; click a ticker scorecard to open weekly detail.
  scope.appendChild(item);
  });
  dcp.appendChild(scope);

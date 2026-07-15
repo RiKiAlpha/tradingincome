@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <title>RiKi Trading</title>
-<!-- RIKI MARGIN ALLOCATION SCORECARDS UI V3.0.2 -->
+<!-- RIKI EYE COMFORT FINTECH UI V3.0.5 -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -425,7 +425,192 @@ body.overlaying #tabs-wrap{display:none !important;}
 #faceid-sub{font-size:13px;color:var(--text2);text-align:center;line-height:1.6;max-width:260px;}
 #faceid-retry{display:none;}
 
-</style></head>
+</style>
+<style id="riki-eye-comfort-fintech-v305">
+/* RIKI_EYE_COMFORT_FINTECH_UI_V3_0_5
+   Neutral graphite surfaces, reduced white glare, larger expanded margin readouts. */
+:root{
+ --riki-graphite-1:#12131a;
+ --riki-graphite-2:#161820;
+ --riki-graphite-3:#1b1d26;
+ --riki-soft-text:rgba(220,224,232,.82);
+ --riki-soft-text-2:rgba(205,210,220,.64);
+ --riki-soft-text-3:rgba(190,196,208,.44);
+ --riki-neutral-line:rgba(205,212,224,.085);
+}
+
+/* Available Funds — softer graphite, not bright white. */
+.buying-power-card{
+ background:
+  radial-gradient(circle at 100% 0,rgba(255,255,255,.045),transparent 36%),
+  linear-gradient(145deg,var(--riki-graphite-2),var(--riki-graphite-1));
+ border-color:var(--riki-neutral-line);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 12px 32px rgba(0,0,0,.16);
+ padding:17px;
+}
+.bp-title{color:var(--riki-soft-text);font-size:13px;letter-spacing:.075em;}
+.bp-sub{color:var(--riki-soft-text-3);font-size:9.5px;}
+.bp-head>.bp-value{color:var(--riki-soft-text);font-size:21px;letter-spacing:-.035em;}
+.bp-account{
+ background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012)),var(--riki-graphite-3);
+ border-color:rgba(255,255,255,.055);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.bp-label{color:var(--riki-soft-text-3);letter-spacing:.055em;}
+.bp-account .bp-value{color:var(--riki-soft-text);font-size:18px;}
+
+/* Ticker scorecards — graphite rows with restrained contrast. */
+.ticker-scope{
+ background:
+  radial-gradient(circle at 92% 0,rgba(255,255,255,.035),transparent 25%),
+  linear-gradient(160deg,#13141b,#0f1016);
+ border-color:var(--riki-neutral-line);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 16px 36px rgba(0,0,0,.13);
+ padding-bottom:9px;
+}
+.ticker-scope-head{
+ background:rgba(255,255,255,.012);
+ border-bottom-color:rgba(255,255,255,.045);
+ padding:16px;
+}
+.ticker-scope-title{color:var(--riki-soft-text);}
+.ticker-scope-sub,.ticker-scope-deployed span{color:var(--riki-soft-text-3);}
+.ticker-scope-deployed b{color:var(--riki-soft-text);font-size:13px;}
+.ticker-item{
+ margin:8px 10px 0;
+ border:1px solid rgba(255,255,255,.05);
+ border-radius:13px;
+ overflow:hidden;
+ background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.009)),#14151c;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.018);
+}
+.ticker-item:last-child{border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:1px;}
+.ticker-summary{background:transparent;padding:14px 15px;}
+.ticker-name{color:var(--riki-soft-text);font-size:14px;letter-spacing:.015em;}
+.ticker-metric{color:var(--riki-soft-text-3);}
+.ticker-value{color:var(--riki-soft-text);font-size:12.5px;}
+.ticker-margin-pct{color:var(--riki-soft-text-2);}
+@media(hover:hover){
+ .ticker-summary:hover{
+  background:linear-gradient(90deg,rgba(255,255,255,.052),rgba(255,255,255,.025));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+  transform:none;
+ }
+ .ticker-summary:hover::before{background:rgba(205,212,224,.34);}
+}
+.ticker-item.open .ticker-summary{
+ background:linear-gradient(90deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+ box-shadow:inset 0 -1px 0 rgba(255,255,255,.055);
+}
+.ticker-item.open .ticker-summary::before{background:rgba(205,212,224,.38);}
+
+/* Expanded detail — larger, calmer, easier to scan. */
+.ticker-detail{
+ padding:12px 14px 16px;
+ background:linear-gradient(180deg,#15171f,#111219);
+ border-top:1px solid rgba(255,255,255,.035);
+}
+.ticker-maint{
+ margin:0 0 12px;
+ padding:15px 15px 14px;
+ border-radius:13px;
+ background:
+  radial-gradient(circle at 100% 0,rgba(255,255,255,.04),transparent 34%),
+  linear-gradient(145deg,#1a1c25,#15171f);
+ border-color:rgba(255,255,255,.065);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.028);
+}
+.ticker-maint-head{margin-bottom:13px;align-items:center;}
+.ticker-maint-title{font-size:10px;color:var(--riki-soft-text-2);letter-spacing:.075em;}
+.ticker-maint-total{font-size:23px;color:var(--riki-soft-text);letter-spacing:-.04em;line-height:1.05;}
+.ticker-maint-sub{font-size:10px;color:var(--riki-soft-text-3);margin-top:5px;}
+.ticker-maint-grid{gap:10px;}
+.ticker-maint-account{
+ padding:11px 12px;
+ border-radius:10px;
+ background:linear-gradient(180deg,rgba(255,255,255,.024),rgba(255,255,255,.008)),#11131a;
+ border-color:rgba(255,255,255,.05);
+}
+.ticker-maint-account-name{font-size:9px;color:var(--riki-soft-text-3);}
+.ticker-maint-account-value{font-size:16px;color:var(--riki-soft-text);margin-top:5px;letter-spacing:-.02em;}
+.ticker-maint-account-sub{font-size:9.5px;color:var(--riki-soft-text-2);margin-top:4px;}
+
+.ticker-week{padding:14px 2px 10px;border-top-color:rgba(255,255,255,.05);}
+.ticker-week-title{margin-bottom:10px;}
+.ticker-week-title strong{font-size:12.5px;color:var(--riki-soft-text);letter-spacing:.01em;}
+.ticker-week-title span{font-size:9.5px;color:var(--riki-soft-text-3);}
+.ticker-detail-head{font-size:8.5px;color:var(--riki-soft-text-3);padding:8px 0 7px;}
+.ticker-account-row{font-size:10.5px;color:var(--riki-soft-text-2);padding:8px 0;align-items:center;}
+.ticker-account-row b{color:var(--riki-soft-text);font-size:11px;}
+.ticker-account-name{color:var(--riki-soft-text-2);font-size:10.5px;}
+.ticker-account-pc{font-size:8.8px;color:var(--riki-soft-text-3);margin-top:3px;}
+.ticker-total-cell .ticker-total-value{font-size:12px;color:var(--riki-soft-text);}
+.ticker-row-margin{
+ font-size:10.5px;
+ line-height:1.35;
+ color:var(--riki-soft-text-3);
+ font-weight:750;
+ margin-top:4px;
+ letter-spacing:-.01em;
+}
+.ticker-row-margin strong{color:var(--riki-soft-text-2);font-size:11px;font-weight:850;}
+
+/* Keep the lighter theme coherent rather than forcing dark graphite. */
+[data-theme="light"] .buying-power-card,
+[data-theme="light"] .ticker-scope,
+[data-theme="light"] .ticker-detail,
+[data-theme="light"] .ticker-maint,
+[data-theme="light"] .ticker-item,
+[data-theme="light"] .bp-account,
+[data-theme="light"] .ticker-maint-account{
+ background:linear-gradient(180deg,#f1f2f5,#e9ebef);
+ border-color:rgba(0,0,0,.075);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+}
+[data-theme="light"] .bp-title,
+[data-theme="light"] .bp-head>.bp-value,
+[data-theme="light"] .bp-account .bp-value,
+[data-theme="light"] .ticker-scope-title,
+[data-theme="light"] .ticker-scope-deployed b,
+[data-theme="light"] .ticker-name,
+[data-theme="light"] .ticker-value,
+[data-theme="light"] .ticker-maint-total,
+[data-theme="light"] .ticker-maint-account-value,
+[data-theme="light"] .ticker-week-title strong,
+[data-theme="light"] .ticker-account-row b,
+[data-theme="light"] .ticker-total-cell .ticker-total-value{color:rgba(22,25,31,.82);}
+[data-theme="light"] .bp-sub,
+[data-theme="light"] .bp-label,
+[data-theme="light"] .ticker-metric,
+[data-theme="light"] .ticker-scope-sub,
+[data-theme="light"] .ticker-maint-sub,
+[data-theme="light"] .ticker-maint-account-name,
+[data-theme="light"] .ticker-week-title span,
+[data-theme="light"] .ticker-detail-head,
+[data-theme="light"] .ticker-account-pc,
+[data-theme="light"] .ticker-row-margin{color:rgba(22,25,31,.44);}
+[data-theme="light"] .ticker-row-margin strong,
+[data-theme="light"] .ticker-maint-account-sub,
+[data-theme="light"] .ticker-account-name{color:rgba(22,25,31,.64);}
+
+@media(max-width:600px){
+ .buying-power-card{padding:15px;}
+ .bp-head>.bp-value{font-size:19px;}
+ .ticker-item{margin-left:8px;margin-right:8px;}
+ .ticker-summary{padding:13px 11px;}
+ .ticker-value{font-size:10.5px;}
+ .ticker-detail{padding:10px 10px 14px;}
+ .ticker-maint{padding:13px 12px;}
+ .ticker-maint-total{font-size:20px;}
+ .ticker-maint-account-value{font-size:14px;}
+ .ticker-row-margin{font-size:9px;white-space:normal;line-height:1.3;}
+ .ticker-row-margin strong{font-size:9.5px;}
+ .ticker-total-cell .ticker-total-value{font-size:10.5px;}
+ .ticker-account-row{gap:4px;}
+}
+</style>
+
+</head>
 <body>
 <div id="app">
  <div id="header">
@@ -1800,7 +1985,7 @@ function renderDash(d){
  var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
  var configuredLookup={};configured.forEach(function(t){configuredLookup[String(t||'').trim().toUpperCase()]=true;});
  var totalTickerMargin=tickerRows.reduce(function(sum,row){var t=String(row.ticker||'').trim().toUpperCase();return sum+(configuredLookup[t]?Math.max(0,money(row.maintenanceRequirement||0)):0);},0);
- scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Consolidated scorecards · click a ticker for weekly detail · v3.0.3</div></div><div class="ticker-scope-head-right"><div class="ticker-scope-deployed"><span>Option margin deployed</span><b>'+fmtS(totalTickerMargin)+'</b></div><span class="pill pb">'+tickerRows.length+'</span></div></div>';
+ scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Consolidated scorecards · click a ticker for weekly detail · v3.0.5</div></div><div class="ticker-scope-head-right"><div class="ticker-scope-deployed"><span>Option margin deployed</span><b>'+fmtS(totalTickerMargin)+'</b></div><span class="pill pb">'+tickerRows.length+'</span></div></div>';
  tickerRows.forEach(function(r){
  var item=document.createElement('div');item.className='ticker-item';
  var total=money(r.total),banked=money(r.banked),potential=money(r.potential),contracts=Number(r.contracts||0);

@@ -1023,6 +1023,23 @@ function toggleRefreshDashboardPause(pause, btn){
 }
 
 // RIKI_MULTI_TICKER_FRONTEND_CONFIG_V1
+function rikiStrategyFetchJson_(url){
+ return fetch(url).then(function(r){
+  return r.text().then(function(text){
+   var body=String(text||'').trim();
+   try{
+    return JSON.parse(body);
+   }catch(parseErr){
+    if(body.indexOf('RiKi backend is running')===0){
+     throw new Error('Backend deployment is still on the older code. In Apps Script, update the existing web-app deployment to a New version, then retry.');
+    }
+    var preview=body.replace(/\s+/g,' ').substring(0,140);
+    throw new Error('Backend returned non-JSON'+(r&&r.status?' (HTTP '+r.status+')':'')+(preview?': '+preview:''));
+   }
+  });
+ });
+}
+
 function rikiApplyStrategyConfigResponse_(d, successMessage){
  if(!d || !d.success){
  toast('Strategy settings failed: '+((d&&d.error)||'unknown'),5000);
@@ -1046,8 +1063,7 @@ function saveStrategyTickers(btn){
  if(!raw){toast('Enter at least one ticker',3500);return;}
  if(!confirm('Save strategy tickers?\n\nThis changes which option activity Legacy, Churner rebuilds, and Nickel Closer include. Existing frozen history is not rebuilt.')) return;
  if(btn){btn.disabled=true;btn.textContent='Saving…';}
- fetch(BACKEND+'?action=setStrategyTickers&tickers='+encodeURIComponent(raw)+'&_='+Date.now())
- .then(function(r){return r.json();})
+ rikiStrategyFetchJson_(BACKEND+'?action=setStrategyTickers&tickers='+encodeURIComponent(raw)+'&_='+Date.now())
  .then(function(d){
  if(btn){btn.disabled=false;btn.textContent='Save Tickers';}
  rikiApplyStrategyConfigResponse_(d,'Tickers saved — tap Refresh to recalculate');
@@ -1069,8 +1085,7 @@ function addStrategyExclusion(btn){
  if(!ticker){toast('Choose a ticker',3000);return;}
  if(!expiry){toast('Choose an expiration date',3000);return;}
  if(btn){btn.disabled=true;btn.textContent='Adding…';}
- fetch(BACKEND+'?action=addStrategyExclusion&ticker='+encodeURIComponent(ticker)+'&expiry='+encodeURIComponent(expiry)+'&note='+encodeURIComponent(note)+'&_='+Date.now())
- .then(function(r){return r.json();})
+ rikiStrategyFetchJson_(BACKEND+'?action=addStrategyExclusion&ticker='+encodeURIComponent(ticker)+'&expiry='+encodeURIComponent(expiry)+'&note='+encodeURIComponent(note)+'&_='+Date.now())
  .then(function(d){
  if(btn){btn.disabled=false;btn.textContent='Add Exclusion';}
  if(rikiApplyStrategyConfigResponse_(d,'Exclusion added — tap Refresh to recalculate')){
@@ -1088,8 +1103,7 @@ function removeStrategyExclusion(ticker,expiry,btn){
  haptic();
  if(!confirm('Remove exclusion '+ticker+' · '+expiry+'?')) return;
  if(btn){btn.disabled=true;btn.textContent='Removing…';}
- fetch(BACKEND+'?action=removeStrategyExclusion&ticker='+encodeURIComponent(ticker)+'&expiry='+encodeURIComponent(expiry)+'&_='+Date.now())
- .then(function(r){return r.json();})
+ rikiStrategyFetchJson_(BACKEND+'?action=removeStrategyExclusion&ticker='+encodeURIComponent(ticker)+'&expiry='+encodeURIComponent(expiry)+'&_='+Date.now())
  .then(function(d){
  if(btn){btn.disabled=false;btn.textContent='Remove';}
  rikiApplyStrategyConfigResponse_(d,'Exclusion removed — tap Refresh to recalculate');

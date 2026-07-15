@@ -1031,7 +1031,7 @@ function rikiStrategyFetchJson_(url){
     return JSON.parse(body);
    }catch(parseErr){
     if(body.indexOf('RiKi backend is running')===0){
-     throw new Error('Backend deployment is still on the older code. In Apps Script, update the existing web-app deployment to a New version, then retry.');
+     throw new Error('Backend deployment is still on the older code. Confirm code.gs contains function setStrategyTickers(), deploy a New version of the existing web app, then open ?action=backendVersion to verify V2_7_3.');
     }
     var preview=body.replace(/\s+/g,' ').substring(0,140);
     throw new Error('Backend returned non-JSON'+(r&&r.status?' (HTTP '+r.status+')':'')+(preview?': '+preview:''));
@@ -2074,6 +2074,7 @@ function renderSettings(d){
  var strategy=d.strategyConfig||{};
  var targets=Array.isArray(strategy.targetTickers)?strategy.targetTickers:[];
  var exclusions=Array.isArray(strategy.exclusions)?strategy.exclusions:[];
+ var strategyBackendVersion=String(strategy.backendVersion||'');
  var strategyCard=document.createElement('div');strategyCard.className='scard';
  var targetOptions=targets.map(function(t){return '<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('');
  var targetChips=targets.length
@@ -2083,7 +2084,7 @@ function renderSettings(d){
  '<div class="srow" style="align-items:flex-start"><div style="min-width:0"><div class="slbl">Strategy Tickers</div><div class="ssub">Only these underlyings are included in RiKi accounting and Nickel Closer</div>'+targetChips+'</div><span class="pill pb">'+targets.length+'</span></div>'+
  '<div class="strategy-editor">'+
  '<input id="strategy-tickers-input" class="strategy-field" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" value="'+escHtml(targets.join(', '))+'" placeholder="MSTR, SOXX, META">'+
- '<div class="strategy-hint">Separate tickers with commas. Duplicates and lowercase are normalized automatically.</div>'+
+ '<div class="strategy-hint">Separate tickers with commas. Duplicates and lowercase are normalized automatically.'+(strategyBackendVersion?' · '+escHtml(strategyBackendVersion):'')+'</div>'+
  '<div class="strategy-actions"><button class="abtn" onclick="saveStrategyTickers(this)">Save Tickers</button></div>'+
  '</div>'+
  '<div class="srow" style="align-items:flex-start"><div><div class="slbl">Add Ticker / Expiry Exclusion</div><div class="ssub">Excluded pairs are ignored by accounting, Churner rebuilds, and Nickel Closer</div></div></div>'+ 

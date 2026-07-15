@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <title>RiKi Trading</title>
-<!-- RIKI TICKER DETAIL CORRECTION UI V2.8.4 -->
+<!-- RIKI OPTION MAINTENANCE UI V2.8.5 -->
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -346,6 +346,16 @@ body.overlaying #tabs-wrap{display:none !important;}
 .bp-value{font-size:18px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums;}
 .bp-line{display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-top:5px;gap:8px;}
 .bp-line b{color:var(--text2);font-weight:700;}
+.ticker-maint{margin:0 0 10px;padding:11px 12px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);}
+.ticker-maint-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px;}
+.ticker-maint-title{font-size:9px;font-weight:850;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
+.ticker-maint-total{font-size:16px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums;}
+.ticker-maint-sub{font-size:8px;color:var(--text3);margin-top:2px;text-align:right;}
+.ticker-maint-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.ticker-maint-account{padding:8px 9px;border-radius:9px;background:var(--bg2);border:1px solid var(--border2);}
+.ticker-maint-account-name{font-size:8px;font-weight:850;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;}
+.ticker-maint-account-value{font-size:12px;font-weight:850;color:var(--text);margin-top:3px;font-variant-numeric:tabular-nums;}
+.ticker-maint-account-sub{font-size:8px;color:var(--text2);margin-top:2px;}
 .ticker-detail-head{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:6px;padding:8px 0 5px;font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
 .ticker-week{padding:10px 0;border-top:1px solid var(--border2);}
 .ticker-week-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;}
@@ -472,7 +482,7 @@ body.overlaying #tabs-wrap{display:none !important;}
  <div id="tally-section"></div>
  <div class="scroll-spacer"></div>
  <div class="scroll-spacer"></div>
- <div class="sver">RiKi Trading &middot; v2.7 Multi-Ticker</div>
+ <div class="sver">RiKi Trading &middot; v2.8.5</div>
 </div>
  </div>
  <div id="tabs-wrap">
@@ -1775,7 +1785,7 @@ function renderDash(d){
  if(tickerRows.length){
  var scope=document.createElement('div');scope.className='ticker-scope';
  var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
- scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Account 1 + Account 2 · This Week, Next Week, Week After · v2.8.4</div></div><span class="pill pb">'+tickerRows.length+'</span></div>';
+ scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Account 1 + Account 2 · This Week, Next Week, Week After · v2.8.5</div></div><span class="pill pb">'+tickerRows.length+'</span></div>';
  tickerRows.forEach(function(r){
  var item=document.createElement('div');item.className='ticker-item open';
  var total=money(r.total),banked=money(r.banked),potential=money(r.potential),contracts=Number(r.contracts||0);
@@ -1786,6 +1796,19 @@ function renderDash(d){
  '<div><div class="ticker-metric">Total</div><div class="ticker-value '+cc(total)+'">'+fmtS(total)+'</div></div>'+
  '</div><div class="ticker-detail"></div>';
  var detail=item.querySelector('.ticker-detail');
+ var maintReq=money(r.maintenanceRequirement||0);
+ var maintContracts=Number(r.maintenanceContracts||0);
+ var maintPer=money(r.maintenancePerContract||0);
+ var maintAccounts=Array.isArray(r.maintenanceAccounts)?r.maintenanceAccounts:[];
+ var maintPerText=maintContracts>0?fmtS(maintPer)+' / ct':'— / ct';
+ var maintHtml='<div class="ticker-maint"><div class="ticker-maint-head"><div><div class="ticker-maint-title">RiKi option maintenance</div><div class="ticker-maint-account-sub">Schwab position maintenance · equity excluded</div></div><div><div class="ticker-maint-total">'+fmtS(maintReq)+'</div><div class="ticker-maint-sub">'+maintContracts+' short ct · '+maintPerText+'</div></div></div><div class="ticker-maint-grid">';
+ maintAccounts.forEach(function(a){
+   var acctContracts=Number(a.shortContracts||0);
+   var acctPerText=acctContracts>0?fmtS(a.maintenancePerContract||0)+' / ct':'— / ct';
+   maintHtml+='<div class="ticker-maint-account"><div class="ticker-maint-account-name">'+escHtml(a.account||'Account')+'</div><div class="ticker-maint-account-value">'+fmtS(a.maintenanceRequirement||0)+'</div><div class="ticker-maint-account-sub">'+acctContracts+' short ct · '+acctPerText+'</div></div>';
+ });
+ maintHtml+='</div></div>';
+ detail.innerHTML=maintHtml;
  (r.expiries||[]).filter(function(x){return ['This Week','Next Week','Week After'].indexOf(x.weekLabel)>=0;}).forEach(function(x){
   var week=document.createElement('div');week.className='ticker-week';
   var body='<div class="ticker-week-title"><strong>'+escHtml(x.weekLabel||x.expiry)+'</strong><span>'+escHtml(x.expiry)+' · '+Number(x.openCalls||0)+'C/'+Number(x.openPuts||0)+'P</span></div>'+

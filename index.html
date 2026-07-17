@@ -609,7 +609,7 @@ body.overlaying #tabs-wrap{display:none !important;}
  .ticker-account-row{gap:4px;}
 }
 
-/* RIKI_DUAL_ENGINE_CONTROLS_V3_2_0 */
+/* RIKI_DUAL_ENGINE_CONTROLS_V3_2_5 */
 .engine-status-card{margin:14px 16px 0;padding:15px 16px;border-radius:14px;background:linear-gradient(145deg,#171922,#12141b);border:1px solid var(--border);}
 .engine-status-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .engine-status-name{font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;}
@@ -812,6 +812,22 @@ function escHtml(v){
  return String(v == null ? '' : v).replace(/[&<>"']/g,function(ch){
  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
  });
+}
+
+function legacyAuditDismissKey_(tr){
+ tr=tr||{};
+ var id=String(tr.runId||'').trim();
+ if(!id){
+  id=[String(tr.reportingWeekEnd||tr.expiry||''),String(tr.status||(tr.pass?'PASS':'FAIL')),String(tr.difference||0),String(tr.date||'')].join('|');
+ }
+ return 'riki_legacy_audit_dismiss:'+id;
+}
+function isLegacyAuditDismissed_(tr){
+ try{return localStorage.getItem(legacyAuditDismissKey_(tr))==='1';}catch(e){return false;}
+}
+function dismissLegacyAudit_(tr){
+ try{localStorage.setItem(legacyAuditDismissKey_(tr),'1');}catch(e){}
+ if(DATA)renderAll(DATA);
 }
 // CHURNER_TIMESTAMP_FORMAT_AND_DAYTRADE_HISTORY_V1
 // Display as M/D/YY HH:MM AM/PM, e.g. 6/24/26 08:43 PM.
@@ -1844,9 +1860,7 @@ function renderDash(d){
  dw.appendChild(el);
  });
  var tr=d.tallyResult;
- if(tr){
- var tdKey='tallyDismiss:'+tr.expiry;
- if(!localStorage.getItem(tdKey)){
+ if(tr&&!isLegacyAuditDismissed_(tr)){
  var isPass=tr.pass;
  var dparts=Object.keys(tr.results||{}).map(function(l){
  var r=tr.results[l]; return l.replace('Account ','A')+': $'+(r.diff||0).toFixed(2);
@@ -1873,15 +1887,12 @@ function renderDash(d){
  var tc=document.createElement('div');
  tc.style.cssText='font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;';
  tc.textContent='x';
- tc.onclick=function(e){
- e.stopPropagation();
- tp.parentNode.removeChild(tp);
- localStorage.setItem(tdKey,'1');
- };
+ tc.setAttribute('role','button');
+ tc.setAttribute('aria-label','Dismiss audit banner');
+ tc.onclick=function(e){e.stopPropagation();dismissLegacyAudit_(tr);};
  tp.appendChild(tl);
  tp.appendChild(tc);
  dw.appendChild(tp);
- }
  }
  if(d.staleData){
  var el=document.createElement('div');el.className='warn urg';
@@ -2301,7 +2312,7 @@ function renderSettings(d){
   var archRows=d.archRows||[],ncDisabled=d.nickelCloserDisabled||[],weeks=[];['THIS WEEK','NEXT WEEK'].forEach(function(label,i){for(var r=0;r<archRows.length;r++){var raw=String(archRows[r][0]||'');if(raw.toUpperCase().indexOf(label)>=0){var m=raw.match(/(\d{4}-\d{2}-\d{2})/);if(m)weeks.push({expiry:m[1],label:i===0?'This Week':'Next Week'});break;}}});if(weeks.length){var card=document.createElement('div');card.className='scard';weeks.forEach(function(w){var enabled=ncDisabled.indexOf(w.expiry)<0,row=document.createElement('div');row.className='srow';row.innerHTML='<div><div class="slbl">Auto-close · '+w.label+'</div><div class="ssub">'+w.expiry+'</div></div><div class="tog'+(enabled?' on':'')+'" onclick="toggleNickelCloser(\''+w.expiry+'\')"><div class="tog-track"></div><div class="tog-thumb"></div></div>';card.appendChild(row);});nc.appendChild(card);}
  }
  var unlock=document.createElement('div');unlock.className='scard';unlock.innerHTML='<div class="srow"><div><div class="slbl" style="color:var(--red)">Emergency RiKi Unlock</div><div class="ssub">Restores Nickel Closer status only; does not change either engine mode.</div></div><button class="abtn red" id="manual-unlock-btn" onclick="doManualUnlockRikiEmergency(this)">Manual Unlock</button></div>';nc.appendChild(unlock);
- renderCancelSection();var tallySection=ge('tally-section');tallySection.innerHTML='';var tr=d.legacyWeeklyAudit||d.tallyResult;if(tr&&engine==='legacy'){var tc=document.createElement('div');tc.className='scard';var st=String(tr.status||(tr.pass?'PASS':'FAIL'));tc.innerHTML='<div class="srow"><div><div class="slbl" style="color:'+(st==='PASS'?'var(--green)':'var(--red)')+'">Weekly Legacy Audit · '+st+'</div><div class="ssub">Week ending '+escHtml(tr.reportingWeekEnd||tr.expiry||'')+' · Difference '+fmtS(tr.difference||0)+' · '+Number(tr.mismatches||0)+' mismatch(es)</div></div></div>';tallySection.appendChild(tc);}
+ renderCancelSection();var tallySection=ge('tally-section');tallySection.innerHTML='';var tr=d.legacyWeeklyAudit||d.tallyResult;if(tr&&engine==='legacy'&&!isLegacyAuditDismissed_(tr)){var tc=document.createElement('div');tc.className='scard';var st=String(tr.status||(tr.pass?'PASS':'FAIL'));var acceptedAudit=st==='PASS'||st==='PASS_WITH_OVERLAP';var sr=document.createElement('div');sr.className='srow';var left=document.createElement('div');var auditSub=st==='PASS_WITH_OVERLAP'?('Week ending '+escHtml(tr.reportingWeekEnd||tr.expiry||'')+' · Legacy/Churner overlap disclosed · Difference '+fmtS(tr.difference||0)+' informational'):('Week ending '+escHtml(tr.reportingWeekEnd||tr.expiry||'')+' · Difference '+fmtS(tr.difference||0)+' · '+Number(tr.mismatches||0)+' mismatch(es)');left.innerHTML='<div class="slbl" style="color:'+(acceptedAudit?'var(--green)':'var(--red)')+'">Weekly Legacy Audit · '+st+'</div><div class="ssub">'+auditSub+'</div>';var close=document.createElement('button');close.className='abtn';close.textContent='Close';close.setAttribute('aria-label','Dismiss weekly Legacy audit');close.onclick=function(){dismissLegacyAudit_(tr);};sr.appendChild(left);sr.appendChild(close);tc.appendChild(sr);tallySection.appendChild(tc);}
 }
 var MOCK={
  updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},

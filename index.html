@@ -700,7 +700,7 @@ body.overlaying #tabs-wrap{display:none !important;}
  <div id="tally-section"></div>
  <div class="scroll-spacer"></div>
  <div class="scroll-spacer"></div>
- <div class="sver">RiKi Trading &middot; Atomic Handoff v3.3.2</div>
+ <div class="sver">RiKi Trading &middot; Atomic Handoff v3.3.3</div>
 </div>
  </div>
  <div id="tabs-wrap">
@@ -827,6 +827,19 @@ function isLegacyAuditDismissed_(tr){
 }
 function dismissLegacyAudit_(tr){
  try{localStorage.setItem(legacyAuditDismissKey_(tr),'1');}catch(e){}
+ if(DATA)renderAll(DATA);
+}
+function weeklyBackupDismissKey_(br){
+ br=br||{};
+ var id=String(br.runId||'').trim();
+ if(!id)id=[String(br.reportingWeekEnd||''),String(br.status||''),String(br.checkedAtEt||'')].join('|');
+ return 'riki_weekly_backup_dismiss:'+id;
+}
+function isWeeklyBackupDismissed_(br){
+ try{return localStorage.getItem(weeklyBackupDismissKey_(br))==='1';}catch(e){return false;}
+}
+function dismissWeeklyBackup_(br){
+ try{localStorage.setItem(weeklyBackupDismissKey_(br),'1');}catch(e){}
  if(DATA)renderAll(DATA);
 }
 // CHURNER_TIMESTAMP_FORMAT_AND_DAYTRADE_HISTORY_V1
@@ -1895,6 +1908,36 @@ function renderDash(d){
  tp.appendChild(tl);
  tp.appendChild(tc);
  dw.appendChild(tp);
+ }
+ var br=d.latestWeeklyBackup;
+ if(br&&!isWeeklyBackupDismissed_(br)){
+ var bst=String(br.status||''),bok=bst==='BACKUP_COMPLETE',bwarn=bst==='BACKUP_SKIPPED_AUDIT';
+ var bp=document.createElement('div');
+ bp.style.margin='10px 16px 0';
+ bp.style.padding='11px 14px';
+ bp.style.borderRadius='10px';
+ bp.style.display='flex';
+ bp.style.alignItems='center';
+ bp.style.justifyContent='space-between';
+ bp.style.gap='12px';
+ bp.style.background=bok?'rgba(52,168,83,.18)':(bwarn?'rgba(244,197,66,.10)':'rgba(229,83,83,.08)');
+ bp.style.border='1px solid '+(bok?'rgba(52,168,83,.4)':(bwarn?'rgba(244,197,66,.35)':'rgba(229,83,83,.25)'));
+ bp.style.color=bok?'#1e7e34':(bwarn?'#b18400':'#e55353');
+ var bl=document.createElement('div');
+ var bt=document.createElement('div');
+ bt.style.cssText='font-size:12px;font-weight:700;';
+ bt.textContent=bok?'Backup complete':(bwarn?'Backup skipped':'Backup failed');
+ var bs=document.createElement('div');
+ bs.style.cssText='font-size:11px;opacity:0.88;margin-top:2px;';
+ bs.textContent=(br.message||('Week ending '+(br.reportingWeekEnd||'')+' · '+bst))+(br.checkedAtEt?' · '+br.checkedAtEt:'');
+ bl.appendChild(bt);bl.appendChild(bs);
+ var bc=document.createElement('div');
+ bc.style.cssText='font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;';
+ bc.textContent='x';
+ bc.setAttribute('role','button');
+ bc.setAttribute('aria-label','Dismiss backup banner');
+ bc.onclick=function(e){e.stopPropagation();dismissWeeklyBackup_(br);};
+ bp.appendChild(bl);bp.appendChild(bc);dw.appendChild(bp);
  }
  if(d.staleData){
  var el=document.createElement('div');el.className='warn urg';

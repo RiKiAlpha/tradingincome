@@ -10,8 +10,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <title>RiKi Trading</title>
-<!-- RIKI DUAL ENGINE ACCOUNTING UI V3.2.0 -->
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- RIKI NEXTGEN FINTECH FRONTEND V3.4.2 · BACKEND UNCHANGED -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
  --blue:#0077b6; --blue-dim:rgba(0,119,182,0.55);
@@ -626,6 +626,221 @@ body.overlaying #tabs-wrap{display:none !important;}
 
 </style>
 
+
+<style id="riki-nextgen-fintech-ui-v342">
+/* RIKI NEXTGEN FINTECH UI V3.4.2 — FRONTEND ONLY */
+:root{
+ --blue:#4b9eff;
+ --blue-dim:rgba(75,158,255,.48);
+ --green:#28d7ad;
+ --gold:#e8bf5b;
+ --red:#ff6678;
+ --orange:#f39a55;
+ --churner:#2f89e8;
+ --churner2:#62adff;
+ --churnerGlow:rgba(75,158,255,.16);
+ --bg:#07090d;
+ --bg2:rgba(15,18,25,.88);
+ --bg3:rgba(23,27,36,.86);
+ --bg4:rgba(30,35,46,.96);
+ --border:rgba(210,222,238,.09);
+ --border2:rgba(210,222,238,.055);
+ --text:rgba(231,237,245,.93);
+ --text2:rgba(205,215,228,.63);
+ --text3:rgba(184,196,212,.39);
+ --riki-surface:linear-gradient(145deg,rgba(24,28,38,.92),rgba(12,15,21,.94));
+ --riki-shadow:0 18px 50px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.035);
+ color-scheme:dark;
+}
+*{font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;}
+body{
+ background:
+  radial-gradient(circle at 12% -8%,rgba(40,215,173,.075),transparent 27%),
+  radial-gradient(circle at 92% 3%,rgba(75,158,255,.085),transparent 30%),
+  var(--bg);
+ color:var(--text);
+ letter-spacing:-.006em;
+}
+#app,#content,.pane,#ph{background:transparent;}
+#header{
+ height:74px;
+ padding:0 18px;
+ background:linear-gradient(180deg,rgba(9,11,16,.92),rgba(9,11,16,.72));
+ border-bottom:1px solid rgba(255,255,255,.045);
+ backdrop-filter:blur(22px) saturate(135%);
+ -webkit-backdrop-filter:blur(22px) saturate(135%);
+}
+#wm svg.logo{width:68px;height:68px;opacity:.96;filter:drop-shadow(0 0 18px rgba(40,215,173,.08));}
+#hright{gap:10px;}
+#utime{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:600;color:var(--text2);letter-spacing:.025em;}
+.sdot{width:7px;height:7px;background:var(--green);box-shadow:0 0 0 4px rgba(40,215,173,.08),0 0 12px rgba(40,215,173,.26);}
+.sdot.exp{background:var(--gold);box-shadow:0 0 0 4px rgba(232,191,91,.08),0 0 12px rgba(232,191,91,.22);}
+.sdot.dead{background:var(--red);box-shadow:0 0 0 4px rgba(255,102,120,.08),0 0 12px rgba(255,102,120,.22);}
+#rbtn{width:34px;height:34px;border:1px solid var(--border);background:rgba(255,255,255,.025);}
+#rbtn:hover{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.13);}
+#rbtn svg{width:14px;height:14px;color:var(--text2);}
+.mode-switch{padding:3px;gap:3px;background:rgba(255,255,255,.025);border-color:var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.02);}
+.mode-pill{padding:6px 10px;font-size:8.5px;font-weight:750;letter-spacing:.075em;}
+.mode-pill.legacy.on{background:rgba(255,255,255,.075);border-color:rgba(255,255,255,.11);}
+.mode-pill.churner.on{background:rgba(75,158,255,.11);border-color:rgba(98,173,255,.38);}
+#tabs-wrap{
+ background:rgba(9,11,16,.90);
+ border-top:1px solid rgba(255,255,255,.05);
+ backdrop-filter:blur(22px) saturate(135%);
+ -webkit-backdrop-filter:blur(22px) saturate(135%);
+}
+#tabs{height:62px;background:transparent;}
+.tab{gap:3px;}
+.tab svg{width:24px;height:24px;stroke-width:1.7;color:rgba(205,215,228,.58);}
+.tlabel{font-size:9px;font-weight:700;letter-spacing:.055em;color:rgba(205,215,228,.54);}
+.tab::after{left:27%;right:27%;height:2px;bottom:4px;background:var(--green);box-shadow:0 0 10px rgba(40,215,173,.30);}
+.scards{}
+.scard,.engine-status-card,.wcard,.cap,.buying-power-card,.ticker-scope,.churner-kpi,.churner-exp-card{
+ background:var(--riki-surface);
+ border:1px solid var(--border);
+ box-shadow:var(--riki-shadow);
+ border-radius:18px;
+}
+.scard{margin:14px 16px 0;overflow:hidden;}
+.srow{padding:17px 18px;border-bottom-color:var(--border2);}
+.slbl{font-size:13px;font-weight:750;letter-spacing:-.015em;color:var(--text);}
+.ssub{font-size:10.5px;line-height:1.48;color:var(--text2);margin-top:4px;}
+.sver{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);}
+.abtn{
+ min-height:34px;
+ padding:8px 14px;
+ border-radius:11px;
+ border:1px solid rgba(75,158,255,.24);
+ background:linear-gradient(180deg,rgba(75,158,255,.16),rgba(75,158,255,.08));
+ color:#7db8ff;
+ font-size:10px;
+ font-weight:750;
+ letter-spacing:.015em;
+ text-transform:none;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+ transition:transform .15s ease,border-color .15s ease,background .15s ease,opacity .15s ease;
+}
+.abtn:hover{border-color:rgba(75,158,255,.46);background:linear-gradient(180deg,rgba(75,158,255,.22),rgba(75,158,255,.10));transform:translateY(-1px);}
+.abtn:active{transform:translateY(0);}
+.abtn.red{border-color:rgba(255,102,120,.24);background:linear-gradient(180deg,rgba(255,102,120,.14),rgba(255,102,120,.07));color:#ff8997;}
+.abtn:disabled,.abtn.is-busy{opacity:.52;cursor:wait;transform:none;}
+.pill{padding:5px 9px;border-radius:999px;font-size:9px;font-weight:750;letter-spacing:.02em;text-transform:none;border:1px solid transparent;}
+.pg{background:rgba(40,215,173,.09);border-color:rgba(40,215,173,.22);color:#53dfbd;}
+.py{background:rgba(232,191,91,.09);border-color:rgba(232,191,91,.24);color:#efd17e;}
+.pr{background:rgba(255,102,120,.09);border-color:rgba(255,102,120,.24);color:#ff8997;}
+.pb{background:rgba(75,158,255,.09);border-color:rgba(75,158,255,.22);color:#7db8ff;}
+.tog{width:48px;height:28px;}
+.tog-track{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08);}
+.tog.on .tog-track{background:rgba(40,215,173,.72);border-color:rgba(40,215,173,.72);box-shadow:0 0 16px rgba(40,215,173,.12);}
+.tog-thumb{width:24px;height:24px;top:1px;left:1px;box-shadow:0 3px 9px rgba(0,0,0,.35);}
+.tog.on .tog-thumb{transform:translateX(20px);}
+.engine-status-card{padding:16px 17px;}
+.engine-status-name{font-size:12px;font-weight:800;letter-spacing:.045em;}
+.engine-status-sub{font-size:10.5px;line-height:1.5;}
+.engine-mode-badge{padding:5px 9px;font-size:8.5px;border-radius:999px;}
+.engine-health-cell{background:rgba(255,255,255,.022);border-color:var(--border2);padding:11px;}
+.engine-health-label{font-size:7.5px;letter-spacing:.07em;}
+.engine-health-value,.cap-n,.churner-kv,.bp-value,.ticker-value,.ticker-maint-total,.ticker-maint-account-value,.wtot-val,.anum-val,.ticker-scope-deployed b{
+ font-family:'JetBrains Mono',monospace;
+ letter-spacing:-.045em;
+}
+/* Secure Schwab connection card */
+.auth-connection-card{padding:0;overflow:hidden;position:relative;}
+.auth-connection-card::before{content:'';position:absolute;left:0;top:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(40,215,173,.42),rgba(75,158,255,.38),transparent);}
+.auth-connection-top{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:13px;align-items:center;padding:18px;border-bottom:1px solid var(--border2);}
+.auth-provider-icon{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#59dfbe;background:linear-gradient(145deg,rgba(40,215,173,.12),rgba(75,158,255,.07));border:1px solid rgba(40,215,173,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+.auth-provider-icon svg{width:20px;height:20px;}
+.auth-connection-copy{min-width:0;}
+.auth-eyebrow{font-size:8px;font-weight:750;letter-spacing:.11em;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}
+.auth-provider-name{font-size:15px;}
+.auth-state-pill{white-space:nowrap;}
+.auth-connection-bottom{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 18px;background:rgba(255,255,255,.012);}
+.auth-renewal{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.auth-renewal span{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);}
+.auth-renewal strong{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--text2);}
+.auth-connect-btn{min-width:96px;}
+/* Modern auth and identity screens */
+#auth-screen{
+ background:
+  radial-gradient(circle at 50% -5%,rgba(40,215,173,.14),transparent 33%),
+  radial-gradient(circle at 95% 85%,rgba(75,158,255,.12),transparent 34%),
+  linear-gradient(180deg,#05070a,#090c12);
+}
+#auth-card{
+ width:min(92vw,430px);
+ padding:30px 25px 24px;
+ border-radius:26px;
+ background:linear-gradient(145deg,rgba(22,27,37,.91),rgba(10,13,18,.94));
+ border:1px solid rgba(213,226,242,.11);
+ box-shadow:0 30px 90px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.05);
+ gap:15px;
+}
+#auth-logo{width:84px;height:84px;filter:drop-shadow(0 0 26px rgba(40,215,173,.14));}
+.auth-kicker{font-size:8px;font-weight:800;letter-spacing:.16em;color:rgba(83,223,189,.72);margin-top:2px;}
+#auth-title{font-size:27px;font-weight:750;letter-spacing:-.045em;}
+#auth-sub{font-size:12.5px;line-height:1.58;color:var(--text2);max-width:310px;}
+#auth-err{padding:9px 12px;border-radius:10px;background:rgba(255,102,120,.08);border:1px solid rgba(255,102,120,.18);font-size:10.5px;}
+#auth-foot{font-size:9px;letter-spacing:.025em;display:flex;align-items:center;gap:6px;color:var(--text3);}
+.auth-foot-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(40,215,173,.38);}
+#faceid-screen{background:rgba(5,7,10,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+#faceid-icon{width:68px;height:68px;border-radius:20px;background:linear-gradient(145deg,rgba(40,215,173,.10),rgba(75,158,255,.06));border-color:rgba(40,215,173,.18);}
+#faceid-title{font-size:20px;font-weight:750;letter-spacing:-.025em;}
+#faceid-sub{font-size:12px;line-height:1.55;}
+/* Refined progress toast */
+#toast{
+ bottom:88px;
+ max-width:min(88vw,440px);
+ padding:12px 16px 12px 36px;
+ border-radius:14px;
+ background:rgba(24,29,39,.94);
+ border:1px solid rgba(213,226,242,.12);
+ box-shadow:0 18px 48px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.04);
+ backdrop-filter:blur(20px) saturate(140%);
+ -webkit-backdrop-filter:blur(20px) saturate(140%);
+ font-size:11px;
+ font-weight:650;
+ color:var(--text);
+ white-space:normal;
+ line-height:1.35;
+ text-align:left;
+}
+#toast::before{content:'';position:absolute;left:15px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(40,215,173,.08),0 0 12px rgba(40,215,173,.30);}
+#loverlay{background:rgba(5,7,10,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+#loverlay svg{width:132px;height:132px;filter:drop-shadow(0 0 24px rgba(40,215,173,.12));}
+/* Tables and financial surfaces */
+th{font-size:8.5px;font-weight:750;letter-spacing:.075em;color:var(--text3);background:rgba(255,255,255,.018);}
+td{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:550;color:var(--text);}
+.atag,.ticker-name,.wlabel,.cap-title{font-family:'Inter',sans-serif;}
+.buying-power-card,.ticker-scope{border-color:rgba(210,222,238,.085);}
+.bp-title,.ticker-scope-title{font-size:11px;font-weight:800;letter-spacing:.08em;}
+.strategy-field,.churner-input,.churner-date-input{font-family:'Inter',sans-serif;background:rgba(255,255,255,.025);border-color:var(--border);border-radius:11px;}
+.strategy-field:focus,.churner-input:focus,.churner-date-input:focus{border-color:rgba(75,158,255,.42);box-shadow:0 0 0 3px rgba(75,158,255,.07);}
+.warn{border-radius:14px;font-size:10.5px;line-height:1.48;}
+/* Light theme remains coherent */
+[data-theme="light"]{
+ --bg:#eef1f5;--bg2:rgba(255,255,255,.90);--bg3:rgba(246,248,251,.94);--bg4:#fff;
+ --border:rgba(15,25,38,.09);--border2:rgba(15,25,38,.055);
+ --text:rgba(18,24,32,.92);--text2:rgba(30,42,57,.62);--text3:rgba(45,58,75,.40);
+ --riki-surface:linear-gradient(145deg,rgba(255,255,255,.96),rgba(244,247,251,.94));
+ --riki-shadow:0 14px 38px rgba(29,46,68,.09),inset 0 1px 0 rgba(255,255,255,.9);
+ color-scheme:light;
+}
+[data-theme="light"] body{background:radial-gradient(circle at 12% -8%,rgba(40,215,173,.08),transparent 28%),radial-gradient(circle at 92% 3%,rgba(75,158,255,.08),transparent 31%),var(--bg);}
+[data-theme="light"] #header,[data-theme="light"] #tabs-wrap{background:rgba(244,247,251,.86);}
+[data-theme="light"] #toast{background:rgba(255,255,255,.95);}
+@media(max-width:600px){
+ #header{padding:0 12px;height:70px;}
+ #wm svg.logo{width:62px;height:62px;}
+ .mode-pill{padding:5px 8px;font-size:8px;}
+ .auth-connection-top{grid-template-columns:38px minmax(0,1fr);padding:16px;}
+ .auth-provider-icon{width:38px;height:38px;border-radius:12px;}
+ .auth-state-pill{grid-column:2;justify-self:start;margin-top:1px;}
+ .auth-connection-bottom{padding:12px 16px;}
+ .auth-connect-btn{min-width:86px;}
+ #toast{bottom:80px;font-size:10.5px;}
+}
+</style>
+
 </head>
 <body>
 <div id="app">
@@ -681,17 +896,21 @@ body.overlaying #tabs-wrap{display:none !important;}
  <div id="ph-scroll"><div id="hc"></div><div class="scroll-spacer"></div></div>
 </div>
 <div class="pane" id="ps">
- <div class="scard">
- <div class="srow">
- <div><div class="slbl">Token Status</div></div>
- <div style="display:flex;flex-direction:column;align-items:center;">
- <span class="pill" id="tpill">&mdash;</span>
- <div class="ssub" id="tdays" style="margin-top:4px;text-align:center;"></div>
+ <div class="scard auth-connection-card">
+ <div class="auth-connection-top">
+ <div class="auth-provider-icon" aria-hidden="true">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10V8a5 5 0 0 1 10 0v2"/><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M12 14v3"/></svg>
  </div>
+ <div class="auth-connection-copy">
+ <div class="auth-eyebrow">Secure connection</div>
+ <div class="slbl auth-provider-name">Charles Schwab</div>
+ <div class="ssub">OAuth access for live balances, positions, transactions, and account health.</div>
  </div>
- <div class="srow">
- <div><div class="slbl">Re-Authenticate</div><div class="ssub">Schwab OAuth via Face ID</div></div>
- <button class="abtn" id="auth-btn">Connect</button>
+ <span class="pill auth-state-pill" id="tpill">Checking</span>
+ </div>
+ <div class="auth-connection-bottom">
+ <div class="auth-renewal"><span>Connection window</span><strong id="tdays">Checking…</strong></div>
+ <button class="abtn auth-connect-btn" id="auth-btn">Reconnect</button>
  </div>
  </div>
  
@@ -700,14 +919,14 @@ body.overlaying #tabs-wrap{display:none !important;}
  <div id="tally-section"></div>
  <div class="scroll-spacer"></div>
  <div class="scroll-spacer"></div>
- <div class="sver">RiKi Trading &middot; Lean Core Fast v3.4.0</div>
+ <div class="sver">RiKi · NextGen Fintech UI v3.4.2</div>
 </div>
  </div>
  <div id="tabs-wrap">
  <div id="tabs">
  <div class="tab on" id="t-d">
  <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
- <span class="tlabel">Dashboard</span>
+ <span class="tlabel">Overview</span>
  </div>
  <div class="tab" id="t-p">
  <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -715,11 +934,11 @@ body.overlaying #tabs-wrap{display:none !important;}
  </div>
  <div class="tab" id="t-h">
  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
- <span class="tlabel">History</span>
+ <span class="tlabel">Activity</span>
  </div>
  <div class="tab" id="t-s">
  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
- <span class="tlabel">Settings</span>
+ <span class="tlabel">Controls</span>
  </div>
  </div>
  <div id="tabs-safe"></div>
@@ -740,8 +959,8 @@ body.overlaying #tabs-wrap{display:none !important;}
  </g>
  </g>
  </svg>
- <div id="auth-title">RiKi Trading</div>
- <div id="auth-sub">Secure sign in for your live trading dashboard</div>
+ <div class="auth-kicker">PRIVATE FINTECH WORKSPACE</div><div id="auth-title">Welcome to RiKi</div>
+ <div id="auth-sub">Your private trading intelligence workspace, protected by Google sign-in.</div>
  <div id="g_id_onload"
  data-client_id="632213689535-vlhn0mn0bkg4dntjul9fi1kb31i3kcos.apps.googleusercontent.com"
  data-callback="onGoogleSignIn"
@@ -759,8 +978,8 @@ body.overlaying #tabs-wrap{display:none !important;}
  data-width="320">
  </div>
  </div>
- <div id="auth-err">This Google account is not authorized.</div>
- <div id="auth-foot">Private access only · Google sign-in required</div>
+ <div id="auth-err">This account does not have access to this RiKi workspace.</div>
+ <div id="auth-foot"><span class="auth-foot-dot"></span> Encrypted session · Private access only</div>
  </div>
 </div>
 <!--  Face ID lock screen  -->
@@ -772,9 +991,9 @@ body.overlaying #tabs-wrap{display:none !important;}
  <circle cx="12" cy="10" r="2"/><path d="M8 16s1-2 4-2 4 2 4 2"/>
  </svg>
  </div>
- <div id="faceid-title">RiKi is Locked</div>
- <div id="faceid-sub">Use Face ID to unlock</div>
- <button class="abtn" id="faceid-retry" onclick="doFaceID()" style="margin-top:8px;">Try Again</button>
+ <div id="faceid-title">RiKi Secure</div>
+ <div id="faceid-sub">Verify your identity to continue to your private workspace.</div>
+ <button class="abtn" id="faceid-retry" onclick="doFaceID()" style="margin-top:8px;">Verify again</button>
 </div>
 
 <div id="toast"></div>
@@ -873,7 +1092,7 @@ var appMode = localStorage.getItem('riki_app_mode') || 'legacy';
 var churnerLogoPulseTimer_ = null;
 function setChurnerBusy_(on,label){
  DATA = DATA || {};
- DATA.churnerLoadingLabel = on ? (label || 'Loading ChurnerData&') : '';
+ DATA.churnerLoadingLabel = on ? (label || 'Loading Churner data…') : '';
  if(on){
  flashLogo();
  if(churnerLogoPulseTimer_) clearInterval(churnerLogoPulseTimer_);
@@ -958,7 +1177,7 @@ function loadChurnerTicker(ticker,opts){
  DATA.churnerSource = DATA.churner.source || '';
  renderAll(DATA);
  }
- setChurnerBusy_(true,'ChurnerData load already running&');
+ setChurnerBusy_(true,'Churner data is already loading…');
  return;
  }
  CHURNER_LOAD_INFLIGHT[cacheKey]=true;
@@ -969,9 +1188,9 @@ function loadChurnerTicker(ticker,opts){
  DATA.churnerLoadedAtEt = DATA.churner.generatedAt || '';
  DATA.churnerSource = DATA.churner.source || '';
  renderAll(DATA);
- setChurnerBusy_(true,'Refreshing ChurnerData&');
+ setChurnerBusy_(true,'Refreshing Churner data…');
  }else{
- setChurnerBusy_(true,'Loading ChurnerData&');
+ setChurnerBusy_(true,'Loading Churner data…');
  }
  fetch(url).then(function(r){return r.json();}).then(function(j){
  delete CHURNER_LOAD_INFLIGHT[cacheKey];
@@ -1004,7 +1223,7 @@ function loadChurnerTicker(ticker,opts){
 function rebuildChurnerData(){
  if(CHURNER_REBUILD_INFLIGHT){
  toast('Churner rebuild already running — duplicate blocked',3500);
- setChurnerBusy_(true,'Rebuild already running&');
+ setChurnerBusy_(true,'Rebuild already in progress…');
  return;
  }
  CHURNER_REBUILD_INFLIGHT = true;
@@ -1020,7 +1239,7 @@ function rebuildChurnerData(){
  localStorage.setItem('riki_churner_focus_ticker',ticker);
  var focus=ticker?'1':'0';
  var url=BACKEND+'?action=churnerEodBuild&ticker='+encodeURIComponent(ticker)+'&focus='+focus+'&start=2026-06-01&fast=1'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
- setChurnerBusy_(true,'Building selected-date Schwab ledger&');
+ setChurnerBusy_(true,'Building the selected-date Schwab ledger…');
  fetch(url).then(function(r){return r.json();}).then(function(j){
  CHURNER_REBUILD_INFLIGHT = false;
  setChurnerBusy_(false);
@@ -1053,7 +1272,7 @@ function backfillChurnerHistory(){
  var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
  var endParam=asOf ? '&end='+encodeURIComponent(asOf) : '';
  var url=BACKEND+'?action=churnerEodBackfill&start=2026-06-01&resetLots=1'+endParam+'&_='+Date.now();
- setChurnerBusy_(true,'Backfilling Schwab ledger history&');
+ setChurnerBusy_(true,'Backfilling Schwab ledger history…');
  fetch(url).then(function(r){return r.json();}).then(function(j){
  setChurnerBusy_(false);
  if(j&&j.success){
@@ -1169,11 +1388,11 @@ function showTokenExpired(){
  content.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;gap:20px;">'+
  '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e55353" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
  '<div style="text-align:center;">'+
- '<div style="font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;">Schwab Token Expired</div>'+
- '<div style="font-size:13px;color:var(--text2);line-height:1.6;">Your connection to Schwab has expired.<br>Re-authenticate to resume live data.</div>'+
+ '<div style="font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;">Schwab connection expired</div>'+
+ '<div style="font-size:13px;color:var(--text2);line-height:1.6;">Reconnect to resume live balances, positions, transactions, and account health.</div>'+
  '</div>'+
- '<button class="abtn red" style="padding:12px 28px;font-size:14px;" onclick="doAuth()">Re-Authenticate</button>'+
- '<div style="font-size:11px;color:var(--text3);text-align:center;">No data is shown to protect<br>against stale position information.</div>'+
+ '<button class="abtn red" style="padding:12px 28px;font-size:14px;" onclick="doAuth()">Reconnect Schwab</button>'+
+ '<div style="font-size:11px;color:var(--text3);text-align:center;">Cached trading data is hidden until the secure connection is restored.</div>'+
  '</div>';
 }
 function isDataStale(d){
@@ -1222,7 +1441,9 @@ function doRefresh(){
 
 function doAuth(){
  haptic();
- toast('Authenticating&');
+ var authBtn=ge('auth-btn'),oldLabel=authBtn?authBtn.textContent:'Reconnect';
+ if(authBtn){authBtn.disabled=true;authBtn.textContent='Connecting…';authBtn.classList.add('is-busy');}
+ toast('Opening secure Schwab connection…', 3200);
  try{
  localStorage.setItem('riki_auth_pending','1');
  localStorage.setItem('riki_auth_started_at', String(Date.now()));
@@ -1232,7 +1453,7 @@ function doAuth(){
  .then(function(r){ return r.json(); })
  .then(function(d){
  if(!d || !d.url){
- toast('No Schwab authorization URL returned');
+ toast('Unable to start the Schwab connection. Please try again.', 5200);
  return;
  }
  var authWindow = window.open(d.url, 'riki_schwab_auth');
@@ -1240,7 +1461,10 @@ function doAuth(){
  window.location.assign(d.url);
  }
  })
- .catch(function(e){ toast('Auth error: '+errMsg(e)); });
+ .catch(function(e){ toast('Connection error · '+errMsg(e), 6500); })
+ .then(function(){
+ if(authBtn){authBtn.disabled=false;authBtn.textContent=oldLabel;authBtn.classList.remove('is-busy');}
+ });
 }
 
 function refreshRootDataAfterControl_(message){return fetch(BACKEND+'?action=data&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||d.success===false)throw new Error((d&&d.error)||'data reload failed');rikiRenderFreshData_(d,false);if(message)toast(message,5200);return d;});}
@@ -1251,7 +1475,7 @@ function switchAccountingEngine(target,btn){
  fetch(BACKEND+'?action=switchActiveEngine&target='+encodeURIComponent(target)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'engine switch failed');return refreshRootDataAfterControl_(d.message||('Switched to '+targetLabel));}).catch(function(e){toast('Engine switch error: '+errMsg(e),7000);if(btn){btn.disabled=false;btn.textContent='Switch to '+targetLabel;}});
 }
 function pauseAccountingEngine(engine,btn){haptic();engine=String(engine||'').toLowerCase();var label=engine==='churner'?'Churner':'Legacy';if(!confirm('Pause '+label+' without starting the other engine?\n\nA final checkpoint runs first. If positions remain, '+label+' enters DRAINING and continues only BTC/expiry processing.'))return;if(btn){btn.disabled=true;btn.textContent='Pausing…';}fetch(BACKEND+'?action=pauseAccountingEngine&engine='+encodeURIComponent(engine)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'pause failed');return refreshRootDataAfterControl_(d.message||label+' updated');}).catch(function(e){toast(label+' pause error: '+errMsg(e),7000);if(btn){btn.disabled=false;btn.textContent='Pause '+label;}});}
-function toggleLegacyAutoRefresh(pause,btn){haptic();if(!confirm((pause?'Pause':'Resume')+' the Legacy 30-minute auto refresh?\n\nManual Legacy Refresh, scheduled Nickel Closer, the 4:35 expiry finalizer, Wednesday audit and Churner are not paused.'))return;if(btn){btn.disabled=true;btn.textContent=pause?'Pausing…':'Resuming…';}fetch(BACKEND+'?action=toggleLegacyAutoRefresh&pause='+(pause?'1':'0')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'auto-refresh control failed');return refreshRootDataAfterControl_(d.message||'Auto refresh updated');}).catch(function(e){toast('Auto-refresh error: '+errMsg(e),6500);if(btn){btn.disabled=false;btn.textContent=pause?'Pause Auto Refresh':'Resume Auto Refresh';}});}
+function toggleLegacyAutoRefresh(pause,btn){haptic();if(!confirm((pause?'Pause':'Resume')+' the Legacy 30-minute auto refresh?\n\nManual Legacy Refresh, scheduled Nickel Closer, the 4:35 expiry finalizer, Wednesday audit and Churner are not paused.'))return;if(btn){btn.disabled=true;btn.textContent=pause?'Pausing…':'Resuming…';}fetch(BACKEND+'?action=toggleLegacyAutoRefresh&pause='+(pause?'1':'0')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'auto-refresh control failed');return refreshRootDataAfterControl_(d.message||'Auto refresh updated');}).catch(function(e){toast('Auto-refresh error: '+errMsg(e),6500);if(btn){btn.disabled=false;btn.textContent=pause?'Pause sync':'Resume sync';}});}
 function cleanupMisclassifiedChurnerLots(btn){haptic();if(!confirm('Remove every ChurnerOpenLots row expiring July 17 or July 24, 2026?\n\nYou confirmed all of these rows belong to Legacy. RiKi will first copy every removed row to ChurnerOpenLotsCleanupAudit. Legacy state, Archive and gains are not changed.'))return;if(btn){btn.disabled=true;btn.textContent='Cleaning…';}fetch(BACKEND+'?action=cleanupMisclassifiedChurnerLots&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'cleanup failed');return refreshRootDataAfterControl_(d.message||'Churner artifacts removed');}).catch(function(e){toast('Cleanup error: '+errMsg(e),7500);if(btn){btn.disabled=false;btn.textContent='Remove Legacy Artifacts';}});}
 function toggleLegacyEngine(pause,btn){return pause?pauseAccountingEngine('legacy',btn):switchAccountingEngine('legacy',btn);}
 function toggleChurnerEngine(pause,btn){return pause?pauseAccountingEngine('churner',btn):switchAccountingEngine('churner',btn);}
@@ -1442,7 +1666,7 @@ function doManualUnlockRikiEmergency(btn){
  }
  });
 }
-//  Cancel All Orders 
+//  Cancel working orders 
 function doCancelAll(){
  haptic();
  var sec = ge('cancel-section');
@@ -1455,7 +1679,7 @@ function doCancelAll(){
  '<div class="ssub" style="margin-top:4px;">This will cancel ALL pending orders on both accounts — including ones placed manually on Schwab.</div>'+
  '</div>'+
  '<div style="display:flex;gap:10px;align-items:center;">'+
- '<button class="abtn red" id="cancel-confirm-btn" onclick="doCancelAllConfirm()">Cancel All Orders</button>'+
+ '<button class="abtn red" id="cancel-confirm-btn" onclick="doCancelAllConfirm()">Cancel working orders</button>'+
  '<span style="font-size:13px;color:var(--text2);cursor:pointer;" onclick="renderCancelSection()">Never mind</span>'+
  '</div>'+
  '</div>'+
@@ -1509,10 +1733,10 @@ function renderCancelSection(){
  '<div class="scard">'+
  '<div class="srow">'+
  '<div>'+
- '<div class="slbl">Cancel All Orders</div>'+
- '<div class="ssub">Cancels all pending orders on both accounts</div>'+
+ '<div class="slbl">Cancel working orders</div>'+
+ '<div class="ssub">Cancels every currently working order across both accounts.</div>'+
  '</div>'+
- '<button class="abtn red" onclick="doCancelAll()">Cancel All</button>'+
+ '<button class="abtn red" onclick="doCancelAll()">Cancel all</button>'+
  '</div>'+
  '</div>';
 }
@@ -1520,7 +1744,7 @@ function renderCancelSection(){
 function doClearTally(btn){
  haptic();
  btn.disabled = true;
- btn.textContent = 'Clearing&';
+ btn.textContent = 'Clearing…';
  fetch(BACKEND+'?action=clearHWM')
  .then(function(r){return r.json();})
  .then(function(d){
@@ -2222,7 +2446,7 @@ function renderChurnerHist(){
  '<tbody>' +
  totalRows.map(function(r){
  var tickers = Array.isArray(r.tickers) ? r.tickers.join(', ') : (r.tickerCount ? (r.tickerCount + ' tickers') : 'ALL');
- if(tickers.length > 24) tickers = tickers.substring(0, 24) + '&';
+ if(tickers.length > 24) tickers = tickers.substring(0, 24) + '…';
  return '<tr>'+
  '<td style="text-align:left;font-weight:800">'+(r.period||'—')+'</td>'+
  '<td>'+(r.tickerCount || (Array.isArray(r.tickers) ? r.tickers.length : 'ALL'))+'</td>'+
@@ -2315,18 +2539,18 @@ function renderHist(){
  }
 }
 function renderSettings(d){
- d=d||{};var pill=ge('tpill'),state=d.tokenState||'unknown',expMs=d.tokenRefreshExpiry||d.tokenExpiry||d.tokenAccessExpiry||0,daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null,map={fresh:{lbl:'Active',cls:'pg'},expiring:{lbl:'Expiring',cls:'py'},expired:{lbl:'Expired',cls:'pr'}},info=map[state]||{lbl:state,cls:'pb'};if(pill){pill.className='pill '+info.cls;pill.textContent=info.lbl;}var td=ge('tdays');if(td)td.textContent=daysLeft===null?'—':daysLeft+' day'+(daysLeft===1?'':'s')+' left';
- var nc=ge('nc-section');nc.innerHTML='';var modeCard=document.createElement('div');modeCard.className='scard';modeCard.innerHTML='<div class="srow"><div><div class="slbl">View Mode</div><div class="ssub">The top pills change only the view. Engine ownership changes only through the Switch button below.</div></div><div class="mode-switch"><button class="mode-pill legacy '+(!isChurnerMode()?'on':'')+'" onclick="setAppMode(\'legacy\')">Legacy</button><button class="mode-pill churner '+(isChurnerMode()?'on':'')+'" onclick="setAppMode(\'churner\')">Churner</button></div></div>';nc.appendChild(modeCard);
+ d=d||{};var pill=ge('tpill'),state=d.tokenState||'unknown',expMs=d.tokenRefreshExpiry||d.tokenExpiry||d.tokenAccessExpiry||0,daysLeft=expMs?Math.max(0,Math.ceil((expMs-Date.now())/86400000)):null,map={fresh:{lbl:'Connected',cls:'pg'},expiring:{lbl:'Renew soon',cls:'py'},expired:{lbl:'Reconnect',cls:'pr'},unknown:{lbl:'Checking',cls:'pb'}},info=map[state]||{lbl:'Checking',cls:'pb'};if(pill){pill.className='pill auth-state-pill '+info.cls;pill.textContent=info.lbl;}var td=ge('tdays');if(td)td.textContent=daysLeft===null?'Status unavailable':(daysLeft===0?'Renew now':'Renews in '+daysLeft+' day'+(daysLeft===1?'':'s'));
+ var nc=ge('nc-section');nc.innerHTML='';var modeCard=document.createElement('div');modeCard.className='scard';modeCard.innerHTML='<div class="srow"><div><div class="slbl">Workspace view</div><div class="ssub">Switch the screen without changing accounting ownership. Engine handoff happens only through the controls below.</div></div><div class="mode-switch"><button class="mode-pill legacy '+(!isChurnerMode()?'on':'')+'" onclick="setAppMode(\'legacy\')">Legacy</button><button class="mode-pill churner '+(isChurnerMode()?'on':'')+'" onclick="setAppMode(\'churner\')">Churner</button></div></div>';nc.appendChild(modeCard);
  var engine=isChurnerMode()?'churner':'legacy',other=engine==='churner'?'legacy':'churner',ctl=engine==='churner'?(d.churnerEngineControl||{mode:'PAUSED'}):(d.legacyEngineControl||{mode:'ACTIVE'}),otherCtl=other==='churner'?(d.churnerEngineControl||{mode:'PAUSED'}):(d.legacyEngineControl||{mode:'ACTIVE'}),owned=engine==='churner'?((d.engineOwnership&&d.engineOwnership.churner)||{}):((d.engineOwnership&&d.engineOwnership.legacy)||{}),mode=String(ctl.mode||'PAUSED'),status=document.createElement('div'),modeClass=mode.toLowerCase(),engineLabel=engine==='churner'?'Churner':'Legacy',otherLabel=other==='churner'?'Churner':'Legacy';status.className='engine-status-card';
  var sub=mode==='ACTIVE'?'Only this engine accepts new STOs. The other engine may continue DRAINING its pre-handoff contracts.':mode==='DRAINING'?'No new STOs. Exact pre-handoff BTC and actual-expiry credit continue until zero.':'No new STO accounting for this engine. History remains visible.';
  status.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name" style="color:'+(engine==='churner'?'var(--churner2)':'var(--text)')+'">'+engineLabel+' Engine</div><div class="engine-status-sub">'+sub+'</div></div><span class="engine-mode-badge '+modeClass+'">'+mode+'</span></div><div class="engine-health-grid"><div class="engine-health-cell"><div class="engine-health-label">Owned open contracts</div><div class="engine-health-value">'+Number(owned.openContracts||ctl.openContracts||0)+'</div></div><div class="engine-health-cell"><div class="engine-health-label">Owned exact symbols</div><div class="engine-health-value">'+Number(owned.openSymbols||ctl.openSymbols||0)+'</div></div></div><div class="engine-actions">'+(mode==='ACTIVE'?'<button class="abtn red" onclick="pauseAccountingEngine(\''+engine+'\',this)">Pause '+engineLabel+'</button>':'<button class="abtn" onclick="switchAccountingEngine(\''+engine+'\',this)">'+(otherCtl.mode==='ACTIVE'?'Switch to ':'Start ')+engineLabel+'</button>')+'</div>';nc.appendChild(status);
  var handoff=d.latestEngineHandoff;if(handoff){var hc=document.createElement('div');hc.className='engine-status-card';hc.innerHTML='<div class="engine-status-name">Latest Ownership Handoff</div><div class="engine-status-sub">'+escHtml(handoff.fromEngine||'')+' → '+escHtml(handoff.toEngine||'')+' · '+escHtml(handoff.effectiveAtEt||'')+'<br>Pre-handoff inventory closes first if the same exact account + option symbol exists in both engines.</div>';nc.appendChild(hc);}
- if(engine==='legacy'){var auto=(d.legacyAutoRefresh||{paused:false}),ac=document.createElement('div');ac.className='engine-status-card';ac.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">30-Min Legacy Auto Refresh</div><div class="engine-status-sub">This pauses only the 9:30–4:00 aligned Legacy accounting refresh. Manual Refresh, Nickel Closer, 4:35 finalizer, Wednesday audit and Churner remain available.</div></div><span class="engine-mode-badge '+(auto.paused?'draining':'active')+'">'+(auto.paused?'PAUSED':'RUNNING')+'</span></div><div class="engine-actions"><button class="abtn '+(auto.paused?'':'red')+'" onclick="toggleLegacyAutoRefresh('+(auto.paused?'false':'true')+',this)">'+(auto.paused?'Resume Auto Refresh':'Pause Auto Refresh')+'</button></div>';nc.appendChild(ac);}
+ if(engine==='legacy'){var auto=(d.legacyAutoRefresh||{paused:false}),ac=document.createElement('div');ac.className='engine-status-card';ac.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Legacy sync</div><div class="engine-status-sub">Runs the aligned 30-minute Legacy accounting cycle during market hours. Manual refresh, the 4:35 close, weekly audit, and Churner remain independent.</div></div><span class="engine-mode-badge '+(auto.paused?'draining':'active')+'">'+(auto.paused?'PAUSED':'RUNNING')+'</span></div><div class="engine-actions"><button class="abtn '+(auto.paused?'':'red')+'" onclick="toggleLegacyAutoRefresh('+(auto.paused?'false':'true')+',this)">'+(auto.paused?'Resume sync':'Pause sync')+'</button></div>';nc.appendChild(ac);}
  var cfg=engineConfig_(engine),targets=Array.isArray(cfg.targetTickers)?cfg.targetTickers:[],exclusions=Array.isArray(cfg.exclusions)?cfg.exclusions:[],cfgCard=document.createElement('div');cfgCard.className='scard';var options=targets.map(function(t){return '<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join(''),chips=targets.length?'<div class="strategy-chipline">'+targets.map(function(t){return '<span class="strategy-chip">'+escHtml(t)+'</span>';}).join('')+'</div>':'<div class="strategy-hint">No '+engine+' tickers configured.</div>';
  cfgCard.innerHTML='<div class="srow" style="align-items:flex-start"><div><div class="slbl">'+engineLabel+' Tickers</div><div class="ssub">Only new '+engineLabel+' STOs are admitted from this independent list. Persisted owned contracts remain eligible for BTC/expiry after removal.</div>'+chips+'</div><span class="pill '+(engine==='churner'?'pb':'pg')+'">'+targets.length+'</span></div><div class="strategy-editor"><input id="'+engine+'-tickers-input" class="strategy-field" value="'+escHtml(targets.join(', '))+'" placeholder="'+(engine==='churner'?'SOXX, META':'MSTR, SOXX, META')+'"><div class="strategy-actions"><button class="abtn" onclick="saveEngineTickers(\''+engine+'\',this)">Save Tickers</button></div></div><div class="srow"><div><div class="slbl">Add '+engineLabel+' Exclusion</div><div class="ssub">Ticker + exact option expiration</div></div></div><div class="strategy-editor"><div class="strategy-grid"><select id="'+engine+'-ex-ticker" class="strategy-field">'+options+'</select><input id="'+engine+'-ex-expiry" class="strategy-field" type="date"><input id="'+engine+'-ex-note" class="strategy-field wide" placeholder="Optional note"></div><div class="strategy-actions"><button class="abtn" onclick="addEngineExclusion(\''+engine+'\',this)">Add Exclusion</button></div></div>';exclusions.forEach(function(x){var row=document.createElement('div');row.className='strategy-ex-row';row.innerHTML='<div class="strategy-ex-main"><div class="strategy-ex-title">'+escHtml(x.ticker)+' · '+escHtml(x.expiry)+'</div><div class="strategy-ex-note">'+escHtml(x.note||'No note')+'</div></div>';var b=document.createElement('button');b.className='strategy-remove';b.textContent='Remove';b.onclick=function(){removeEngineExclusion(engine,String(x.ticker||''),String(x.expiry||''),b);};row.appendChild(b);cfgCard.appendChild(row);});nc.appendChild(cfgCard);
- var nickelMasterOn=String(d.nickelCloserStatus||'OFF').toUpperCase()==='ON',masterCard=document.createElement('div');masterCard.className='engine-status-card';masterCard.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Nickel Closer Master</div><div class="engine-status-sub">Default OFF. When ON, scheduled Legacy refreshes may submit eligible 3-cent BTC orders. Weekly expiry switches below remain independent.</div></div><span class="engine-mode-badge '+(nickelMasterOn?'active':'paused')+'">'+(nickelMasterOn?'ON':'OFF')+'</span></div><div class="engine-actions"><div class="tog'+(nickelMasterOn?' on':'')+'" onclick="setNickelCloserMaster('+(nickelMasterOn?'false':'true')+',this)"><div class="tog-track"></div><div class="tog-thumb"></div></div></div>';nc.appendChild(masterCard);
- if(engine==='churner'){var h=d.churnerOpenLotsHealth||{},health=document.createElement('div');health.className='engine-status-card';health.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name" style="color:var(--churner2)">ChurnerOpenLots Health</div><div class="engine-status-sub">The Positions tab and engine counts now read this sheet directly—not a saved Churner snapshot.</div></div><span class="engine-mode-badge '+(String(h.status||'CLEAN')==='CLEAN'?'active':'draining')+'">'+escHtml(h.status||'CLEAN')+'</span></div><div class="engine-health-grid"><div class="engine-health-cell"><div class="engine-health-label">Expired unresolved</div><div class="engine-health-value">'+Number(h.expiredUnresolvedRows||0)+'</div></div><div class="engine-health-cell"><div class="engine-health-label">July 17/24 Legacy artifacts</div><div class="engine-health-value">'+Number(h.legacyArtifactCandidateContracts||0)+'</div></div></div><div class="engine-actions"><button class="abtn" onclick="reconcileChurnerOpenLots(this)">Reconcile Open Lots</button>'+(Number(h.legacyArtifactCandidateRows||0)>0?'<button class="abtn red" onclick="cleanupMisclassifiedChurnerLots(this)">Remove Legacy Artifacts</button>':'')+'</div>';nc.appendChild(health);}else{var archRows=d.archRows||[],ncDisabled=d.nickelCloserDisabled||[],weeks=[];['THIS WEEK','NEXT WEEK'].forEach(function(label,i){for(var r=0;r<archRows.length;r++){var raw=String(archRows[r][0]||'');if(raw.toUpperCase().indexOf(label)>=0){var m=raw.match(/(\d{4}-\d{2}-\d{2})/);if(m)weeks.push({expiry:m[1],label:i===0?'This Week':'Next Week'});break;}}});if(weeks.length){var card=document.createElement('div');card.className='scard';weeks.forEach(function(w){var enabled=ncDisabled.indexOf(w.expiry)<0,row=document.createElement('div');row.className='srow';row.innerHTML='<div><div class="slbl">Auto-close · '+w.label+'</div><div class="ssub">'+w.expiry+(nickelMasterOn?'':' · Master OFF')+'</div></div><div class="tog'+(enabled?' on':'')+'" onclick="toggleNickelCloser(\''+w.expiry+'\')"><div class="tog-track"></div><div class="tog-thumb"></div></div>';card.appendChild(row);});nc.appendChild(card);}}
- var unlock=document.createElement('div');unlock.className='scard';unlock.innerHTML='<div class="srow"><div><div class="slbl" style="color:var(--red)">Emergency RiKi Unlock</div><div class="ssub">Restores Nickel Closer status only; engine ownership is unchanged.</div></div><button class="abtn red" id="manual-unlock-btn" onclick="doManualUnlockRikiEmergency(this)">Manual Unlock</button></div>';nc.appendChild(unlock);renderCancelSection();var tallySection=ge('tally-section');tallySection.innerHTML='';var tr=d.legacyWeeklyAudit||d.tallyResult;if(tr&&engine==='legacy'&&!isLegacyAuditDismissed_(tr)){var tc=document.createElement('div');tc.className='scard';var st=String(tr.status||(tr.pass?'PASS':'FAIL')),accepted=st==='PASS'||st==='PASS_WITH_OVERLAP',sr=document.createElement('div');sr.className='srow';var left=document.createElement('div');left.innerHTML='<div class="slbl" style="color:'+(accepted?'var(--green)':'var(--red)')+'">Weekly Legacy Audit · '+st+'</div><div class="ssub">Week ending '+escHtml(tr.reportingWeekEnd||tr.expiry||'')+' · Difference '+fmtS(tr.difference||0)+' · '+Number(tr.mismatches||0)+' mismatch(es)</div>';var close=document.createElement('button');close.className='abtn';close.textContent='Close';close.onclick=function(){dismissLegacyAudit_(tr);};sr.appendChild(left);sr.appendChild(close);tc.appendChild(sr);tallySection.appendChild(tc);}
+ var nickelMasterOn=String(d.nickelCloserStatus||'OFF').toUpperCase()==='ON',masterCard=document.createElement('div');masterCard.className='engine-status-card';masterCard.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Nickel Closer</div><div class="engine-status-sub">Off by default. Enable only when you want scheduled Legacy syncs to submit eligible 3¢ buy-to-close orders. Expiry controls remain independent.</div></div><span class="engine-mode-badge '+(nickelMasterOn?'active':'paused')+'">'+(nickelMasterOn?'ON':'OFF')+'</span></div><div class="engine-actions"><div class="tog'+(nickelMasterOn?' on':'')+'" onclick="setNickelCloserMaster('+(nickelMasterOn?'false':'true')+',this)"><div class="tog-track"></div><div class="tog-thumb"></div></div></div>';nc.appendChild(masterCard);
+ if(engine==='churner'){var h=d.churnerOpenLotsHealth||{},health=document.createElement('div');health.className='engine-status-card';health.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name" style="color:var(--churner2)">ChurnerOpenLots Health</div><div class="engine-status-sub">The Positions tab and engine counts now read this sheet directly—not a saved Churner snapshot.</div></div><span class="engine-mode-badge '+(String(h.status||'CLEAN')==='CLEAN'?'active':'draining')+'">'+escHtml(h.status||'CLEAN')+'</span></div><div class="engine-health-grid"><div class="engine-health-cell"><div class="engine-health-label">Expired unresolved</div><div class="engine-health-value">'+Number(h.expiredUnresolvedRows||0)+'</div></div><div class="engine-health-cell"><div class="engine-health-label">July 17/24 Legacy artifacts</div><div class="engine-health-value">'+Number(h.legacyArtifactCandidateContracts||0)+'</div></div></div><div class="engine-actions"><button class="abtn" onclick="reconcileChurnerOpenLots(this)">Reconcile Open Lots</button>'+(Number(h.legacyArtifactCandidateRows||0)>0?'<button class="abtn red" onclick="cleanupMisclassifiedChurnerLots(this)">Remove Legacy Artifacts</button>':'')+'</div>';nc.appendChild(health);}else{var archRows=d.archRows||[],ncDisabled=d.nickelCloserDisabled||[],weeks=[];['THIS WEEK','NEXT WEEK'].forEach(function(label,i){for(var r=0;r<archRows.length;r++){var raw=String(archRows[r][0]||'');if(raw.toUpperCase().indexOf(label)>=0){var m=raw.match(/(\d{4}-\d{2}-\d{2})/);if(m)weeks.push({expiry:m[1],label:i===0?'This Week':'Next Week'});break;}}});if(weeks.length){var card=document.createElement('div');card.className='scard';weeks.forEach(function(w){var enabled=ncDisabled.indexOf(w.expiry)<0,row=document.createElement('div');row.className='srow';row.innerHTML='<div><div class="slbl">Expiry closer · '+w.label+'</div><div class="ssub">'+w.expiry+(nickelMasterOn?'':' · Master OFF')+'</div></div><div class="tog'+(enabled?' on':'')+'" onclick="toggleNickelCloser(\''+w.expiry+'\')"><div class="tog-track"></div><div class="tog-thumb"></div></div>';card.appendChild(row);});nc.appendChild(card);}}
+ var unlock=document.createElement('div');unlock.className='scard';unlock.innerHTML='<div class="srow"><div><div class="slbl" style="color:var(--red)">Recovery control</div><div class="ssub">Restore Nickel Closer after a protective lock. Accounting ownership is never changed.</div></div><button class="abtn red" id="manual-unlock-btn" onclick="doManualUnlockRikiEmergency(this)">Restore</button></div>';nc.appendChild(unlock);renderCancelSection();var tallySection=ge('tally-section');tallySection.innerHTML='';var tr=d.legacyWeeklyAudit||d.tallyResult;if(tr&&engine==='legacy'&&!isLegacyAuditDismissed_(tr)){var tc=document.createElement('div');tc.className='scard';var st=String(tr.status||(tr.pass?'PASS':'FAIL')),accepted=st==='PASS'||st==='PASS_WITH_OVERLAP',sr=document.createElement('div');sr.className='srow';var left=document.createElement('div');left.innerHTML='<div class="slbl" style="color:'+(accepted?'var(--green)':'var(--red)')+'">Weekly Legacy Audit · '+st+'</div><div class="ssub">Week ending '+escHtml(tr.reportingWeekEnd||tr.expiry||'')+' · Difference '+fmtS(tr.difference||0)+' · '+Number(tr.mismatches||0)+' mismatch(es)</div>';var close=document.createElement('button');close.className='abtn';close.textContent='Close';close.onclick=function(){dismissLegacyAudit_(tr);};sr.appendChild(left);sr.appendChild(close);tc.appendChild(sr);tallySection.appendChild(tc);}
 }
 var MOCK={
  updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
@@ -2569,7 +2793,7 @@ function rikiExchangeSchwabCallback_(reason){
  if(!rikiLocationHasSchwabCode_()) return Promise.resolve({ success:false, noCode:true });
 
  rikiSchwabExchangeInFlight_ = true;
- toast('Completing Schwab authentication&', 4000);
+ toast('Securing your Schwab connection…', 4000);
 
  var callbackUrl = '';
  try{ callbackUrl = String(window.location.href || ''); }catch(e){}
@@ -2592,13 +2816,13 @@ function rikiExchangeSchwabCallback_(reason){
  }catch(e){}
  rikiCleanSchwabCallbackUrl_();
  rikiSignalSchwabAuthComplete_();
- toast(tok.idempotent ? ' Schwab already connected' : ' Schwab connected — token updated', 5000);
+ toast(tok.idempotent ? 'Schwab is already connected' : 'Schwab connected securely', 5000);
  return tok;
  })
  .catch(function(e){
  // Keep the callback code in the address bar so a temporary backend failure
  // can be retried by one reload. The backend independently blocks duplicates.
- toast('Schwab auth failed: ' + errMsg(e), 7000);
+ toast('Schwab connection failed · ' + errMsg(e), 7000);
  try{ console.error('Schwab callback exchange failed', e); }catch(x){}
  return { success:false, error:errMsg(e) };
  })
@@ -2647,7 +2871,7 @@ function startLoadingData(){
  } else {
  DATA={
  dashRows:[], archRows:[], archClosed:[], allClosed:[], invRows:[],
- updated:'Loading saved dashboard&', tokenState:'unknown',
+ updated:'Loading your latest dashboard…', tokenState:'unknown',
  churner:null, manualOnly:true, dataSource:'empty-shell', _savedMs:0
  };
  renderAll(DATA);

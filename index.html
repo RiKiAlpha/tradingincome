@@ -1008,6 +1008,9 @@ td{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:550;color
 <script>
 var BACKEND = 'https://script.google.com/macros/s/AKfycby9ObqHh3pLF_Ku3C_udLds3wGK0Ig3EkItKqx1ZYZF2UFEtjUB7MC9ljA49VUnGYZ-mQ/exec';
 var DATA_JSON = 'https://rikialpha.github.io/tradingincome/d8f3a.json';
+var RIKI_V5_HISTORY_BASE = 'https://rikialpha.github.io/tradingincome/history';
+var RIKI_V5_HISTORY_CACHE = {};
+var RIKI_V5_LEGACY_WEEK_CACHE = {};
 var CLIENT_ID = '632213689535-vlhn0mn0bkg4dntjul9fi1kb31i3kcos.apps.googleusercontent.com';
 var ALLOWED_EMAIL = 'gprasaad88@gmail.com';
 function ge(id){ return document.getElementById(id); }
@@ -1144,80 +1147,15 @@ function getChurnerTickerInput_(){
 }
 
 function loadChurnerTicker(ticker,opts){
- opts=opts||{};
- ticker=String(ticker||'').trim().toUpperCase();
- var inp=getChurnerTickerInput_();
- if(inp) inp.value=ticker;
- localStorage.setItem('riki_churner_ticker',ticker);
- localStorage.setItem('riki_churner_focus_ticker',ticker);
- if(ticker) localStorage.setItem('riki_churner_focus','1'); else localStorage.setItem('riki_churner_focus','0');
-
- // RIKI_V7_1_CHURNER_DATE_LOAD_ID_FIX_V1
- // The rendered date picker id is churner-asof-input. The previous loader read
- // churner-date-input, so selected historical dates were not sent to backend and
- // the sheet read fell back to the latest row.
- var dateInput=getChurnerAsOfInput_();
- var asOf=dateInput && dateInput.value ? String(dateInput.value).trim() : '';
- if(asOf){
- localStorage.setItem('riki_churner_asof',asOf);
- localStorage.setItem('riki_churner_asof_date',asOf);
- }
-
- // RIKI_V7_7_CHURNER_TIMESTAMP_EXECUTION_LOAD_FASTFIX_V1
- // Ticker/date Load should be compact: selected-day detail + total ledger only.
- // Full ticker-history reconstruction is reserved for Rebuild/Backfill/all-history views.
- var compact = ticker ? '1' : '0';
- var url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&compact='+compact+'&start=2026-06-01&fast=1'+(asOf?'&asOf='+encodeURIComponent(asOf):'')+'&_='+Date.now();
- var cacheKey=(asOf||'latest')+'|'+(ticker||'ALL');
- if(CHURNER_LOAD_INFLIGHT[cacheKey]){
- if(CHURNER_LOAD_CACHE[cacheKey]){
- DATA = DATA || {};
- DATA.churner = CHURNER_LOAD_CACHE[cacheKey];
- DATA.churnerLoadedAtEt = DATA.churner.generatedAt || '';
- DATA.churnerSource = DATA.churner.source || '';
- renderAll(DATA);
- }
- setChurnerBusy_(true,'Churner data is already loading…');
- return;
- }
- CHURNER_LOAD_INFLIGHT[cacheKey]=true;
-
- if(CHURNER_LOAD_CACHE[cacheKey]){
- DATA = DATA || {};
- DATA.churner = CHURNER_LOAD_CACHE[cacheKey];
- DATA.churnerLoadedAtEt = DATA.churner.generatedAt || '';
- DATA.churnerSource = DATA.churner.source || '';
- renderAll(DATA);
- setChurnerBusy_(true,'Refreshing Churner data…');
- }else{
- setChurnerBusy_(true,'Loading Churner data…');
- }
- fetch(url).then(function(r){return r.json();}).then(function(j){
- delete CHURNER_LOAD_INFLIGHT[cacheKey];
- setChurnerBusy_(false);
- if(j && j.success){
- if(j.compactMode && DATA && DATA.churner){
- j.historyDaily = j.historyDaily && j.historyDaily.length ? j.historyDaily : (DATA.churner.historyDaily || []);
- j.historyWeekly = j.historyWeekly && j.historyWeekly.length ? j.historyWeekly : (DATA.churner.historyWeekly || []);
- j.historyMonthly = j.historyMonthly && j.historyMonthly.length ? j.historyMonthly : (DATA.churner.historyMonthly || []);
- }
- CHURNER_LOAD_CACHE[cacheKey]=j;
- DATA.churner=j;
- DATA.churnerLoadedAtEt=j.generatedAt||'';
- DATA.churnerSource=j.source||'';
- saveCache(DATA);
- renderAll(DATA);
- if(j.needsRebuild && !opts.quiet) toast(j.message||'No saved ChurnerData for this date');
- }else{
- toast((j&&j.error)||'Churner load failed');
- renderAll(DATA);
- }
- }).catch(function(e){
- delete CHURNER_LOAD_INFLIGHT[cacheKey];
- setChurnerBusy_(false);
- toast('Churner load error');
- renderAll(DATA);
- });
+ opts=opts||{};ticker=String(ticker||'').trim().toUpperCase();var inp=getChurnerTickerInput_();if(inp)inp.value=ticker;
+ localStorage.setItem('riki_churner_ticker',ticker);localStorage.setItem('riki_churner_focus_ticker',ticker);localStorage.setItem('riki_churner_focus',ticker?'1':'0');
+ var dateInput=getChurnerAsOfInput_(),asOf=dateInput&&dateInput.value?String(dateInput.value).trim():churnerTodayEt_();
+ localStorage.setItem('riki_churner_asof',asOf);localStorage.setItem('riki_churner_asof_date',asOf);
+ if(asOf && asOf!==churnerTodayEt_()){rikiV5LoadHistoricalChurner_(asOf,ticker,opts);return;}
+ var compact=ticker?'1':'0',url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&compact='+compact+'&start=2026-06-01&fast=1&asOf='+encodeURIComponent(asOf)+'&_='+Date.now(),cacheKey=asOf+'|'+(ticker||'ALL');
+ if(CHURNER_LOAD_INFLIGHT[cacheKey]){if(CHURNER_LOAD_CACHE[cacheKey]){DATA=DATA||{};DATA.churner=CHURNER_LOAD_CACHE[cacheKey];renderAll(DATA);}setChurnerBusy_(true,'Churner data is already loading…');return;}
+ CHURNER_LOAD_INFLIGHT[cacheKey]=true;if(CHURNER_LOAD_CACHE[cacheKey]){DATA=DATA||{};DATA.churner=CHURNER_LOAD_CACHE[cacheKey];renderAll(DATA);setChurnerBusy_(true,'Refreshing live Churner view…');}else setChurnerBusy_(true,'Loading live Churner view…');
+ fetch(url).then(function(r){return r.json();}).then(function(j){delete CHURNER_LOAD_INFLIGHT[cacheKey];setChurnerBusy_(false);if(j&&j.success){CHURNER_LOAD_CACHE[cacheKey]=j;DATA=DATA||{};DATA.churner=j;DATA.churnerLoadedAtEt=j.generatedAt||'';DATA.churnerSource=j.source||'V5 live cache';saveCache(DATA);renderAll(DATA);}else{toast((j&&j.error)||'Churner load failed');renderAll(DATA);}}).catch(function(){delete CHURNER_LOAD_INFLIGHT[cacheKey];setChurnerBusy_(false);toast('Churner load error');renderAll(DATA);});
 }
 
 function rebuildChurnerData(){
@@ -1417,26 +1355,16 @@ function flashLogo(){
  setTimeout(function(){ wm.classList.remove('flash'); }, 600);
 }
 function doRefresh(){
-  haptic();
-  if(isChurnerMode()){
-    var ctl=(DATA&&DATA.churnerEngineControl)||{};
-    if(String(ctl.mode||'PAUSED')==='PAUSED'){toast('Churner is PAUSED — start it in Settings first',4200);return;}
-    showOverlay();
-    var dateInput=getChurnerAsOfInput_();
-    var asOf=dateInput&&dateInput.value?String(dateInput.value).trim():churnerTodayEt_();
-    fetch(BACKEND+'?action=churnerRefresh&asOf='+encodeURIComponent(asOf)+'&_='+Date.now())
-      .then(function(r){return r.json();})
-      .then(function(j){hideOverlay();if(!j||!j.success){toast('Churner refresh stopped: '+((j&&j.error)||'unknown'),6000);return;}try{CHURNER_LOAD_CACHE={};}catch(e){}DATA=DATA||{};DATA.churner=j;DATA.churnerLoadedAtEt=j.generatedAt||'';DATA.churnerSource=j.source||'';if(j.churnerMode&&DATA.churnerEngineControl)DATA.churnerEngineControl.mode=j.churnerMode;if(Array.isArray(j.ownedPositions))DATA.churnerOwnedPositions=j.ownedPositions;if(j.openLotsHealth)DATA.churnerOpenLotsHealth=j.openLotsHealth;if(DATA.engineOwnership&&DATA.engineOwnership.churner){DATA.engineOwnership.churner.positions=j.ownedPositions||DATA.engineOwnership.churner.positions||[];DATA.engineOwnership.churner.openContracts=(j.openLotsHealth&&j.openLotsHealth.openContracts)||0;DATA.engineOwnership.churner.openSymbols=(j.openLotsHealth&&j.openLotsHealth.openSymbols)||0;}saveCache(DATA);renderAll(DATA);toast(j.refreshSkipped?(j.refreshMessage||'Loaded saved historical Churner ledger'):'Churner refreshed and reconciled from Schwab',3200);})
-      .catch(function(e){hideOverlay();toast('Churner refresh error: '+errMsg(e),6000);});
-    return;
-  }
-  var legacyMode=String((DATA&&DATA.legacyEngineControl&&DATA.legacyEngineControl.mode)||DATA&&DATA.legacyMode||'ACTIVE');
-  if(legacyMode==='PAUSED'){toast('Legacy is PAUSED — resume it in Settings first',4200);return;}
-  showOverlay();
-  fetch(BACKEND+'?action=legacyRefresh&_='+Date.now())
-    .then(function(r){return r.json();})
-    .then(function(fresh){hideOverlay();if(fresh&&fresh.tokenExpired){showTokenExpired();return;}if(!fresh||fresh.success===false){toast('Legacy refresh failed: '+((fresh&&fresh.error)||'unknown'),6000);return;}if(fresh.refreshSkipped){renderAll(fresh);saveCache(fresh);toast(fresh.refreshMessage||'Legacy refresh skipped',4000);return;}rikiRenderFreshData_(fresh,true);toast(legacyMode==='DRAINING'?'Legacy draining refresh completed':'Legacy refreshed',2400);})
-    .catch(function(e){hideOverlay();toast('Legacy refresh error: '+errMsg(e),6000);});
+ haptic();
+ if(isChurnerMode()){
+   var ctl=(DATA&&DATA.churnerEngineControl)||{};if(String(ctl.mode||'PAUSED')==='PAUSED'){toast('Churner is PAUSED — start it in Settings first',4200);return;}
+   var dateInput=getChurnerAsOfInput_(),asOf=dateInput&&dateInput.value?String(dateInput.value).trim():churnerTodayEt_();
+   if(asOf!==churnerTodayEt_()){loadChurnerTicker((getChurnerTickerInput_()||{}).value||'',{});return;}
+ }else{
+   var legacyMode=String((DATA&&DATA.legacyEngineControl&&DATA.legacyEngineControl.mode)||DATA&&DATA.legacyMode||'ACTIVE');if(legacyMode==='PAUSED'){toast('Legacy is PAUSED — resume it in Settings first',4200);return;}
+ }
+ showOverlay();
+ fetch(BACKEND+'?action=v5RefreshLive&_='+Date.now()).then(function(r){return r.json();}).then(function(fresh){hideOverlay();if(fresh&&fresh.tokenExpired){showTokenExpired();return;}if(!fresh||fresh.success===false){toast('Live refresh failed: '+((fresh&&fresh.error)||'unknown'),6000);return;}CHURNER_LOAD_CACHE={};rikiRenderFreshData_(fresh,true);toast('Lightning refresh complete · '+Number((fresh.v5RefreshResult&&fresh.v5RefreshResult.runtimeMs)||fresh.v5RuntimeMs||0)+' ms',2600);}).catch(function(e){hideOverlay();toast('Live refresh error: '+errMsg(e),6000);});
 }
 
 function doAuth(){
@@ -2390,6 +2318,42 @@ function churnerHistoryTotalsClient_(rows){
  });
 }
 
+
+function rikiV5StaticJson_(url){
+ if(RIKI_V5_HISTORY_CACHE[url])return Promise.resolve(RIKI_V5_HISTORY_CACHE[url]);
+ return fetch(url+'?_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(j){RIKI_V5_HISTORY_CACHE[url]=j;return j;});
+}
+function rikiV5FilterHistoricalChurner_(day,ticker){
+ var out=JSON.parse(JSON.stringify(day||{})),t=String(ticker||'').toUpperCase();if(!t)return out;
+ out.tickers=[t];out.tickerDayTradeRows=(out.tickerDayTradeRows||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.expiryRows=(out.expiryRows||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.historyDaily=(out.historyDaily||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.historyWeekly=(out.historyWeekly||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.historyMonthly=(out.historyMonthly||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});
+ var exact=(out.tickerDayTradeRows||[])[0];if(exact){out.summary={openedToday:Number(exact.openedToday||0),closedToday:Number(exact.closedToday||0),stillOpen:Number(exact.stillOpen||0),stillOpenFromToday:Number(exact.stillOpenFromToday||0),bankedToday:Number(exact.totalBankedToday||exact.bankedToday||0),totalBankedToday:Number(exact.totalBankedToday||exact.bankedToday||0),dayTradeBankedToday:Number(exact.dayTradeBankedToday||0),dayTradeContractsToday:Number(exact.dayTradeContractsToday||0),olderOpenBankedToday:Number(exact.olderOpenBankedToday||0),olderOpenClosedTodayContracts:Number(exact.olderOpenClosedTodayContracts||0),potentialAt3c:Number(exact.potentialAt3c||0),potentialAt3cFromToday:Number(exact.potentialAt3cFromToday||0),unmatchedBtcToday:Number(exact.unmatchedBtcToday||0),expiredWorthlessContractsToday:Number(exact.expiredWorthlessContracts||0),expiredWorthlessBankedToday:Number(exact.expiredWorthlessBanked||0)};}else{out.summary={openedToday:0,closedToday:0,stillOpen:0,stillOpenFromToday:0,bankedToday:0,totalBankedToday:0,dayTradeBankedToday:0,dayTradeContractsToday:0,olderOpenBankedToday:0,olderOpenClosedTodayContracts:0,potentialAt3c:0,potentialAt3cFromToday:0,unmatchedBtcToday:0,expiredWorthlessContractsToday:0,expiredWorthlessBankedToday:0};}
+ out.historyDailyTotals=churnerHistoryTotalsClient_(out.historyDaily);out.historyWeeklyTotals=churnerHistoryTotalsClient_(out.historyWeekly);out.historyMonthlyTotals=churnerHistoryTotalsClient_(out.historyMonthly);return out;
+}
+function rikiV5ApplyHistoricalChurner_(day,ticker){
+ var j=rikiV5FilterHistoricalChurner_(day,ticker);j.success=true;j.source=j.source||'GitHub:V5_FINALIZED_HISTORY';j.noSchwabFetch=true;j.historyDaily=j.historyDaily||[];j.historyWeekly=j.historyWeekly||[];j.historyMonthly=j.historyMonthly||[];j.historyDailyTotals=j.historyDailyTotals||[];j.historyWeeklyTotals=j.historyWeeklyTotals||[];j.historyMonthlyTotals=j.historyMonthlyTotals||[];DATA=DATA||{};DATA.churner=j;DATA.churnerLoadedAtEt=j.generatedAt||'';DATA.churnerSource=j.source;saveCache(DATA);renderAll(DATA);
+}
+function rikiV5LoadHistoricalChurner_(asOf,ticker,opts){
+ opts=opts||{};var month=String(asOf||'').substring(0,7),url=RIKI_V5_HISTORY_BASE+'/churner/'+month+'.json',key=asOf+'|'+(ticker||'ALL');
+ if(CHURNER_LOAD_INFLIGHT[key])return;CHURNER_LOAD_INFLIGHT[key]=true;setChurnerBusy_(true,'Loading finalized history…');
+ rikiV5StaticJson_(url).then(function(file){var raw=file&&file.days&&file.days[asOf];if(!raw)throw new Error('Date not in static history');var day=JSON.parse(JSON.stringify(raw)),keys=['historyDaily','historyWeekly','historyMonthly','historyDailyTotals','historyWeeklyTotals','historyMonthlyTotals'];keys.forEach(function(k){if(Array.isArray(file[k]))day[k]=file[k];});delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);rikiV5ApplyHistoricalChurner_(day,ticker);}).catch(function(){fetch(BACKEND+'?action=v5ChurnerHistory&asOf='+encodeURIComponent(asOf)+'&ticker='+encodeURIComponent(ticker||'')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);if(!j||!j.success){toast((j&&j.error)||'No finalized history for '+asOf);return;}rikiV5ApplyHistoricalChurner_(j,ticker);}).catch(function(){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);toast('Historical Churner load failed');});});
+}
+function rikiV5RenderLegacyWeekDetail_(week){
+ var host=ge('legacy-week-detail');if(!host)return;var rows=(week&&week.tickerRows)||[];if(!rows.length){host.innerHTML='<div class="empty">No ticker detail saved for this week.</div>';return;}
+ rows=rows.slice().sort(function(a,b){return Number(b.totalNet||0)-Number(a.totalNet||0);});host.innerHTML='<div class="mhdr" style="margin-top:18px">Legacy detail · '+escHtml(week.weekEnd||'')+'</div><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">Ticker</th><th>Expiry</th><th>Account</th><th>Banked</th><th>Potential</th><th>Total</th><th>Contracts</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td style="text-align:left;font-weight:800">'+escHtml(r.ticker||'')+'</td><td>'+escHtml(r.expiry||'')+'</td><td>'+escHtml(r.account||'')+'</td><td class="'+cc(r.bankedNet)+'">'+fmtS(r.bankedNet||0)+'</td><td class="'+cc(r.potentialNet)+'">'+fmtS(r.potentialNet||0)+'</td><td class="'+cc(r.totalNet)+'">'+fmtS(r.totalNet||0)+'</td><td>'+Number(r.contracts||0)+'</td></tr>';}).join('')+'</tbody></table></div>';
+}
+function rikiV5LoadLegacyWeekDetail_(period){
+ var year=String(period||'').substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json',host=ge('legacy-week-detail');if(host)host.innerHTML='<div class="empty">Loading ticker detail…</div>';
+ if(RIKI_V5_LEGACY_WEEK_CACHE[period]){rikiV5RenderLegacyWeekDetail_(RIKI_V5_LEGACY_WEEK_CACHE[period]);return;}
+ rikiV5StaticJson_(url).then(function(file){var week=file&&file.weeks&&file.weeks[period];if(!week)throw new Error('Week not found');RIKI_V5_LEGACY_WEEK_CACHE[period]=week;rikiV5RenderLegacyWeekDetail_(week);}).catch(function(){fetch(BACKEND+'?action=v5LegacyHistory&period='+encodeURIComponent(period)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){if(!j||!j.success){if(host)host.innerHTML='<div class="empty">No finalized ticker detail for this week.</div>';return;}RIKI_V5_LEGACY_WEEK_CACHE[period]=j.week;rikiV5RenderLegacyWeekDetail_(j.week);}).catch(function(){if(host)host.innerHTML='<div class="empty">Legacy detail load failed.</div>';});});
+}
+function rikiV5RefreshReportsButton_(btn){
+ if(btn){btn.disabled=true;btn.textContent='Writing…';}toast('Writing summary reports and finalized history…',2600);
+ fetch(BACKEND+'?action=v5RefreshReports&_='+Date.now()).then(function(r){return r.json();}).then(function(j){if(btn){btn.disabled=false;btn.textContent='Refresh Reports';}if(!j||!j.success){toast('Report refresh failed: '+((j&&j.error)||'unknown'),6000);return;}if(j.publishSuccess===false){toast('Spreadsheet reports updated; history publish warning: '+((j.warnings||[]).join('; ')||'check V5ReportControl'),7000);return;}toast('Spreadsheet reports and history updated · '+Number(j.runtimeMs||0)+' ms',4200);}).catch(function(e){if(btn){btn.disabled=false;btn.textContent='Refresh Reports';}toast('Report refresh error: '+errMsg(e),6000);});
+}
+function rikiV5AppendReportsCard_(){
+ var nc=ge('nc-section');if(!nc||ge('v5-report-card'))return;var card=document.createElement('div');card.id='v5-report-card';card.className='engine-status-card';card.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Spreadsheet Reports</div><div class="engine-status-sub">Live refresh stays zero-sheet. Use this only when you want Dashboard, Archive, LegacyTickerData, Churner ledgers, Audit, and static history updated now.</div></div><span class="engine-mode-badge active">ON DEMAND</span></div><div class="engine-actions"><button class="abtn" id="v5-report-refresh-btn">Refresh Reports</button></div>';nc.insertBefore(card,nc.firstChild);ge('v5-report-refresh-btn').addEventListener('click',function(){rikiV5RefreshReportsButton_(this);});
+}
+
 function renderChurnerHist(){
  var c=chData();
  var el=ge('hc'); el.innerHTML='';
@@ -2510,8 +2474,8 @@ function renderHist(){
  t.innerHTML='<thead><tr><th style="text-align:left">Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
  var tb=document.createElement('tbody');
  if(!rows.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';}
- else{rows.slice().reverse().forEach(function(row){var lbl=String(row[0]||'\u2014').replace(/\s*\(.*\)/,'').trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tb.appendChild(tr);});}
- t.appendChild(tb);el.appendChild(t);
+ else{rows.slice().reverse().forEach(function(row){var lbl=String(row[0]||'\u2014').replace(/\s*\(.*\)/,'').trim();var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.style.cursor='pointer';tr.title='Open ticker and expiry detail';tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tr.addEventListener('click',function(){rikiV5LoadLegacyWeekDetail_(lbl);});tb.appendChild(tr);});}
+ t.appendChild(tb);el.appendChild(t);var detail=document.createElement('div');detail.id='legacy-week-detail';detail.innerHTML='<div class="empty" style="padding-top:18px">Click a week to see Legacy ticker and expiry gains.</div>';el.appendChild(detail);
  } else {
  var monthly={};
  function normMon(k){var us=k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(us)return us[3]+'-'+us[1].padStart(2,'0')+'-'+us[2].padStart(2,'0');var usShort=k.match(/^(\d{1,2})\/(\d{4})$/);if(usShort)return usShort[2]+'-'+usShort[1].padStart(2,'0');return k;}
@@ -2552,6 +2516,10 @@ function renderSettings(d){
  if(engine==='churner'){var h=d.churnerOpenLotsHealth||{},health=document.createElement('div');health.className='engine-status-card';health.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name" style="color:var(--churner2)">ChurnerOpenLots Health</div><div class="engine-status-sub">The Positions tab and engine counts now read this sheet directly—not a saved Churner snapshot.</div></div><span class="engine-mode-badge '+(String(h.status||'CLEAN')==='CLEAN'?'active':'draining')+'">'+escHtml(h.status||'CLEAN')+'</span></div><div class="engine-health-grid"><div class="engine-health-cell"><div class="engine-health-label">Expired unresolved</div><div class="engine-health-value">'+Number(h.expiredUnresolvedRows||0)+'</div></div><div class="engine-health-cell"><div class="engine-health-label">July 17/24 Legacy artifacts</div><div class="engine-health-value">'+Number(h.legacyArtifactCandidateContracts||0)+'</div></div></div><div class="engine-actions"><button class="abtn" onclick="reconcileChurnerOpenLots(this)">Reconcile Open Lots</button>'+(Number(h.legacyArtifactCandidateRows||0)>0?'<button class="abtn red" onclick="cleanupMisclassifiedChurnerLots(this)">Remove Legacy Artifacts</button>':'')+'</div>';nc.appendChild(health);}else{var archRows=d.archRows||[],ncDisabled=d.nickelCloserDisabled||[],weeks=[];['THIS WEEK','NEXT WEEK'].forEach(function(label,i){for(var r=0;r<archRows.length;r++){var raw=String(archRows[r][0]||'');if(raw.toUpperCase().indexOf(label)>=0){var m=raw.match(/(\d{4}-\d{2}-\d{2})/);if(m)weeks.push({expiry:m[1],label:i===0?'This Week':'Next Week'});break;}}});if(weeks.length){var card=document.createElement('div');card.className='scard';weeks.forEach(function(w){var enabled=ncDisabled.indexOf(w.expiry)<0,row=document.createElement('div');row.className='srow';row.innerHTML='<div><div class="slbl">Expiry closer · '+w.label+'</div><div class="ssub">'+w.expiry+(nickelMasterOn?'':' · Master OFF')+'</div></div><div class="tog'+(enabled?' on':'')+'" onclick="toggleNickelCloser(\''+w.expiry+'\')"><div class="tog-track"></div><div class="tog-thumb"></div></div>';card.appendChild(row);});nc.appendChild(card);}}
  var unlock=document.createElement('div');unlock.className='scard';unlock.innerHTML='<div class="srow"><div><div class="slbl" style="color:var(--red)">Recovery control</div><div class="ssub">Restore Nickel Closer after a protective lock. Accounting ownership is never changed.</div></div><button class="abtn red" id="manual-unlock-btn" onclick="doManualUnlockRikiEmergency(this)">Restore</button></div>';nc.appendChild(unlock);renderCancelSection();var tallySection=ge('tally-section');tallySection.innerHTML='';var tr=d.legacyWeeklyAudit||d.tallyResult;if(tr&&engine==='legacy'&&!isLegacyAuditDismissed_(tr)){var tc=document.createElement('div');tc.className='scard';var st=String(tr.status||(tr.pass?'PASS':'FAIL')),accepted=st==='PASS'||st==='PASS_WITH_OVERLAP',sr=document.createElement('div');sr.className='srow';var left=document.createElement('div');left.innerHTML='<div class="slbl" style="color:'+(accepted?'var(--green)':'var(--red)')+'">Weekly Legacy Audit · '+st+'</div><div class="ssub">Week ending '+escHtml(tr.reportingWeekEnd||tr.expiry||'')+' · Difference '+fmtS(tr.difference||0)+' · '+Number(tr.mismatches||0)+' mismatch(es)</div>';var close=document.createElement('button');close.className='abtn';close.textContent='Close';close.onclick=function(){dismissLegacyAudit_(tr);};sr.appendChild(left);sr.appendChild(close);tc.appendChild(sr);tallySection.appendChild(tc);}
 }
+
+var rikiV5RenderSettingsBase_ = renderSettings;
+renderSettings = function(d){ rikiV5RenderSettingsBase_(d); rikiV5AppendReportsCard_(); };
+
 var MOCK={
  updated:'6:20 PM',tokenState:'fresh',tokenExpiry:Date.now()+(6*86400000),goals:{'A1':4000,'A2':3000},
  warnings:{earnings:'MSTR earnings May 20 \u26a0\ufe0f',earningsUrgent:true,holiday:'Market holiday May 26'},
@@ -2702,6 +2670,26 @@ function rikiFetchGithubFallback_(){
  return fetch(DATA_JSON + '?_=' + Date.now(), { cache:'no-store' })
  .then(function(r){ if(!r.ok) throw new Error('GitHub JSON HTTP '+r.status); return r.json(); });
 }
+
+// V5 cache-only hydration. This endpoint never calls Schwab, never rebuilds
+// accounting, and never writes Sheets. It only reads the latest scheduled or
+// manual in-memory terminal snapshot.
+function rikiFetchV5LiveSnapshotOnly_(){
+ return fetch(BACKEND + '?action=v5LiveSnapshot&_=' + Date.now())
+ .then(function(r){ return r.json(); });
+}
+
+function rikiPaintV5LiveSnapshot_(snap){
+ if(!snap || snap.success===false || !(snap.v5LiveEngine||snap.v4LiveEngine)) return false;
+ if(rikiDataFreshnessMs_(snap) < rikiDataFreshnessMs_(DATA)) return false;
+ if(snap.churner && DATA) DATA.churner = snap.churner;
+ rikiRenderFreshData_(snap, false);
+ return true;
+}
+
+
+function rikiFetchV4LiveSnapshotOnly_(){ return rikiFetchV5LiveSnapshotOnly_(); }
+function rikiPaintV4LiveSnapshot_(snap){ return rikiPaintV5LiveSnapshot_(snap); }
 
 function rikiDataFreshnessMs_(d){
  if(!d) return 0;
@@ -2879,7 +2867,7 @@ function startLoadingData(){
 
  rikiFetchGithubFallback_()
  .then(function(githubData){
- if(!rikiShouldPaintGithubFirst_(githubData, _cached)) return;
+ if(!rikiShouldPaintGithubFirst_(githubData, DATA)) return;
  githubData = rikiPrepareIncomingData_(githubData);
  githubData.dataSource = githubData.dataSource || 'GitHub:d8f3a.json';
  DATA = githubData;
@@ -2893,6 +2881,11 @@ function startLoadingData(){
  }
  try{ console.warn('GitHub first-paint fallback failed', e); }catch(x){}
  });
+
+ // Hydrate the latest V5 scheduled/manual snapshot without triggering Schwab.
+ rikiFetchV5LiveSnapshotOnly_()
+ .then(function(snap){ rikiPaintV5LiveSnapshot_(snap); })
+ .catch(function(e){ try{ console.warn('V5 cache-only hydration unavailable', e); }catch(x){} });
 }
 
 var _lastFetch = Date.now();
@@ -2905,6 +2898,9 @@ document.addEventListener('visibilitychange', function(){
  if(!isAuthed()){ showAuthScreen(); return; }
  if(checkLock()) return;
  rikiMaybeRefreshAuthDisplay_('visibility');
+ rikiFetchV5LiveSnapshotOnly_()
+ .then(function(snap){ rikiPaintV5LiveSnapshot_(snap); })
+ .catch(function(e){ try{ console.warn('V5 visibility hydration unavailable', e); }catch(x){} });
 });
 
 // Update the original RiKi tab as soon as the separate Schwab callback tab finishes.

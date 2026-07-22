@@ -1267,9 +1267,13 @@ document.body.classList.remove('overlaying');
 function saveCache(d){
 try{
 if(!d) return;
-d._savedMs = Math.max(Number(d._savedMs || 0), Date.now());
+// Preserve the server's data-refresh timestamp. Browser cache/write time is
+// tracked separately and must never make old financial data look newer.
+var refreshMs = rikiDataFreshnessMs_(d);
+if(refreshMs && !Number(d.v5DataRefreshMs || 0)) d.v5DataRefreshMs = refreshMs;
+d._clientCachedAtMs = Date.now();
 localStorage.setItem('riki_data', JSON.stringify(d));
-localStorage.setItem('riki_last_fresh', String(Date.now()));
+localStorage.setItem('riki_last_fresh', String(refreshMs || Date.now()));
 }catch(e){}
 }
 function showTokenExpired(){
@@ -1319,7 +1323,21 @@ if(asOf!==churnerTodayEt_()){loadChurnerTicker((getChurnerTickerInput_()||{}).va
 var legacyMode=String((DATA&&DATA.legacyEngineControl&&DATA.legacyEngineControl.mode)||DATA&&DATA.legacyMode||'ACTIVE');if(legacyMode==='PAUSED'){toast('Legacy is PAUSED — resume it in Settings first',4200);return;}
 }
 showOverlay();
-fetch(BACKEND+'?action=v5RefreshLive&_='+Date.now()).then(function(r){return r.json();}).then(function(fresh){hideOverlay();if(fresh&&fresh.tokenExpired){showTokenExpired();return;}if(!fresh||fresh.success===false){toast('Live refresh failed: '+((fresh&&fresh.error)||'unknown'),6000);return;}CHURNER_LOAD_CACHE={};rikiRenderFreshData_(fresh,true);toast('Lightning refresh complete · '+Number((fresh.v5RefreshResult&&fresh.v5RefreshResult.runtimeMs)||fresh.v5RuntimeMs||0)+' ms',2600);}).catch(function(e){hideOverlay();toast('Live refresh error: '+errMsg(e),6000);});
+fetch(BACKEND+'?action=v5RefreshLive&_='+Date.now()).then(function(r){return r.json();}).then(function(fresh){
+hideOverlay();
+if(fresh&&fresh.tokenExpired){showTokenExpired();return;}
+if(!fresh||fresh.success===false){toast('Live refresh failed: '+((fresh&&fresh.error)||'unknown'),6000);return;}
+CHURNER_LOAD_CACHE={};
+rikiRenderFreshData_(fresh,true);
+var rr=fresh.v5RefreshResult||{},pub=rr.staticJsonPublish||{};
+if(pub.success===false){
+ toast('Live data refreshed · static sync warning: '+(pub.error||pub.reason||'GitHub publish failed'),7000);
+}else if(pub.skipped&&pub.reason==='NEWER_SNAPSHOT_ALREADY_PUBLISHED'){
+ toast('Lightning refresh complete · newer snapshot already preserved',3600);
+}else{
+ toast('Lightning refresh complete · '+Number(rr.backendTotalMs||rr.runtimeMs||fresh.v5RuntimeMs||0)+' ms · saved for every device',3200);
+}
+}).catch(function(e){hideOverlay();toast('Live refresh error: '+errMsg(e),6000);});
 }
 function doAuth(){
 haptic();
@@ -1630,6 +1648,10 @@ updateHistoryModeButtons();
 renderHist();
 renderSettings(d);
 }
+function rikiShowTimestampSyncing_(){
+var el=ge('utime');
+if(el) el.textContent='Syncing…';
+}
 function renderHeader(d){
 updateModeUI();
 var el=ge('utime');
@@ -1640,8 +1662,8 @@ if(el){
 var raw = '';
 // V7.7: header should show app/Refresh freshness, not Churner calc age.
 // Churner calculation time remains visible in the Churner banner as "calc ...".
-if(d && d.generatedAtEt){
-raw = formatChurnerTimestamp_(d.generatedAtEt);
+if(d && (d.v5DataRefreshAtEt || d.generatedAtEt)){
+raw = formatChurnerTimestamp_(d.v5DataRefreshAtEt || d.generatedAtEt);
 } else {
 raw = String(d.updated || '\u2014');
 }
@@ -2486,12 +2508,15 @@ function lockNow(){
 localStorage.setItem('riki_last_active','0');
 toast('Locked — Face ID required on next open');
 }
-// LEGACY_LIVE_DATA_LOAD_NO_STALE_GITHUB_V1
-// GitHub DATA_JSON is now only a fallback. Normal app open / idle wake reads live Apps Script sheet data
-// so the header timestamp cannot revert to yesterday's last GitHub write.
+// RIKI_STATIC_JSON_LATEST_REFRESH_WINS_V344
+// App open and iPhone wake use localStorage + GitHub only. Manual and scheduled
+// refreshes both publish d8f3a.json; server refresh time controls freshness.
 function rikiPrepareIncomingData_(d){
 if(!d) return d;
-d._savedMs = Math.max(Number(d._savedMs || 0), Date.now());
+// Never replace the server refresh epoch with browser hydration time.
+var incomingRefreshMs = rikiDataFreshnessMs_(d);
+if(incomingRefreshMs && !Number(d.v5DataRefreshMs || 0)) d.v5DataRefreshMs = incomingRefreshMs;
+d._clientHydratedAtMs = Date.now();
 // RIKI_V7_2_CHURNER_HISTORY_STABLE_NO_BLANK_V1
 // In Churner mode, preserve the currently displayed ChurnerData while live
 // legacy dashboard refresh runs. The separate ChurnerData fetch will replace
@@ -2539,8 +2564,26 @@ return true;
 }
 function rikiFetchV4LiveSnapshotOnly_(){ return rikiFetchV5LiveSnapshotOnly_(); }
 function rikiPaintV4LiveSnapshot_(snap){ return rikiPaintV5LiveSnapshot_(snap); }
+function rikiParseRefreshTimestampMs_(value){
+if(!value) return 0;
+if(typeof value==='number' && isFinite(value)) return Number(value);
+var s=String(value).trim();
+var m=s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+if(m){
+ // RiKi timestamps are Eastern Time; the user/browser is also ET. Constructing
+ // local time avoids treating the server timestamp as UTC.
+ var local=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]),Number(m[5]),Number(m[6]||0));
+ return isNaN(local.getTime())?0:local.getTime();
+}
+var parsed=Date.parse(s);
+return isFinite(parsed)?parsed:0;
+}
 function rikiDataFreshnessMs_(d){
 if(!d) return 0;
+var explicit=Number(d.v5DataRefreshMs || d.v4DataRefreshMs || 0);
+if(isFinite(explicit) && explicit>0) return explicit;
+var generated=rikiParseRefreshTimestampMs_(d.v5DataRefreshAtEt || d.generatedAtEt || d.generatedAt || '');
+if(generated>0) return generated;
 return Number(d._savedMs || d.savedMs || d.generatedMs || 0) || 0;
 }
 function rikiShouldPaintGithubFirst_(githubData, cachedData){
@@ -2702,9 +2745,14 @@ churner:null, manualOnly:true, dataSource:'empty-shell', _savedMs:0
 };
 renderAll(DATA);
 }
+// Never flash an older local timestamp while checking the authoritative JSON.
+rikiShowTimestampSyncing_();
 rikiFetchGithubFallback_()
 .then(function(githubData){
-if(!rikiShouldPaintGithubFirst_(githubData, DATA)) return;
+if(!rikiShouldPaintGithubFirst_(githubData, DATA)){
+ renderHeader(DATA);
+ return;
+}
 githubData = rikiPrepareIncomingData_(githubData);
 githubData.dataSource = githubData.dataSource || 'GitHub:d8f3a.json';
 DATA = githubData;
@@ -2715,6 +2763,8 @@ saveCache(githubData);
 if(!_cached){
 DATA.updated = 'Saved dashboard unavailable — click Load or Refresh';
 renderAll(DATA);
+}else{
+ renderHeader(DATA);
 }
 try{ console.warn('GitHub first-paint fallback failed', e); }catch(x){}
 });
@@ -2730,16 +2780,20 @@ if(document.visibilityState !== 'visible') return;
 if(!isAuthed()){ showAuthScreen(); return; }
 if(checkLock()) return;
 rikiMaybeRefreshAuthDisplay_('visibility');
+rikiShowTimestampSyncing_();
 rikiFetchGithubFallback_()
 .then(function(githubData){
-if(!rikiShouldPaintGithubFirst_(githubData, DATA)) return;
+if(!rikiShouldPaintGithubFirst_(githubData, DATA)){
+ renderHeader(DATA);
+ return;
+}
 githubData = rikiPrepareIncomingData_(githubData);
 githubData.dataSource = githubData.dataSource || 'GitHub:d8f3a.json';
 DATA = githubData;
 renderAll(githubData);
 saveCache(githubData);
 })
-.catch(function(e){ try{ console.warn('Static visibility hydration unavailable', e); }catch(x){} });
+.catch(function(e){ renderHeader(DATA); try{ console.warn('Static visibility hydration unavailable', e); }catch(x){} });
 });
 // Update the original RiKi tab as soon as the separate Schwab callback tab finishes.
 window.addEventListener('storage', function(e){

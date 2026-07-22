@@ -1334,6 +1334,10 @@ if(pub.success===false){
  toast('Live data refreshed · static sync warning: '+(pub.error||pub.reason||'GitHub publish failed'),7000);
 }else if(pub.skipped&&pub.reason==='NEWER_SNAPSHOT_ALREADY_PUBLISHED'){
  toast('Lightning refresh complete · newer snapshot already preserved',3600);
+}else if(rr.noSchwabCalls&&rr.finalizedSnapshot){
+ toast('Finalized after-close data loaded · saved for every device',3600);
+}else if(rr.noSchwabCalls){
+ toast('Latest finalized data loaded · saved for every device',3600);
 }else{
  toast('Lightning refresh complete · '+Number(rr.backendTotalMs||rr.runtimeMs||fresh.v5RuntimeMs||0)+' ms · saved for every device',3200);
 }
@@ -2025,7 +2029,7 @@ bp.appendChild(bl);bp.appendChild(bc);dw.appendChild(bp);
 if(d.staleData){
 var el=document.createElement('div');el.className='warn urg';
 el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-' Positions data unavailable — showing last known data. Schwab API returned empty positions.';
+' Live refresh failed — showing the last successful dashboard snapshot.';
 dw.appendChild(el);
 }
 var dc=ge('dc');dc.innerHTML='';

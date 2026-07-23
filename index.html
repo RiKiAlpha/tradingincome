@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RIKI_INDEX_HISTORY_SUMMARY_V5_1_3_VERIFIED -->
+<!-- RIKI_INDEX_HISTORY_DRILLDOWN_V5_1_4_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1085,6 +1085,8 @@ return s.replace(/\s*\(.*\)/,'').trim();
 if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){ document.documentElement.classList.add('pwa'); }
 var DATA=null, activeTab='d', histMode='weeks';
 var RIKI_HISTORY_SELECTED_PERIOD={daily:'',weeks:'',monthly:''};
+var RIKI_CHURNER_HISTORY_LOAD_STATE={};
+var RIKI_CHURNER_HISTORY_MONTH_CACHE={};
 var CHURNER_LOAD_CACHE = {}; // RIKI_V7_5 fast in-memory date+ticker sheet cache
 var CHURNER_LOAD_INFLIGHT = {}; // RIKI_V7_8 prevent duplicate date/ticker load executions
 var CHURNER_REBUILD_INFLIGHT = false; // RIKI_V7_8 one rebuild from this browser tab at a time
@@ -2273,10 +2275,20 @@ rows.forEach(function(r){var t=String(r.ticker||'').trim().toUpperCase();if(!t)r
 var summary=Object.keys(byTicker).map(function(k){return byTicker[k];}).sort(function(a,b){return Number(b.banked||0)-Number(a.banked||0);});
 host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(week&&week.weekEnd||''))+'</div><table><thead><tr><th style="text-align:left">Ticker</th><th>Contracts</th><th>Banked</th></tr></thead><tbody>'+summary.map(function(r){return '<tr><td style="text-align:left;font-weight:900">'+escHtml(r.ticker)+'</td><td>'+Number(r.contracts||0)+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td></tr>';}).join('')+'</tbody></table></div>';
 }
+function rikiV5LegacyWeekHasTickerRows_(week){
+return !!(week&&Array.isArray(week.tickerRows)&&week.tickerRows.length);
+}
 function rikiV5LoadLegacyWeekDetail_(period){
-var year=String(period||'').substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json',host=ge('legacy-week-detail');if(host)host.innerHTML='<div class="empty">Loading ticker detail…</div>';
-if(RIKI_V5_LEGACY_WEEK_CACHE[period]){rikiV5RenderLegacyWeekDetail_(RIKI_V5_LEGACY_WEEK_CACHE[period]);return;}
-rikiV5StaticJson_(url).then(function(file){var week=file&&file.weeks&&file.weeks[period];if(!week)throw new Error('Week not found');RIKI_V5_LEGACY_WEEK_CACHE[period]=week;rikiV5RenderLegacyWeekDetail_(week);}).catch(function(){fetch(BACKEND+'?action=v5LegacyHistory&period='+encodeURIComponent(period)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){if(!j||!j.success){if(host)host.innerHTML='<div class="empty">No finalized ticker detail for this week.</div>';return;}RIKI_V5_LEGACY_WEEK_CACHE[period]=j.week;rikiV5RenderLegacyWeekDetail_(j.week);}).catch(function(){if(host)host.innerHTML='<div class="empty">Legacy detail load failed.</div>';});});
+period=rikiCleanHistoryPeriod_(period);var year=String(period||'').substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json',host=ge('legacy-week-detail');
+if(host)host.innerHTML='<div class="empty">Loading ticker detail…</div>';
+function renderIfReady_(week){if(!rikiV5LegacyWeekHasTickerRows_(week))return false;RIKI_V5_LEGACY_WEEK_CACHE[period]=week;rikiV5RenderLegacyWeekDetail_(week);return true;}
+function gasFallback_(){
+fetch(BACKEND+'?action=v5LegacyHistory&period='+encodeURIComponent(period)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){
+if(!j||!j.success||!renderIfReady_(j.week)){if(host)host.innerHTML='<div class="empty">No finalized ticker summary is saved for this week. Run Refresh Reports once, then tap the week again.</div>';return;}
+}).catch(function(){if(host)host.innerHTML='<div class="empty">Legacy ticker detail load failed.</div>';});
+}
+if(renderIfReady_(RIKI_V5_LEGACY_WEEK_CACHE[period]))return;
+rikiV5StaticJson_(url).then(function(file){var week=file&&file.weeks&&file.weeks[period];if(!renderIfReady_(week))throw new Error('Ticker rows missing');}).catch(gasFallback_);
 }
 function rikiV5RefreshReportsButton_(btn){
 if(btn){btn.disabled=true;btn.textContent='Writing…';}toast('Writing summary reports and finalized history…',2600);
@@ -2285,33 +2297,50 @@ fetch(BACKEND+'?action=v5RefreshReports&_='+Date.now()).then(function(r){return 
 function rikiV5AppendReportsCard_(){
 var nc=ge('nc-section');if(!nc||ge('v5-report-card'))return;var card=document.createElement('div');card.id='v5-report-card';card.className='engine-status-card';card.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Spreadsheet Reports</div><div class="engine-status-sub">Live refresh stays zero-sheet. Use this only when you want Dashboard, Archive, LegacyTickerData, Churner ledgers, Audit, and static history updated now.</div></div><span class="engine-mode-badge active">ON DEMAND</span></div><div class="engine-actions"><button class="abtn" id="v5-report-refresh-btn">Refresh Reports</button></div>';nc.insertBefore(card,nc.firstChild);ge('v5-report-refresh-btn').addEventListener('click',function(){rikiV5RefreshReportsButton_(this);});
 }
-function renderChurnerHist(){
-var c=chData();
-var el=ge('hc');el.innerHTML='';
-if(!c){el.innerHTML='<div class="empty">No Churner data</div>';return;}
-var rows=histMode==='daily'?(c.historyDaily||[]):histMode==='monthly'?(c.historyMonthly||[]):(c.historyWeekly||[]);
-rows=rows.slice();
-var totalRows=histMode==='daily'?(c.historyDailyTotals||[]):histMode==='monthly'?(c.historyMonthlyTotals||[]):(c.historyWeeklyTotals||[]);
-if(!totalRows.length)totalRows=churnerHistoryTotalsClient_(rows);
-totalRows=totalRows.slice().sort(function(a,b){return String(b.period||'').localeCompare(String(a.period||''));});
-var selected=String(RIKI_HISTORY_SELECTED_PERIOD[histMode]||'');
-if(histMode==='daily'&&!selected)selected=String(c.asOfDate||'');
-if(!selected||!totalRows.some(function(r){return String(r.period||'')===selected;}))selected=totalRows.length?String(totalRows[0].period||''):'';
-RIKI_HISTORY_SELECTED_PERIOD[histMode]=selected;
-var periodTitle=histMode==='daily'?'Date':histMode==='monthly'?'Month':'Week Ending';
-var totalTitle=histMode==='daily'?'Daily History':histMode==='monthly'?'Monthly History':'Weekly History';
-if(totalRows.length){
-var totalCard=document.createElement('div');totalCard.className='churner-kpi';
-totalCard.innerHTML='<div class="churner-line" style="border-top:none;margin-bottom:8px;"><span>'+totalTitle+'</span><b>Tap a period</b></div><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">'+periodTitle+'</th><th>Tickers</th><th>Closed</th><th>Banked</th><th>Day Trade Gains</th></tr></thead><tbody>'+totalRows.map(function(r){var p=String(r.period||'');return '<tr class="history-period-row'+(p===selected?' selected':'')+'" data-period="'+escHtml(p)+'"><td style="text-align:left;font-weight:800">'+escHtml(rikiCleanHistoryPeriod_(p)||'—')+'</td><td>'+(r.tickerCount||(Array.isArray(r.tickers)?r.tickers.length:'—'))+'</td><td>'+(r.closed||0)+'</td><td class="'+cc(r.banked)+'" style="font-weight:900">'+fmtS(r.banked||0)+'</td><td class="'+cc(r.dayTradeBanked)+'" style="font-weight:900">'+fmtS(r.dayTradeBanked||0)+' <span style="font-size:9px;color:var(--text3)">/'+(r.dayTradeContracts||0)+' ct</span></td></tr>';}).join('')+'</tbody></table></div>';
-el.appendChild(totalCard);
-Array.prototype.forEach.call(totalCard.querySelectorAll('.history-period-row'),function(tr){tr.addEventListener('click',function(){RIKI_HISTORY_SELECTED_PERIOD[histMode]=String(tr.getAttribute('data-period')||'');haptic();renderChurnerHist();});});
+function rikiV5ChurnerHistoryRows_(c,mode){
+return mode==='daily'?(c.historyDaily||[]):mode==='monthly'?(c.historyMonthly||[]):(c.historyWeekly||[]);
 }
-var detailRows=rows.filter(function(r){return String(r.period||'')===selected;}).sort(function(a,b){var ga=Number(a.dayTradeBanked||a.banked||0),gb=Number(b.dayTradeBanked||b.banked||0);return gb-ga;});
-var wrap=document.createElement('div');wrap.className='history-detail-wrap';
-wrap.innerHTML='<div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(selected)||'—')+'</div>';
-var t=document.createElement('table');t.innerHTML='<thead><tr><th style="text-align:left">Ticker</th><th>Closed</th><th>Banked</th><th>Day Trade Gains</th></tr></thead>';
-var tb=document.createElement('tbody');
-if(!detailRows.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:34px;color:var(--text3)">No ticker summary for this period</td></tr>';}
+function rikiV5ChurnerHistoryTotals_(c,mode){
+return mode==='daily'?(c.historyDailyTotals||[]):mode==='monthly'?(c.historyMonthlyTotals||[]):(c.historyWeeklyTotals||[]);
+}
+function rikiV5MergeHistoryRows_(base,extra,isTotals){
+var map={},keys=[];(base||[]).concat(extra||[]).forEach(function(r){if(!r)return;var p=String(r.period||'');if(!p)return;var key=p+'|'+(isTotals?'TOTAL':String(r.ticker||'').toUpperCase());if(!map[key])keys.push(key);map[key]=r;});
+return keys.map(function(k){return map[k];});
+}
+function rikiV5MergeChurnerHistoryPayload_(payload){
+if(!payload)return;DATA=DATA||{};DATA.churner=DATA.churner||{};var c=DATA.churner;
+['historyDaily','historyWeekly','historyMonthly'].forEach(function(k){c[k]=rikiV5MergeHistoryRows_(c[k],payload[k],false);});
+['historyDailyTotals','historyWeeklyTotals','historyMonthlyTotals'].forEach(function(k){c[k]=rikiV5MergeHistoryRows_(c[k],payload[k],true);});
+}
+function rikiV5ChurnerHistoryAsOf_(period,mode,c){
+period=String(period||'');if(mode!=='monthly')return rikiCleanHistoryPeriod_(period);
+var month=period.substring(0,7);if(c&&String(c.asOfDate||'').substring(0,7)===month)return String(c.asOfDate||'');
+var m=month.match(/^(\d{4})-(\d{2})$/);if(!m)return '';
+return m[1]+'-'+m[2]+'-'+String(new Date(Number(m[1]),Number(m[2]),0).getDate()).padStart(2,'0');
+}
+function rikiV5ChurnerPeriodHasDetail_(c,mode,period){
+return rikiV5ChurnerHistoryRows_(c||{},mode).some(function(r){return String(r.period||'')===String(period||'')&&String(r.ticker||'').trim();});
+}
+function rikiV5HydrateChurnerHistoryPeriod_(period,mode){
+period=String(period||'');if(!period)return;var key=mode+'|'+period,state=RIKI_CHURNER_HISTORY_LOAD_STATE[key];if(state==='loading'||state==='done'||state==='empty')return;
+RIKI_CHURNER_HISTORY_LOAD_STATE[key]='loading';var c=chData()||{},month=period.substring(0,7),url=RIKI_V5_HISTORY_BASE+'/churner/'+month+'.json';
+function finish_(payload){rikiV5MergeChurnerHistoryPayload_(payload);var ready=rikiV5ChurnerPeriodHasDetail_(chData()||{},mode,period);RIKI_CHURNER_HISTORY_LOAD_STATE[key]=ready?'done':'empty';renderChurnerHist();return ready;}
+function gasFallback_(){var asOf=rikiV5ChurnerHistoryAsOf_(period,mode,c);if(!asOf){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();return;}
+fetch(BACKEND+'?action=v5ChurnerHistory&asOf='+encodeURIComponent(asOf)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){if(!j||!j.success){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();return;}finish_(j);}).catch(function(){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();});}
+var cached=RIKI_CHURNER_HISTORY_MONTH_CACHE[month];if(cached){if(!finish_(cached))gasFallback_();return;}
+rikiV5StaticJson_(url).then(function(file){RIKI_CHURNER_HISTORY_MONTH_CACHE[month]=file||{};if(!finish_(file))gasFallback_();}).catch(gasFallback_);
+}
+function renderChurnerHist(){
+var c=chData();var el=ge('hc');el.innerHTML='';if(!c){el.innerHTML='<div class="empty">No Churner data</div>';return;}
+var rows=rikiV5ChurnerHistoryRows_(c,histMode).slice();var totalRows=rikiV5ChurnerHistoryTotals_(c,histMode).slice();if(!totalRows.length)totalRows=churnerHistoryTotalsClient_(rows);
+totalRows=totalRows.slice().sort(function(a,b){return String(b.period||'').localeCompare(String(a.period||''));});
+var selected=String(RIKI_HISTORY_SELECTED_PERIOD[histMode]||'');if(histMode==='daily'&&!selected)selected=String(c.asOfDate||'');if(!selected||!totalRows.some(function(r){return String(r.period||'')===selected;}))selected=totalRows.length?String(totalRows[0].period||''):'';RIKI_HISTORY_SELECTED_PERIOD[histMode]=selected;
+var periodTitle=histMode==='daily'?'Date':histMode==='monthly'?'Month':'Week Ending';var totalTitle=histMode==='daily'?'Daily History':histMode==='monthly'?'Monthly History':'Weekly History';
+if(totalRows.length){var totalCard=document.createElement('div');totalCard.className='churner-kpi';totalCard.innerHTML='<div class="churner-line" style="border-top:none;margin-bottom:8px;"><span>'+totalTitle+'</span><b>Tap a period</b></div><div style="overflow-x:auto"><table><thead><tr><th style="text-align:left">'+periodTitle+'</th><th>Tickers</th><th>Closed</th><th>Banked</th><th>Day Trade Gains</th></tr></thead><tbody>'+totalRows.map(function(r){var p=String(r.period||'');return '<tr class="history-period-row'+(p===selected?' selected':'')+'" data-period="'+escHtml(p)+'"><td style="text-align:left;font-weight:800">'+escHtml(rikiCleanHistoryPeriod_(p)||'—')+'</td><td>'+(r.tickerCount||(Array.isArray(r.tickers)?r.tickers.length:'—'))+'</td><td>'+(r.closed||0)+'</td><td class="'+cc(r.banked)+'" style="font-weight:900">'+fmtS(r.banked||0)+'</td><td class="'+cc(r.dayTradeBanked)+'" style="font-weight:900">'+fmtS(r.dayTradeBanked||0)+' <span style="font-size:9px;color:var(--text3)">/'+(r.dayTradeContracts||0)+' ct</span></td></tr>';}).join('')+'</tbody></table></div>';el.appendChild(totalCard);Array.prototype.forEach.call(totalCard.querySelectorAll('.history-period-row'),function(tr){tr.addEventListener('click',function(){RIKI_HISTORY_SELECTED_PERIOD[histMode]=String(tr.getAttribute('data-period')||'');haptic();renderChurnerHist();});});}
+var detailRows=rows.filter(function(r){return String(r.period||'')===selected&&String(r.ticker||'').trim();}).sort(function(a,b){var ga=Number(a.dayTradeBanked||a.banked||0),gb=Number(b.dayTradeBanked||b.banked||0);return gb-ga;});
+var loadKey=histMode+'|'+selected,loadState=RIKI_CHURNER_HISTORY_LOAD_STATE[loadKey]||'';if(selected&&!detailRows.length&&!loadState){rikiV5HydrateChurnerHistoryPeriod_(selected,histMode);loadState='loading';}
+var wrap=document.createElement('div');wrap.className='history-detail-wrap';wrap.innerHTML='<div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(selected)||'—')+'</div>';var t=document.createElement('table');t.innerHTML='<thead><tr><th style="text-align:left">Ticker</th><th>Closed</th><th>Banked</th><th>Day Trade Gains</th></tr></thead>';var tb=document.createElement('tbody');
+if(!detailRows.length){var msg=loadState==='loading'?'Loading ticker summary…':'No ticker summary saved for this period';tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:34px;color:var(--text3)">'+msg+'</td></tr>';}
 else detailRows.forEach(function(r){var tr=document.createElement('tr');tr.innerHTML='<td style="text-align:left;font-weight:900">'+escHtml(r.ticker||'—')+'</td><td>'+(r.closed||0)+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td><td class="'+cc(r.dayTradeBanked)+'">'+fmtS(r.dayTradeBanked||0)+' <span style="font-size:9px;color:var(--text3)">/'+(r.dayTradeContracts||0)+' ct</span></td>';tb.appendChild(tr);});
 t.appendChild(tb);wrap.appendChild(t);el.appendChild(wrap);
 }

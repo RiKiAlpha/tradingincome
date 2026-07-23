@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RIKI_INDEX_HISTORY_DRILLDOWN_V5_1_4_VERIFIED -->
+<!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1087,6 +1087,9 @@ var DATA=null, activeTab='d', histMode='weeks';
 var RIKI_HISTORY_SELECTED_PERIOD={daily:'',weeks:'',monthly:''};
 var RIKI_CHURNER_HISTORY_LOAD_STATE={};
 var RIKI_CHURNER_HISTORY_MONTH_CACHE={};
+var RIKI_V5_LEGACY_MULTI_TICKER_START='2026-07-17';
+var RIKI_V5_LEGACY_YEAR_CACHE={};
+var RIKI_V5_LEGACY_MONTH_LOAD_STATE={};
 var CHURNER_LOAD_CACHE = {}; // RIKI_V7_5 fast in-memory date+ticker sheet cache
 var CHURNER_LOAD_INFLIGHT = {}; // RIKI_V7_8 prevent duplicate date/ticker load executions
 var CHURNER_REBUILD_INFLIGHT = false; // RIKI_V7_8 one rebuild from this browser tab at a time
@@ -2266,29 +2269,52 @@ opts=opts||{};var month=String(asOf||'').substring(0,7),url=RIKI_V5_HISTORY_BASE
 if(CHURNER_LOAD_INFLIGHT[key])return;CHURNER_LOAD_INFLIGHT[key]=true;setChurnerBusy_(true,'Loading finalized history…');
 rikiV5StaticJson_(url).then(function(file){var raw=file&&file.days&&file.days[asOf];if(!raw)throw new Error('Date not in static history');var day=JSON.parse(JSON.stringify(raw)),keys=['historyDaily','historyWeekly','historyMonthly','historyDailyTotals','historyWeeklyTotals','historyMonthlyTotals'];keys.forEach(function(k){if(Array.isArray(file[k]))day[k]=file[k];});delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);rikiV5ApplyHistoricalChurner_(day,ticker);}).catch(function(){fetch(BACKEND+'?action=v5ChurnerHistory&asOf='+encodeURIComponent(asOf)+'&ticker='+encodeURIComponent(ticker||'')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);if(!j||!j.success){toast((j&&j.error)||'No finalized history for '+asOf);return;}rikiV5ApplyHistoricalChurner_(j,ticker);}).catch(function(){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);toast('Historical Churner load failed');});});
 }
+function rikiV5LegacyArchiveWeekMap_(){
+var out={};((DATA&&DATA.allClosed)||[]).forEach(function(row){var week=rikiCleanHistoryPeriod_(row&&row[0]);if(!/^\d{4}-\d{2}-\d{2}$/.test(week))return;out[week]={weekEnd:week,a1:money(row[1]),a2:money(row[3]),total:money(row[6])};});return out;
+}
+function rikiV5LegacyArchiveOnlyWeek_(period,fallback){
+period=rikiCleanHistoryPeriod_(period);if(!period||period>=RIKI_V5_LEGACY_MULTI_TICKER_START)return null;var x=fallback||rikiV5LegacyArchiveWeekMap_()[period];if(!x)return null;return {weekEnd:period,archiveOnly:true,tickerRows:[{ticker:'MSTR',contracts:null,bankedNet:money(x.total),archiveOnly:true}]};
+}
+function rikiV5RenderLegacyTickerDetail_(host,period,rows,options){
+options=options||{};if(!host)return;rows=rows||[];if(!rows.length){host.innerHTML='<div class="empty">No certified ticker summary is saved for this period.</div>';return;}
+var byTicker={};rows.forEach(function(r){var t=String(r.ticker||'').trim().toUpperCase();if(!t)return;if(!byTicker[t])byTicker[t]={ticker:t,contracts:0,contractsKnown:true,banked:0};var c=r.contracts;if(c===null||c===undefined||c==='')byTicker[t].contractsKnown=false;else byTicker[t].contracts+=Number(c||0);byTicker[t].banked+=money(r.bankedNet!==undefined?r.bankedNet:r.banked);});
+var summary=Object.keys(byTicker).map(function(k){return byTicker[k];}).sort(function(a,b){return Number(b.banked||0)-Number(a.banked||0)||String(a.ticker).localeCompare(String(b.ticker));});
+var note=options.archiveOnly?' · MSTR-only Archive':'';var missing=Number(options.missingWeeks||0);if(missing)note+=' · '+missing+' week'+(missing===1?'':'s')+' awaiting certified detail';
+host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(period)||period)+escHtml(note)+'</div><table><thead><tr><th style="text-align:left">Ticker</th><th>Contracts</th><th>Banked</th></tr></thead><tbody>'+summary.map(function(r){var ct=r.contractsKnown?Number(r.contracts||0):'—';return '<tr><td style="text-align:left;font-weight:900">'+escHtml(r.ticker)+'</td><td>'+ct+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td></tr>';}).join('')+'</tbody></table></div>';
+}
 function rikiV5RenderLegacyWeekDetail_(week){
-var host=ge('legacy-week-detail');if(!host)return;
-var rows=(week&&week.tickerRows)||[];
-if(!rows.length){host.innerHTML='<div class="empty">No ticker summary saved for this week.</div>';return;}
-var byTicker={};
-rows.forEach(function(r){var t=String(r.ticker||'').trim().toUpperCase();if(!t)return;if(!byTicker[t])byTicker[t]={ticker:t,contracts:0,banked:0};byTicker[t].contracts+=Number(r.contracts||0);byTicker[t].banked+=money(r.bankedNet||0);});
-var summary=Object.keys(byTicker).map(function(k){return byTicker[k];}).sort(function(a,b){return Number(b.banked||0)-Number(a.banked||0);});
-host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(week&&week.weekEnd||''))+'</div><table><thead><tr><th style="text-align:left">Ticker</th><th>Contracts</th><th>Banked</th></tr></thead><tbody>'+summary.map(function(r){return '<tr><td style="text-align:left;font-weight:900">'+escHtml(r.ticker)+'</td><td>'+Number(r.contracts||0)+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td></tr>';}).join('')+'</tbody></table></div>';
+var host=ge('legacy-week-detail');if(!host)return;var rows=(week&&week.tickerRows)||[];rikiV5RenderLegacyTickerDetail_(host,week&&week.weekEnd||'',rows,{archiveOnly:!!(week&&week.archiveOnly)});
 }
 function rikiV5LegacyWeekHasTickerRows_(week){
 return !!(week&&Array.isArray(week.tickerRows)&&week.tickerRows.length);
 }
-function rikiV5LoadLegacyWeekDetail_(period){
-period=rikiCleanHistoryPeriod_(period);var year=String(period||'').substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json',host=ge('legacy-week-detail');
+function rikiV5LoadLegacyWeekDetail_(period,archiveFallback){
+period=rikiCleanHistoryPeriod_(period);var archiveOnly=rikiV5LegacyArchiveOnlyWeek_(period,archiveFallback);if(archiveOnly){rikiV5RenderLegacyWeekDetail_(archiveOnly);return;}
+var year=String(period||'').substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json',host=ge('legacy-week-detail');
 if(host)host.innerHTML='<div class="empty">Loading ticker detail…</div>';
 function renderIfReady_(week){if(!rikiV5LegacyWeekHasTickerRows_(week))return false;RIKI_V5_LEGACY_WEEK_CACHE[period]=week;rikiV5RenderLegacyWeekDetail_(week);return true;}
 function gasFallback_(){
 fetch(BACKEND+'?action=v5LegacyHistory&period='+encodeURIComponent(period)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){
-if(!j||!j.success||!renderIfReady_(j.week)){if(host)host.innerHTML='<div class="empty">No finalized ticker summary is saved for this week. Run Refresh Reports once, then tap the week again.</div>';return;}
+if(!j||!j.success||!renderIfReady_(j.week)){if(host)host.innerHTML='<div class="empty">No certified ticker summary is saved for this week.</div>';return;}
 }).catch(function(){if(host)host.innerHTML='<div class="empty">Legacy ticker detail load failed.</div>';});
 }
 if(renderIfReady_(RIKI_V5_LEGACY_WEEK_CACHE[period]))return;
-rikiV5StaticJson_(url).then(function(file){var week=file&&file.weeks&&file.weeks[period];if(!renderIfReady_(week))throw new Error('Ticker rows missing');}).catch(gasFallback_);
+rikiV5StaticJson_(url).then(function(file){RIKI_V5_LEGACY_YEAR_CACHE[year]=file||{};var week=file&&file.weeks&&file.weeks[period];if(!renderIfReady_(week))throw new Error('Ticker rows missing');}).catch(gasFallback_);
+}
+function rikiV5BuildLegacyMonthDetail_(month,file){
+month=String(month||'').substring(0,7);var archiveWeeks=rikiV5LegacyArchiveWeekMap_(),weekSet={},weeks=(file&&file.weeks)||{};
+Object.keys(archiveWeeks).forEach(function(w){if(w.substring(0,7)===month)weekSet[w]=true;});Object.keys(weeks).forEach(function(w){var clean=rikiCleanHistoryPeriod_(w);if(clean.substring(0,7)===month)weekSet[clean]=true;});
+var rows=[],archiveOnly=false,missingWeeks=0;Object.keys(weekSet).sort().forEach(function(week){
+if(week<RIKI_V5_LEGACY_MULTI_TICKER_START){var a=rikiV5LegacyArchiveOnlyWeek_(week,archiveWeeks[week]);if(a){Array.prototype.push.apply(rows,a.tickerRows||[]);archiveOnly=true;}return;}
+var w=weeks[week];if(rikiV5LegacyWeekHasTickerRows_(w))Array.prototype.push.apply(rows,w.tickerRows||[]);else if(archiveWeeks[week])missingWeeks++;
+});
+return {period:month,tickerRows:rows,archiveOnly:archiveOnly,missingWeeks:missingWeeks};
+}
+function rikiV5LoadLegacyMonthDetail_(month){
+month=String(month||'').substring(0,7);var host=ge('legacy-month-detail');if(!host||!/^\d{4}-\d{2}$/.test(month))return;var year=month.substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json';host.innerHTML='<div class="empty">Loading ticker detail…</div>';
+function finish_(file){var built=rikiV5BuildLegacyMonthDetail_(month,file||{});if(!built.tickerRows.length){host.innerHTML='<div class="empty">No finalized ticker summary is saved for this month.</div>';return;}rikiV5RenderLegacyTickerDetail_(host,month,built.tickerRows,{archiveOnly:built.archiveOnly,missingWeeks:built.missingWeeks});}
+if(RIKI_V5_LEGACY_YEAR_CACHE[year]){finish_(RIKI_V5_LEGACY_YEAR_CACHE[year]);return;}
+rikiV5StaticJson_(url).then(function(file){RIKI_V5_LEGACY_YEAR_CACHE[year]=file||{};finish_(file);}).catch(function(){finish_({weeks:{}});});
 }
 function rikiV5RefreshReportsButton_(btn){
 if(btn){btn.disabled=true;btn.textContent='Writing…';}toast('Writing summary reports and finalized history…',2600);
@@ -2363,7 +2389,7 @@ var t=document.createElement('table');
 t.innerHTML='<thead><tr><th style="text-align:left">Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
 var tb=document.createElement('tbody');
 if(!rows.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';}
-else{rows.slice().reverse().forEach(function(row){var lbl=rikiCleanHistoryPeriod_(row[0]||'\u2014');var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.style.cursor='pointer';tr.title='Open ticker and expiry detail';tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tr.addEventListener('click',function(){rikiV5LoadLegacyWeekDetail_(lbl);});tb.appendChild(tr);});}
+else{rows.slice().reverse().forEach(function(row){var lbl=rikiCleanHistoryPeriod_(row[0]||'\u2014');var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.style.cursor='pointer';tr.title='Open ticker and expiry detail';tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tr.addEventListener('click',function(){rikiV5LoadLegacyWeekDetail_(lbl,{weekEnd:lbl,a1:a1,a2:a2,total:tot});});tb.appendChild(tr);});}
 t.appendChild(tb);el.appendChild(t);var detail=document.createElement('div');detail.id='legacy-week-detail';detail.innerHTML='<div class="empty" style="padding-top:18px">Tap a week to see ticker contracts and banked gains.</div>';el.appendChild(detail);
 } else {
 var monthly={};
@@ -2378,17 +2404,17 @@ if(!months.length){el.innerHTML='<div class="empty">No monthly data</div>';retur
 var t=document.createElement('table');
 t.innerHTML='<thead><tr><th style="text-align:left">Month</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
 var tb=document.createElement('tbody');
-var now=new Date(),cm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1);
+var now=new Date(),cm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1),selectedMonth=String(RIKI_HISTORY_SELECTED_PERIOD.monthly||'');
 months.forEach(function(mo){
 var e=monthly[mo];var hdrtxt;
 try{hdrtxt=new Date(mo+'-02').toLocaleDateString('en-US',{month:'long',year:'numeric'});}catch(x){hdrtxt=mo;}
 var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm)||activeMonths.has(mo);
 var dot=isCur?'&nbsp;<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;vertical-align:middle;position:relative;top:-1px;-webkit-animation:blink 1.4s ease-in-out infinite;animation:blink 1.4s ease-in-out infinite"></span>':'';
-var tr=document.createElement('tr');
+var tr=document.createElement('tr');tr.style.cursor='pointer';tr.title='Open ticker summary';tr.setAttribute('data-period',mo);if(mo===selectedMonth)tr.className='history-period-row selected';else tr.className='history-period-row';
 tr.innerHTML='<td style="text-align:left;font-weight:600">'+hdrtxt+dot+'</td><td class="'+cc(a1)+'">'+fmtS(a1)+'</td><td class="'+cc(a2)+'">'+fmtS(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';
-tb.appendChild(tr);
+tr.addEventListener('click',function(){RIKI_HISTORY_SELECTED_PERIOD.monthly=mo;Array.prototype.forEach.call(tb.querySelectorAll('.history-period-row'),function(x){x.classList.remove('selected');});tr.classList.add('selected');haptic();rikiV5LoadLegacyMonthDetail_(mo);});tb.appendChild(tr);
 });
-t.appendChild(tb);el.appendChild(t);
+t.appendChild(tb);el.appendChild(t);var detail=document.createElement('div');detail.id='legacy-month-detail';detail.innerHTML='<div class="empty" style="padding-top:18px">Tap a month to see ticker contracts and banked gains.</div>';el.appendChild(detail);if(selectedMonth&&months.indexOf(selectedMonth)>=0)rikiV5LoadLegacyMonthDetail_(selectedMonth);
 }
 }
 function renderSettings(d){

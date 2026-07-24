@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
+<!-- RIKI_INDEX_FINTECH_LEAN_STATUS_BANNERS_V5_1_7_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2010,18 +2011,18 @@ var dparts=Object.keys(tr.results||{}).sort().map(function(l){
 }).join(' · ');
 var tp=document.createElement('div');
 tp.style.margin='14px 16px 0';
-tp.style.padding='10px 14px';
+tp.style.padding='13px 14px';
 tp.style.borderRadius='10px';
 tp.style.display='flex';
 tp.style.alignItems='center';
 tp.style.justifyContent='space-between';
-tp.style.background=isPass?'rgba(52,168,83,.18)':'rgba(229,83,83,.08)';
-tp.style.border='1px solid '+(isPass?'rgba(52,168,83,.4)':'rgba(229,83,83,.2)');
-tp.style.color=isPass?'#1e7e34':'#e55353';
+tp.style.background=isPass?'rgba(0,184,148,.08)':'rgba(229,83,83,.08)';
+tp.style.border='1px solid '+(isPass?'rgba(0,184,148,.20)':'rgba(229,83,83,.20)');
+tp.style.color=isPass?'var(--green)':'var(--red)';
 var tl=document.createElement('div');
 var tt=document.createElement('div');
-tt.style.cssText='font-size:12px;font-weight:800;line-height:1.35;';
-var auditText=(isPass?'✓ Audit passed':'✕ Audit failed')+(week?' for week ending '+week:'');
+tt.style.cssText='font-size:12px;font-weight:500;line-height:1.45;';
+var auditText=(isPass?'Audit passed':'Audit failed')+(week?' for week ending '+week:'');
 if(!isPass&&dparts)auditText+=' · '+dparts;
 if(auditStamp)auditText+=' · '+auditStamp;
 tt.textContent=auditText;
@@ -2041,19 +2042,19 @@ if(br&&!isWeeklyBackupDismissed_(br)){
 var bst=String(br.status||''),bok=bst==='BACKUP_COMPLETE',bwarn=bst==='BACKUP_SKIPPED_AUDIT';
 var bp=document.createElement('div');
 bp.style.margin='10px 16px 0';
-bp.style.padding='10px 14px';
+bp.style.padding='13px 14px';
 bp.style.borderRadius='10px';
 bp.style.display='flex';
 bp.style.alignItems='center';
 bp.style.justifyContent='space-between';
 bp.style.gap='12px';
-bp.style.background=bok?'rgba(52,168,83,.18)':(bwarn?'rgba(244,197,66,.10)':'rgba(229,83,83,.08)');
-bp.style.border='1px solid '+(bok?'rgba(52,168,83,.4)':(bwarn?'rgba(244,197,66,.35)':'rgba(229,83,83,.25)'));
-bp.style.color=bok?'#1e7e34':(bwarn?'#b18400':'#e55353');
+bp.style.background=bok?'rgba(0,184,148,.08)':'rgba(229,83,83,.08)';
+bp.style.border='1px solid '+(bok?'rgba(0,184,148,.20)':'rgba(229,83,83,.20)');
+bp.style.color=bok?'var(--green)':'var(--red)';
 var bl=document.createElement('div');
 var bt=document.createElement('div');
-bt.style.cssText='font-size:12px;font-weight:800;line-height:1.35;';
-var backupLabel=bok?'✓ Backup completed':(bwarn?'⚠ Backup blocked':'✕ Backup failed');
+bt.style.cssText='font-size:12px;font-weight:500;line-height:1.45;';
+var backupLabel=bok?'Backup completed':(bwarn?'Backup blocked':'Backup failed');
 var backupWeek=rikiCleanHistoryPeriod_(br.reportingWeekEnd||''),backupStamp=rikiLeanBannerTimestamp_(br.checkedAtEt||'');
 if(backupWeek)backupLabel+=' for week ending '+backupWeek;
 if(backupStamp)backupLabel+=' · '+backupStamp;

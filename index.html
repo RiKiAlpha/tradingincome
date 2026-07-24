@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
 <!-- RIKI_INDEX_FINTECH_LEAN_STATUS_BANNERS_V5_1_7_VERIFIED -->
+<!-- RIKI_INDEX_MATCHED_WARNING_FONT_V5_1_8_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2021,7 +2022,7 @@ tp.style.border='1px solid '+(isPass?'rgba(0,184,148,.20)':'rgba(229,83,83,.20)'
 tp.style.color=isPass?'var(--green)':'var(--red)';
 var tl=document.createElement('div');
 var tt=document.createElement('div');
-tt.style.cssText='font-size:12px;font-weight:500;line-height:1.45;';
+tt.style.cssText='font-size:10.5px;font-weight:500;line-height:1.48;';
 var auditText=(isPass?'Audit passed':'Audit failed')+(week?' for week ending '+week:'');
 if(!isPass&&dparts)auditText+=' · '+dparts;
 if(auditStamp)auditText+=' · '+auditStamp;
@@ -2053,7 +2054,7 @@ bp.style.border='1px solid '+(bok?'rgba(0,184,148,.20)':'rgba(229,83,83,.20)');
 bp.style.color=bok?'var(--green)':'var(--red)';
 var bl=document.createElement('div');
 var bt=document.createElement('div');
-bt.style.cssText='font-size:12px;font-weight:500;line-height:1.45;';
+bt.style.cssText='font-size:10.5px;font-weight:500;line-height:1.48;';
 var backupLabel=bok?'Backup completed':(bwarn?'Backup blocked':'Backup failed');
 var backupWeek=rikiCleanHistoryPeriod_(br.reportingWeekEnd||''),backupStamp=rikiLeanBannerTimestamp_(br.checkedAtEt||'');
 if(backupWeek)backupLabel+=' for week ending '+backupWeek;

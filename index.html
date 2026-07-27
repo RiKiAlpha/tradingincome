@@ -2,6 +2,7 @@
 <!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
 <!-- RIKI_INDEX_FINTECH_LEAN_STATUS_BANNERS_V5_1_7_VERIFIED -->
 <!-- RIKI_INDEX_MATCHED_WARNING_FONT_V5_1_8_VERIFIED -->
+<!-- RIKI_INDEX_WEEK_SCORECARD_EXPIRY_3C_DUAL_QUOTE_V5_1_9_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -230,6 +231,10 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .wexp{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;}
 .asect{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:10px;}
 .alabel{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.02em;}
+.account-label{display:flex;align-items:center;gap:7px;}
+.account-label-a1{color:var(--churner2);}
+.account-label-a2{color:var(--green);}
+.account-bank-icon{width:15px;height:15px;flex:0 0 15px;display:block;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
 .anums{display:-webkit-flex;display:flex;width:100%;}
 .aitem{-webkit-flex:1;flex:1;}
 .anum-lbl{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:4px;}
@@ -242,6 +247,16 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .wtot{border-top:1px solid var(--border);padding-top:16px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;}
 .wtot-lbl{font-size:9px;color:var(--text3);font-weight:600;margin-bottom:4px;}
 .wtot-val{font-size:13px;font-weight:800;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
+.grand-total-row{width:100%;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;}
+.grand-total-title{font-size:16px;font-weight:700;color:var(--text2);white-space:nowrap;}
+.grand-dual-quote{display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;min-width:0;}
+.grand-quote-leg{text-align:right;min-width:0;}
+.grand-quote-primary{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:900;line-height:1;letter-spacing:-.055em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.grand-quote-secondary{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:750;line-height:1.08;letter-spacing:-.04em;color:var(--text2);font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.78;}
+.grand-quote-slash{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;line-height:1;color:var(--text3);padding-top:1px;}
+.grand-quote-label{margin-top:5px;font-size:8px;font-weight:850;letter-spacing:.075em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+.grand-quote-leg:first-child .grand-quote-label{color:var(--green);}
+@media(max-width:420px){.grand-total-row{align-items:center;gap:9px}.grand-total-title{font-size:14px}.grand-dual-quote{gap:6px}.grand-quote-primary{font-size:17px}.grand-quote-secondary{font-size:13px}.grand-quote-slash{font-size:15px}.grand-quote-label{font-size:7px;margin-top:4px}}
 .cap{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 18px;}
 .ticker-scope{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
 .ticker-scope-head{padding:15px 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border2);}
@@ -2085,6 +2100,7 @@ var m=String(s||'').match(/(\d+)P\s*\/\s*(\d+)C/i);
 return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
 }
 function fmtPC(s){var o=parsePCstr(s);return o.c+'C/'+o.p+'P';}
+function openContractCount_(s){var m=String(s||'').match(/(\d+)\s*[PC]\s*\/\s*(\d+)\s*[PC]/i);return m?Number(m[1])+Number(m[2]):0;}
 var openPos={};
 (d.dashRows||[]).forEach(function(row){
 var acct=String(row[0]||'');
@@ -2107,10 +2123,12 @@ if(wi===3 && a1b===0 && a1p===0 && a2b===0 && a2p===0) return;
 var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
 var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
 var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
+var openContractsTotal=openContractCount_(a1pc)+openContractCount_(a2pc);
 var hc1 = hedgeCosts['Account 1:' + exp] || 0;
 var hc2 = hedgeCosts['Account 2:' + exp] || 0;
 var totalHedge = hc1 + hc2;
 var grandNet = grand - totalHedge;
+var grandExpiry = grandNet + (3.02 * openContractsTotal);
 var hedgeRow = totalHedge > 0
 ? '<div class="wtot" style="border-top:none;padding-top:0;margin-top:-4px;">'+
 '<div class="anums">'+
@@ -2122,19 +2140,19 @@ var hedgeRow = totalHedge > 0
 : '';
 var card=document.createElement('div');card.className='wcard';
 card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class="wexp">'+exp+'</span></div>'+
-'<div class="asect"><div class="alabel">Account 1</div><div class="anums">'+
+'<div class="asect"><div class="alabel account-label account-label-a1"><svg class="account-bank-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8"/><path d="M3 18h18M2 21h20"/><path d="M12 3 3 8h18L12 3z"/></svg><span>Account 1</span></div><div class="anums">'+
 '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">'+fmt(a1b)+'</div></div>'+
 '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+'</div>'+(a1pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a1pc+')</div>':'')+'</div>'+
 '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a1b+a1p)+'">'+fmt(a1b+a1p)+'</div></div></div>'+
 '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div><div class="ppct" style="color:'+pc(p1)+'">'+p1+'%</div></div>'+
 '<div class="ptgt">of '+fmt(g1)+' target</div></div>'+
-'<div class="asect"><div class="alabel">Account 2</div><div class="anums">'+
+'<div class="asect"><div class="alabel account-label account-label-a2"><svg class="account-bank-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8"/><path d="M3 18h18M2 21h20"/><path d="M12 3 3 8h18L12 3z"/></svg><span>Account 2</span></div><div class="anums">'+
 '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">'+fmt(a2b)+'</div></div>'+
 '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+'</div>'+(a2pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a2pc+')</div>':'')+'</div>'+
 '<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">'+fmt(a2b+a2p)+'</div></div></div>'+
 '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
 '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+
-'<div class="wtot"><div class="anums"><div class="aitem"><div style="font-size:16px;font-weight:600;color:var(--text2)">Grand Total</div></div><div class="aitem"></div><div class="aitem"><div class="'+cc(grandNet)+'" style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums">'+fmtS(grandNet)+'</div></div></div></div>'+
+'<div class="wtot"><div class="grand-total-row"><div class="grand-total-title">Grand Total</div><div class="grand-dual-quote"><div class="grand-quote-leg"><div class="grand-quote-primary '+cc(grandExpiry)+'">'+fmtS(grandExpiry)+'</div><div class="grand-quote-label">Expiry</div></div><div class="grand-quote-slash">/</div><div class="grand-quote-leg"><div class="grand-quote-secondary">'+fmtS(grandNet)+'</div><div class="grand-quote-label">3¢ Exit</div></div></div></div></div>'+
 hedgeRow;
 dc.appendChild(card);
 });

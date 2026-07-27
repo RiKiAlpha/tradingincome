@@ -1256,6 +1256,7 @@ function fmtPct(n){ n=parseFloat(n)||0; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
 function fmtOI(n){ n=parseInt(n)||0; return n>=1000?(n/1000).toFixed(1)+'k':String(n); }
 function fmtStrike(n){ return n%1===0?n.toFixed(0):n.toFixed(2); }
 function toast(msg,ms){ var t=ge('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},ms||2200); }
+// RIKI_V11_3_STO_CHECK_EXACT_AVAILABILITY_FRONTEND_V1
 // TRADE_QUICK_STO_FILLED_COUNT_TX_V3_NO_ORDER_CAP
 // Click-only read from Schwab transactions. Counts ALL filled OPTION STO contracts for today across A1/A2.
 // Uses executed transactions instead of orders so high-volume RiKi days do not hit order-result caps.
@@ -1284,6 +1285,7 @@ function quickStoTopTickers_(rows){
 }
 
 function quickStoFillPctText_(v){
+  if(v === null || v === undefined || v === '') return '—';
   var n = Number(v);
   if(isNaN(n)) return '—';
   return n.toFixed(1) + '%';
@@ -1291,6 +1293,14 @@ function quickStoFillPctText_(v){
 function quickStoNum_(v){
   var n = Number(v || 0);
   return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+function quickStoMaybeNum_(v){
+  if(v === null || v === undefined || v === '') return '—';
+  return quickStoNum_(v);
+}
+function quickStoMaybeMoney0_(v){
+  if(v === null || v === undefined || v === '') return '—';
+  return quickStoMoney0_(v);
 }
 function renderQuickStoScorecard_(data){
   var box = ge('quick-sto-scorecard');
@@ -1306,12 +1316,18 @@ function renderQuickStoScorecard_(data){
   S.quickStoScorecardUpdatedAt = data.generatedAt || '';
 
   var filled = Number(data.stoFilledContracts || 0);
-  var cancelled = Number(data.stoCancelledContracts || 0);
-  var fillPct = quickStoFillPctText_(data.overallFillPct);
-  var gain = Number(data.totalDayTradeGain || 0);
-  var openToday = Number(data.sameDayOpenContracts || 0);
+  var cancellationAvailable = data.fillRateAvailable !== false &&
+    data.cancellationsComplete !== false &&
+    data.stoCancelledContracts !== null &&
+    data.stoCancelledContracts !== undefined;
+  var cancelled = cancellationAvailable ? Number(data.stoCancelledContracts || 0) : null;
+  var fillPct = cancellationAvailable ? quickStoFillPctText_(data.overallFillPct) : '—';
+  var gainAvailable = data.gainAvailable !== false && data.totalDayTradeGain !== null && data.totalDayTradeGain !== undefined;
+  var openAvailable = data.openAvailable !== false && data.sameDayOpenContracts !== null && data.sameDayOpenContracts !== undefined;
+  var gain = gainAvailable ? Number(data.totalDayTradeGain || 0) : null;
+  var openToday = openAvailable ? Number(data.sameDayOpenContracts || 0) : null;
 
-  if(!rows.length && !filled && !cancelled && !gain){
+  if(!rows.length && !filled && !(cancellationAvailable && cancelled) && !(gainAvailable && gain) && !(openAvailable && openToday)){
     box.innerHTML = '<div class="qsc-title">STO Check · A1+A2</div><div class="qsc-empty">No STO fill/cancel activity found for today.</div>';
     return;
   }
@@ -1319,26 +1335,37 @@ function renderQuickStoScorecard_(data){
   var html = '<div class="qsc-title">STO Check · A1+A2</div>'+
     '<div class="qsc-summary">'+
       '<div class="qsc-m"><div class="qsc-mk">Filled</div><div class="qsc-mv">'+quickStoNum_(filled)+'</div></div>'+
-      '<div class="qsc-m"><div class="qsc-mk">Cancelled</div><div class="qsc-mv">'+quickStoNum_(cancelled)+'</div></div>'+
-      '<div class="qsc-m"><div class="qsc-mk">Open</div><div class="qsc-mv">'+quickStoNum_(openToday)+'</div></div>'+
+      '<div class="qsc-m"><div class="qsc-mk">Cancelled</div><div class="qsc-mv">'+quickStoMaybeNum_(cancelled)+'</div></div>'+
+      '<div class="qsc-m"><div class="qsc-mk">Open</div><div class="qsc-mv">'+quickStoMaybeNum_(openToday)+'</div></div>'+
       '<div class="qsc-m"><div class="qsc-mk">Fill Rate</div><div class="qsc-mv">'+fillPct+'</div></div>'+
-      '<div class="qsc-m"><div class="qsc-mk">DT Gain</div><div class="qsc-mv">'+quickStoMoney0_(gain)+'</div></div>'+
+      '<div class="qsc-m"><div class="qsc-mk">DT Gain</div><div class="qsc-mv">'+quickStoMaybeMoney0_(gain)+'</div></div>'+
     '</div>'+
     '<div class="qsc-head"><div class="qsc-h">Ticker</div><div class="qsc-h">Filled</div><div class="qsc-h">Cancel</div><div class="qsc-h">Open</div><div class="qsc-h">Fill%</div><div class="qsc-h">Gain</div></div>';
 
   html += rows.map(function(r){
     var rf = Number(r.filledContracts || r.contracts || 0);
-    var rc = Number(r.cancelledContracts || 0);
-    var ro = Number(r.sameDayOpenContracts || 0);
+    var rcAvailable = cancellationAvailable && r.cancelledContracts !== null && r.cancelledContracts !== undefined;
+    var rc = rcAvailable ? Number(r.cancelledContracts || 0) : null;
+    var roAvailable = openAvailable && r.sameDayOpenContracts !== null && r.sameDayOpenContracts !== undefined;
+    var rgAvailable = gainAvailable && r.dayTradeGain !== null && r.dayTradeGain !== undefined;
+    var ro = roAvailable ? Number(r.sameDayOpenContracts || 0) : null;
+    var rg = rgAvailable ? Number(r.dayTradeGain || 0) : null;
     return '<div class="qsc-row">'+
       '<div class="qsc-t">'+basketEsc(r.ticker || '?')+'</div>'+
       '<div class="qsc-f">'+quickStoNum_(rf)+'</div>'+
-      '<div class="qsc-c">'+quickStoNum_(rc)+'</div>'+
-      '<div class="qsc-o">'+quickStoNum_(ro)+'</div>'+
-      '<div class="qsc-p">'+quickStoFillPctText_(r.fillPct)+'</div>'+
-      '<div class="qsc-g">'+quickStoMoney0_(r.dayTradeGain || 0)+'</div>'+
+      '<div class="qsc-c">'+quickStoMaybeNum_(rc)+'</div>'+
+      '<div class="qsc-o">'+quickStoMaybeNum_(ro)+'</div>'+
+      '<div class="qsc-p">'+(rcAvailable ? quickStoFillPctText_(r.fillPct) : '—')+'</div>'+
+      '<div class="qsc-g">'+quickStoMaybeMoney0_(rg)+'</div>'+
     '</div>';
   }).join('');
+
+  if(!cancellationAvailable){
+    html += '<div class="qsc-empty" style="margin-top:7px">Fill rate unavailable — cancellation data incomplete. Gain, Filled and Open remain exact.</div>';
+  }
+  if(!gainAvailable || !openAvailable){
+    html += '<div class="qsc-empty" style="margin-top:7px">DT Gain and Open unavailable — certified prior-close inventory was not available. Filled and any available Fill Rate remain exact.</div>';
+  }
   box.innerHTML = html;
 }
 function toggleQuickStoScorecard(ev){
@@ -1367,14 +1394,20 @@ function quickStoFilledCount(){
     .then(function(d){
       if(!d || !d.success){ throw new Error((d && d.error) || 'quick STO count failed'); }
       var n = Number(d.stoFilledContracts || 0);
-      var gain = Number(d.totalDayTradeGain || 0);
-      var openToday = Number(d.sameDayOpenContracts || 0);
-      var fillPct = quickStoFillPctText_(d.overallFillPct);
-      if(val) val.textContent = quickStoMoney0_(gain) + ' · ' + fillPct + ' · O ' + openToday.toLocaleString('en-US');
+      var gainAvailable = d.gainAvailable !== false && d.totalDayTradeGain !== null && d.totalDayTradeGain !== undefined;
+      var openAvailable = d.openAvailable !== false && d.sameDayOpenContracts !== null && d.sameDayOpenContracts !== undefined;
+      var gain = gainAvailable ? Number(d.totalDayTradeGain || 0) : null;
+      var openToday = openAvailable ? Number(d.sameDayOpenContracts || 0) : null;
+      var fillAvailable = d.fillRateAvailable !== false &&
+        d.cancellationsComplete !== false &&
+        d.overallFillPct !== null &&
+        d.overallFillPct !== undefined;
+      var fillPct = fillAvailable ? quickStoFillPctText_(d.overallFillPct) : '—';
+      if(val) val.textContent = quickStoMaybeMoney0_(gain) + ' · ' + fillPct + ' · O ' + quickStoMaybeNum_(openToday);
       renderQuickStoScorecard_(d);
       var top = quickStoTopTickers_(d.tickerRows || []);
-      var cap = d.maybeCapped ? ' · CHECK CAP' : '';
-      toast('DT gain: ' + quickStoMoney0_(gain) + ' · Filled ' + n.toLocaleString('en-US') + ' · Fill ' + fillPct + ' · Open ' + openToday.toLocaleString('en-US') + (top ? ' · ' + top : '') + cap + ' · ' + quickStoTimeLabel_(d.generatedAt), 3900);
+      var quality = fillAvailable ? (d.maybeCapped ? ' · CHECK CAP' : '') : ' · Fill unavailable';
+      toast('DT gain: ' + quickStoMaybeMoney0_(gain) + ' · Filled ' + n.toLocaleString('en-US') + ' · Fill ' + fillPct + ' · Open ' + quickStoMaybeNum_(openToday) + (top ? ' · ' + top : '') + quality + ((!gainAvailable || !openAvailable) ? ' · Gain/Open unavailable' : '') + ' · ' + quickStoTimeLabel_(d.generatedAt), 3900);
     })
     .catch(function(e){
       if(val) val.textContent='ERR';

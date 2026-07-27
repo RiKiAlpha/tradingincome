@@ -4,6 +4,7 @@
 <!-- RIKI_INDEX_MATCHED_WARNING_FONT_V5_1_8_VERIFIED -->
 <!-- RIKI_INDEX_WEEK_SCORECARD_EXPIRY_3C_DUAL_QUOTE_V5_1_9_VERIFIED -->
 <!-- RIKI_INDEX_DESKTOP_GRAND_TOTAL_ALIGNED_V5_1_10_VERIFIED -->
+<!-- RIKI_INDEX_ACCOUNT_EXPIRY_TICKER_WORTHLESS_V5_1_11_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -233,8 +234,8 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .asect{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;gap:10px;}
 .alabel{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.02em;}
 .account-label{display:flex;align-items:center;gap:7px;}
-.account-label-a1{color:var(--churner2);}
-.account-label-a2{color:var(--green);}
+.account-label-a1{color:var(--account-a1,#c9b8ff);}
+.account-label-a2{color:var(--account-a2,#ffb39c);}
 .account-bank-icon{width:15px;height:15px;flex:0 0 15px;display:block;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
 .anums{display:-webkit-flex;display:flex;width:100%;}
 .aitem{-webkit-flex:1;flex:1;}
@@ -250,6 +251,8 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .wtot-val{font-size:13px;font-weight:800;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
 .grand-total-row{width:100%;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;}
 .grand-total-title{font-size:16px;font-weight:700;color:var(--text2);white-space:nowrap;}
+.grand-total-title-wrap{display:flex;align-items:baseline;gap:9px;min-width:0;}
+.grand-total-pc{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:750;color:var(--text3);letter-spacing:.01em;white-space:nowrap;}
 .grand-dual-quote{display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;min-width:0;}
 .grand-quote-leg{text-align:right;min-width:0;}
 .grand-quote-primary{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:900;line-height:1;letter-spacing:-.055em;font-variant-numeric:tabular-nums;white-space:nowrap;}
@@ -257,8 +260,15 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .grand-quote-slash{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;line-height:1;color:var(--text3);padding-top:1px;}
 .grand-quote-label{margin-top:5px;font-size:8px;font-weight:850;letter-spacing:.075em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
 .grand-quote-leg:first-child .grand-quote-label{color:var(--green);}
-@media(max-width:420px){.grand-total-row{align-items:center;gap:9px}.grand-total-title{font-size:14px}.grand-dual-quote{gap:6px}.grand-quote-primary{font-size:17px}.grand-quote-secondary{font-size:13px}.grand-quote-slash{font-size:15px}.grand-quote-label{font-size:7px;margin-top:4px}}
-@media(min-width:601px){.grand-total-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;justify-content:initial;gap:0}.grand-total-title{grid-column:1 / span 2}.grand-dual-quote{grid-column:3;justify-self:start;justify-content:flex-start}}
+.account-dual-quote{display:flex;align-items:flex-start;justify-content:flex-start;gap:5px;min-width:0;}
+.account-quote-leg{text-align:left;min-width:0;}
+.account-quote-primary{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:850;line-height:1;letter-spacing:-.045em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.account-quote-secondary{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;line-height:1.05;letter-spacing:-.035em;color:var(--text2);font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.76;}
+.account-quote-slash{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;line-height:1;color:var(--text3);padding-top:1px;}
+.account-quote-label{margin-top:4px;font-size:6.5px;font-weight:850;letter-spacing:.065em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+.account-quote-leg:first-child .account-quote-label{color:var(--text2);}
+@media(max-width:420px){.grand-total-row{align-items:center;gap:9px}.grand-total-title{font-size:14px}.grand-total-title-wrap{align-items:flex-start;flex-direction:column;gap:3px}.grand-total-pc{font-size:8px}.grand-dual-quote{gap:6px}.grand-quote-primary{font-size:17px}.grand-quote-secondary{font-size:13px}.grand-quote-slash{font-size:15px}.grand-quote-label{font-size:7px;margin-top:4px}.account-dual-quote{gap:4px}.account-quote-primary{font-size:11px}.account-quote-secondary{font-size:9px}.account-quote-slash{font-size:9.5px}.account-quote-label{font-size:6px;margin-top:3px}}
+@media(min-width:601px){.grand-total-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;justify-content:initial;gap:0}.grand-total-title-wrap{grid-column:1 / span 2}.grand-dual-quote{grid-column:3;justify-self:start;justify-content:flex-start}}
 .cap{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 18px;}
 .ticker-scope{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
 .ticker-scope-head{padding:15px 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border2);}
@@ -647,6 +657,8 @@ box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
 --gold:#e8bf5b;
 --red:#ff6678;
 --orange:#f39a55;
+--account-a1:#c9b8ff;
+--account-a2:#ffb39c;
 --churner:#2f89e8;
 --churner2:#62adff;
 --churnerGlow:rgba(75,158,255,.16);
@@ -832,6 +844,7 @@ td{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:550;color
 --bg:#eef1f5;--bg2:rgba(255,255,255,.90);--bg3:rgba(246,248,251,.94);--bg4:#fff;
 --border:rgba(15,25,38,.09);--border2:rgba(15,25,38,.055);
 --text:rgba(18,24,32,.92);--text2:rgba(30,42,57,.62);--text3:rgba(45,58,75,.40);
+--account-a1:#7659c7;--account-a2:#c9684d;
 --riki-surface:linear-gradient(145deg,rgba(255,255,255,.96),rgba(244,247,251,.94));
 --riki-shadow:0 14px 38px rgba(29,46,68,.09),inset 0 1px 0 rgba(255,255,255,.9);
 color-scheme:light;
@@ -2103,6 +2116,7 @@ return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
 }
 function fmtPC(s){var o=parsePCstr(s);return o.c+'C/'+o.p+'P';}
 function openContractCount_(s){var m=String(s||'').match(/(\d+)\s*[PC]\s*\/\s*(\d+)\s*[PC]/i);return m?Number(m[1])+Number(m[2]):0;}
+function displayPCCounts_(s){var m=String(s||'').match(/(\d+)\s*C\s*\/\s*(\d+)\s*P/i);return m?{c:Number(m[1]),p:Number(m[2])}:{c:0,p:0};}
 var openPos={};
 (d.dashRows||[]).forEach(function(row){
 var acct=String(row[0]||'');
@@ -2122,13 +2136,19 @@ var wi=KEYS.findIndex(function(l){return raw.toUpperCase().indexOf(l)>=0;});
 var lbl=wi>=0?LBLS[wi]:raw;
 var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
 if(wi===3 && a1b===0 && a1p===0 && a2b===0 && a2p===0) return;
-var p1=pct(a1b+a1p,g1),p2=pct(a2b+a2p,g2);
 var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
 var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
-var openContractsTotal=openContractCount_(a1pc)+openContractCount_(a2pc);
+var a1OpenContracts=openContractCount_(a1pc),a2OpenContracts=openContractCount_(a2pc);
+var openContractsTotal=a1OpenContracts+a2OpenContracts;
+var a1Counts=displayPCCounts_(a1pc),a2Counts=displayPCCounts_(a2pc);
+var grandCalls=a1Counts.c+a2Counts.c,grandPuts=a1Counts.p+a2Counts.p;
 var hc1 = hedgeCosts['Account 1:' + exp] || 0;
 var hc2 = hedgeCosts['Account 2:' + exp] || 0;
 var totalHedge = hc1 + hc2;
+var a1PotentialExpiry=a1p+(3.02*a1OpenContracts),a2PotentialExpiry=a2p+(3.02*a2OpenContracts);
+var a1Total3c=a1b+a1p-hc1,a2Total3c=a2b+a2p-hc2;
+var a1TotalExpiry=a1Total3c+(3.02*a1OpenContracts),a2TotalExpiry=a2Total3c+(3.02*a2OpenContracts);
+var p1=pct(a1TotalExpiry,g1),p2=pct(a2TotalExpiry,g2);
 var grandNet = grand - totalHedge;
 var grandExpiry = grandNet + (3.02 * openContractsTotal);
 var hedgeRow = totalHedge > 0
@@ -2144,17 +2164,17 @@ var card=document.createElement('div');card.className='wcard';
 card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class="wexp">'+exp+'</span></div>'+
 '<div class="asect"><div class="alabel account-label account-label-a1"><svg class="account-bank-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8"/><path d="M3 18h18M2 21h20"/><path d="M12 3 3 8h18L12 3z"/></svg><span>Account 1</span></div><div class="anums">'+
 '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">'+fmt(a1b)+'</div></div>'+
-'<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a1p)+'</div>'+(a1pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a1pc+')</div>':'')+'</div>'+
-'<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a1b+a1p)+'">'+fmt(a1b+a1p)+'</div></div></div>'+
+'<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono '+cc(a1PotentialExpiry)+'">'+fmt(a1PotentialExpiry)+'</div>'+(a1pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a1pc+')</div>':'')+'</div>'+
+'<div class="aitem"><div class="anum-lbl">Total</div><div class="account-dual-quote"><div class="account-quote-leg"><div class="account-quote-primary '+cc(a1TotalExpiry)+'">'+fmtS(a1TotalExpiry)+'</div><div class="account-quote-label">Expiry</div></div><div class="account-quote-slash">/</div><div class="account-quote-leg"><div class="account-quote-secondary">'+fmtS(a1Total3c)+'</div><div class="account-quote-label">3¢ Exit</div></div></div></div></div>'+
 '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div><div class="ppct" style="color:'+pc(p1)+'">'+p1+'%</div></div>'+
 '<div class="ptgt">of '+fmt(g1)+' target</div></div>'+
 '<div class="asect"><div class="alabel account-label account-label-a2"><svg class="account-bank-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8"/><path d="M3 18h18M2 21h20"/><path d="M12 3 3 8h18L12 3z"/></svg><span>Account 2</span></div><div class="anums">'+
 '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">'+fmt(a2b)+'</div></div>'+
-'<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono dim">'+fmt(a2p)+'</div>'+(a2pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a2pc+')</div>':'')+'</div>'+
-'<div class="aitem"><div class="anum-lbl">Total</div><div class="anum-val mono '+cc(a2b+a2p)+'">'+fmt(a2b+a2p)+'</div></div></div>'+
+'<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono '+cc(a2PotentialExpiry)+'">'+fmt(a2PotentialExpiry)+'</div>'+(a2pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a2pc+')</div>':'')+'</div>'+
+'<div class="aitem"><div class="anum-lbl">Total</div><div class="account-dual-quote"><div class="account-quote-leg"><div class="account-quote-primary '+cc(a2TotalExpiry)+'">'+fmtS(a2TotalExpiry)+'</div><div class="account-quote-label">Expiry</div></div><div class="account-quote-slash">/</div><div class="account-quote-leg"><div class="account-quote-secondary">'+fmtS(a2Total3c)+'</div><div class="account-quote-label">3¢ Exit</div></div></div></div></div>'+
 '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
 '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+
-'<div class="wtot"><div class="grand-total-row"><div class="grand-total-title">Grand Total</div><div class="grand-dual-quote"><div class="grand-quote-leg"><div class="grand-quote-primary '+cc(grandExpiry)+'">'+fmtS(grandExpiry)+'</div><div class="grand-quote-label">Expiry</div></div><div class="grand-quote-slash">/</div><div class="grand-quote-leg"><div class="grand-quote-secondary">'+fmtS(grandNet)+'</div><div class="grand-quote-label">3¢ Exit</div></div></div></div></div>'+
+'<div class="wtot"><div class="grand-total-row"><div class="grand-total-title-wrap"><div class="grand-total-title">Grand Total</div><div class="grand-total-pc">'+grandCalls+'C / '+grandPuts+'P</div></div><div class="grand-dual-quote"><div class="grand-quote-leg"><div class="grand-quote-primary '+cc(grandExpiry)+'">'+fmtS(grandExpiry)+'</div><div class="grand-quote-label">Expiry</div></div><div class="grand-quote-slash">/</div><div class="grand-quote-leg"><div class="grand-quote-secondary">'+fmtS(grandNet)+'</div><div class="grand-quote-label">3¢ Exit</div></div></div></div></div>'+
 hedgeRow;
 dc.appendChild(card);
 });
@@ -2170,7 +2190,7 @@ bph+='<div class="bp-account"><div class="bp-label">'+escHtml(a.account||'Accoun
 bph+='</div>';
 bpc.innerHTML=bph;dcp.appendChild(bpc);
 }
-var tickerRows=(d.tickerBreakdown||[]).slice().sort(function(a,b){return money(b&&b.total||0)-money(a&&a.total||0);});
+var tickerRows=(d.tickerBreakdown||[]).slice().sort(function(a,b){function expiryTotal_(r){r=r||{};var open=Number(r.openCalls||0)+Number(r.openPuts||0);return money(r.banked||0)+money(r.potential||0)+(3.02*open);}return expiryTotal_(b)-expiryTotal_(a);});
 if(tickerRows.length){
 var scope=document.createElement('div');scope.className='ticker-scope';
 var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
@@ -2180,7 +2200,7 @@ var deployedHead=totalTickerMargin>0?'<div class="ticker-scope-deployed"><span>O
 scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Sorted by Total · click a ticker for weekly detail</div></div><div class="ticker-scope-head-right">'+deployedHead+'<span class="pill pb">'+tickerRows.length+'</span></div></div>';
 tickerRows.forEach(function(r){
 var item=document.createElement('div');item.className='ticker-item';
-var total=money(r.total),banked=money(r.banked),potential=money(r.potential),contracts=Number(r.contracts||0);
+var banked=money(r.banked),openCalls=Number(r.openCalls||0),openPuts=Number(r.openPuts||0),openTickerContracts=openCalls+openPuts,potential=money(r.potential)+(3.02*openTickerContracts),total=banked+potential,contracts=Number(r.contracts||0);
 var maintReq=Math.max(0,money(r.maintenanceRequirement||0));
 var maintPct=totalTickerMargin>0?(maintReq/totalTickerMargin*100):0;
 var showMargin=maintReq>0||Number(r.maintenanceContracts||0)>0;
@@ -2213,16 +2233,17 @@ var week=document.createElement('div');week.className='ticker-week';
 var body='<div class="ticker-week-title"><strong>'+escHtml(x.weekLabel||x.expiry)+'</strong><span>'+escHtml(x.expiry)+' · '+Number(x.openCalls||0)+'C/'+Number(x.openPuts||0)+'P</span></div>'+
 '<div class="ticker-detail-head"><span>Account</span><span style="text-align:right">Banked</span><span style="text-align:right">Potential</span><span style="text-align:right">Total</span></div>';
 (x.accounts||[]).forEach(function(a){
-var at=money(a.total);
+var accountOpen=Number(a.openCalls||0)+Number(a.openPuts||0),accountPotential=money(a.potential||0)+(3.02*accountOpen),at=money(a.banked||0)+accountPotential;
 var accountWeekMargin=Math.max(0,money(a.maintenanceRequirement||0));
 var accountWeekMarginPct=totalTickerMargin>0?(accountWeekMargin/totalTickerMargin*100):0;
 body+='<div class="ticker-account-row"><div class="ticker-account-name">'+escHtml(a.account||'')+'<div class="ticker-account-pc">'+Number(a.openCalls||0)+'C / '+Number(a.openPuts||0)+'P · '+Number(a.contracts||0)+' ct</div></div>'+
-'<b class="'+cc(a.banked)+'">'+fmtS(a.banked||0)+'</b><b class="'+cc(a.potential)+'">'+fmtS(a.potential||0)+'</b>'+
+'<b class="'+cc(a.banked)+'">'+fmtS(a.banked||0)+'</b><b class="'+cc(accountPotential)+'">'+fmtS(accountPotential)+'</b>'+
 '<div class="ticker-total-cell"><div class="ticker-total-value '+cc(at)+'">'+fmtS(at)+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(accountWeekMargin)+' ('+accountWeekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
 });
 var weekMargin=Math.max(0,money(x.maintenanceRequirement||0));
 var weekMarginPct=totalTickerMargin>0?(weekMargin/totalTickerMargin*100):0;
-body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(x.potential||0)+'</b><div class="ticker-total-cell"><div class="ticker-total-value">'+fmtS(money(x.total))+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(weekMargin)+' ('+weekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
+var tickerWeekOpen=Number(x.openCalls||0)+Number(x.openPuts||0),tickerWeekPotential=money(x.potential||0)+(3.02*tickerWeekOpen),tickerWeekTotal=money(x.banked||0)+tickerWeekPotential;
+body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(tickerWeekPotential)+'</b><div class="ticker-total-cell"><div class="ticker-total-value">'+fmtS(tickerWeekTotal)+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(weekMargin)+' ('+weekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
 week.innerHTML=body;detail.appendChild(week);
 });
 // Consolidated by default; click a ticker scorecard to open weekly detail.

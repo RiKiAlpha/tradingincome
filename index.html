@@ -6,6 +6,7 @@
 <!-- RIKI_INDEX_DESKTOP_GRAND_TOTAL_ALIGNED_V5_1_10_VERIFIED -->
 <!-- RIKI_INDEX_ACCOUNT_EXPIRY_TICKER_WORTHLESS_V5_1_11_VERIFIED -->
 <!-- RIKI_INDEX_UNIFIED_PASTEL_YELLOW_ACCOUNTS_V5_1_13_VERIFIED -->
+<!-- RIKI_INDEX_POSITIONS_EXPIRY_SORTABLE_HEADERS_V5_1_14_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -863,6 +864,59 @@ color-scheme:light;
 .auth-connection-bottom{padding:12px 16px;}
 .auth-connect-btn{min-width:86px;}
 #toast{bottom:80px;font-size:10.5px;}
+}
+</style>
+
+<style id="riki-positions-expiry-sortable-v514">
+/* RIKI_POSITIONS_EXPIRY_SORTABLE_HEADERS_V5_1_14
+   Frontend-only: existing open-credit payload fields, modern sorting, readable headers. */
+#pp table,#hc table{border-collapse:separate;border-spacing:0;}
+#pp thead th,#hc thead th{
+  font-size:11.5px;
+  font-weight:700;
+  letter-spacing:.025em;
+  color:var(--text2);
+  padding-top:9px;
+  padding-bottom:9px;
+  background:linear-gradient(180deg,rgba(31,36,47,.96),rgba(22,26,35,.94));
+  border-bottom:1px solid rgba(210,222,238,.09);
+}
+#pp thead th{position:sticky;top:0;z-index:4;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+#pp tbody tr,#hc tbody tr{transition:background-color .14s ease;}
+@media(hover:hover){#pp tbody tr:hover td,#hc tbody tr:hover td{background:rgba(255,255,255,.024);}}
+.pos-sort-btn{
+  width:100%;
+  min-height:22px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  letter-spacing:inherit;
+  text-transform:inherit;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.pos-sort-btn:hover{color:var(--text);}
+.pos-sort-btn.active{color:var(--text);}
+.pos-sort-caret{position:relative;width:7px;height:11px;display:inline-block;color:var(--text3);flex:0 0 7px;}
+.pos-sort-caret::before,.pos-sort-caret::after{content:'';position:absolute;left:1px;width:0;height:0;border-left:2.5px solid transparent;border-right:2.5px solid transparent;opacity:.46;}
+.pos-sort-caret::before{top:1px;border-bottom:3.5px solid currentColor;}
+.pos-sort-caret::after{bottom:1px;border-top:3.5px solid currentColor;}
+.pos-sort-btn.active.asc .pos-sort-caret::before,.pos-sort-btn.active.desc .pos-sort-caret::after{color:var(--green);opacity:1;filter:drop-shadow(0 0 5px rgba(40,215,173,.24));}
+.pos-sort-btn.active.asc .pos-sort-caret::after,.pos-sort-btn.active.desc .pos-sort-caret::before{opacity:.16;}
+body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-mode .pos-sort-btn.active.desc .pos-sort-caret::after{color:var(--churner2);filter:drop-shadow(0 0 5px rgba(98,173,255,.24));}
+.pos-expiry-credit{font-weight:750;}
+[data-theme="light"] #pp thead th,[data-theme="light"] #hc thead th{background:linear-gradient(180deg,rgba(252,253,255,.98),rgba(239,243,248,.96));border-bottom-color:rgba(15,25,38,.10);}
+[data-theme="light"] .pos-sort-btn.active.asc .pos-sort-caret::before,[data-theme="light"] .pos-sort-btn.active.desc .pos-sort-caret::after{color:#078d74;filter:none;}
+@media(max-width:600px){
+  #pp thead th,#hc thead th{font-size:11px;padding:8px 6px;letter-spacing:.015em;}
+  #pp td,#hc td{font-size:11px;}
+  .pos-sort-btn{gap:4px;}
 }
 </style>
 </head>
@@ -2265,10 +2319,83 @@ inner+='<div class="cap-row"><div class="cap-acct">'+acct+'</div><div class="cap
 inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
 }
 }
-var posSort={col:'exp',dir:1};
-function posSortBy(col){ if(posSort.col===col){posSort.dir*=-1;}else{posSort.col=col;posSort.dir=col==='net'?-1:1;} renderPositions(DATA||MOCK); }
-function renderChurnerPositions(d){var rows=((d&&d.churner&&d.churner.ownedPositions)||((d&&d.churnerOwnedPositions)||[]));ge('pth').innerHTML='<tr><th>Acct</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Open</th><th>Pot @3c</th></tr>';var tb=ge('ptb');tb.innerHTML='';if(!rows.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">No Churner-owned open contracts</td></tr>';return;}rows.forEach(function(p){var isPut=String(p.side||'').toUpperCase()==='PUT',tr=document.createElement('tr');tr.innerHTML='<td><span class="atag '+(p.account==='A1'?'pa1':'pa2')+'">'+escHtml(p.account||'')+'</span></td><td style="font-weight:800">'+escHtml(p.ticker||'')+'</td><td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td><td>$'+Math.round(money(p.strike))+'</td><td>'+escHtml(p.expiry||'')+'</td><td>'+Number(p.openQty||0)+'</td><td class="'+cc(p.potentialAt3c)+'">'+fmtS(p.potentialAt3c||0)+'</td>';tb.appendChild(tr);});}
-function renderPositions(d){if(isChurnerMode()){renderChurnerPositions(d);return;}var rows=(d&&d.legacyOwnedPositions)||[];ge('pth').innerHTML='<tr><th>Acct</th><th>Ticker</th><th>Type</th><th>Strike</th><th>Expiry</th><th>Open</th><th>Pot @3c</th></tr>';var tb=ge('ptb');tb.innerHTML='';if(!rows.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">No Legacy-owned open contracts</td></tr>';return;}rows.slice().sort(function(a,b){return String(a.accountLabel).localeCompare(String(b.accountLabel))||String(a.ticker).localeCompare(String(b.ticker))||String(a.expiry).localeCompare(String(b.expiry))||Number(a.strike)-Number(b.strike);}).forEach(function(p){var isPut=String(p.side||'').toUpperCase().indexOf('PUT')>=0,tr=document.createElement('tr');tr.innerHTML='<td><span class="atag '+(String(p.account||'').indexOf('1')>=0?'pa1':'pa2')+'">'+escHtml(p.account||'')+'</span></td><td style="font-weight:800">'+escHtml(p.ticker||'')+'</td><td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td><td>$'+Math.round(money(p.strike))+'</td><td>'+escHtml(p.expiry||'')+'</td><td>'+Number(p.openQty||0)+'</td><td class="'+cc(p.potentialAt3c)+'">'+fmtS(p.potentialAt3c||0)+'</td>';tb.appendChild(tr);});}
+var posSort={col:'expiryDate',dir:1};
+var POS_SORT_DEFAULT_DIR={ticker:1,type:1,strike:1,expiryDate:1,open:-1,expiry:-1};
+function posSortBy(col){
+  if(!Object.prototype.hasOwnProperty.call(POS_SORT_DEFAULT_DIR,col))return;
+  if(posSort.col===col)posSort.dir*=-1;
+  else{posSort.col=col;posSort.dir=POS_SORT_DEFAULT_DIR[col];}
+  renderPositions(DATA||MOCK);
+}
+function positionAccount_(p){return String((p&&p.account)||(p&&p.accountLabel)||'').replace(/^Account\s+/i,'A');}
+function positionType_(p){return String(p&&p.side||'').toUpperCase().indexOf('PUT')>=0?'PUT':'CALL';}
+function positionExpiryCredit_(p){
+  p=p||{};
+  var direct=['openingCreditRemaining','stoNetRemaining','openCreditRemaining','remainingNetCredit','netCreditRemaining','expiryCredit'];
+  for(var i=0;i<direct.length;i++){
+    var v=p[direct[i]];
+    if(v!==null&&v!==undefined&&v!==''&&isFinite(Number(v)))return Number(v);
+  }
+  // Some Churner payloads retain the same net proceeds as a per-contract field.
+  if(isFinite(Number(p.avgStoNetPerContract))&&isFinite(Number(p.openQty)))return Number(p.avgStoNetPerContract)*Number(p.openQty);
+  if(isFinite(Number(p.avgOpenCreditPerContract))&&isFinite(Number(p.openQty)))return Number(p.avgOpenCreditPerContract)*Number(p.openQty);
+  return null;
+}
+function positionSortValue_(p,col){
+  if(col==='ticker')return String(p&&p.ticker||'').toUpperCase();
+  if(col==='type')return positionType_(p);
+  if(col==='strike')return Number(p&&p.strike||0);
+  if(col==='expiryDate')return String(p&&p.expiry||'');
+  if(col==='open')return Number(p&&p.openQty||0);
+  if(col==='expiry'){var credit=positionExpiryCredit_(p);return credit===null?-Infinity:credit;}
+  return '';
+}
+function positionCompare_(a,b,col){
+  var av=positionSortValue_(a,col),bv=positionSortValue_(b,col);
+  if(typeof av==='number'||typeof bv==='number'){av=Number(av);bv=Number(bv);return av===bv?0:(av<bv?-1:1);}
+  return String(av).localeCompare(String(bv),undefined,{numeric:true,sensitivity:'base'});
+}
+function positionSortedRows_(rows){
+  return (rows||[]).map(function(p,i){return{p:p,i:i};}).sort(function(x,y){
+    var cmp=positionCompare_(x.p,y.p,posSort.col)*posSort.dir;
+    if(cmp)return cmp;
+    cmp=positionAccount_(x.p).localeCompare(positionAccount_(y.p));if(cmp)return cmp;
+    cmp=String(x.p.ticker||'').localeCompare(String(y.p.ticker||''));if(cmp)return cmp;
+    cmp=String(x.p.expiry||'').localeCompare(String(y.p.expiry||''));if(cmp)return cmp;
+    cmp=Number(x.p.strike||0)-Number(y.p.strike||0);return cmp||x.i-y.i;
+  }).map(function(x){return x.p;});
+}
+function positionSortHeader_(label,col){
+  var active=posSort.col===col,dir=posSort.dir===1?'asc':'desc';
+  return '<th><button type="button" class="pos-sort-btn'+(active?' active '+dir:'')+'" onclick="posSortBy(\''+col+'\')" aria-label="Sort by '+escHtml(label)+'" aria-sort="'+(active?(dir==='asc'?'ascending':'descending'):'none')+'"><span>'+escHtml(label)+'</span><span class="pos-sort-caret" aria-hidden="true"></span></button></th>';
+}
+function positionHeaderHtml_(){
+  return '<tr><th>Acct</th>'+positionSortHeader_('Ticker','ticker')+positionSortHeader_('Type','type')+positionSortHeader_('Strike','strike')+positionSortHeader_('Expiry Date','expiryDate')+positionSortHeader_('Open','open')+positionSortHeader_('Expiry','expiry')+'</tr>';
+}
+function renderPositionRows_(rows,emptyText){
+  ge('pth').innerHTML=positionHeaderHtml_();
+  var tb=ge('ptb');tb.innerHTML='';
+  if(!rows.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">'+escHtml(emptyText)+'</td></tr>';return;}
+  positionSortedRows_(rows).forEach(function(p){
+    var isPut=positionType_(p)==='PUT',account=positionAccount_(p),credit=positionExpiryCredit_(p),tr=document.createElement('tr');
+    tr.innerHTML='<td><span class="atag '+(account==='A1'?'pa1':'pa2')+'">'+escHtml(account)+'</span></td>'+
+      '<td style="font-weight:800">'+escHtml(p.ticker||'')+'</td>'+
+      '<td><span class="pill '+(isPut?'po':'pb')+'">'+(isPut?'Put':'Call')+'</span></td>'+
+      '<td>$'+Math.round(money(p.strike))+'</td>'+
+      '<td>'+escHtml(p.expiry||'')+'</td>'+
+      '<td>'+Number(p.openQty||0)+'</td>'+
+      '<td class="pos-expiry-credit '+(credit===null?'dim':cc(credit))+'" title="Remaining net STO proceeds at expiry">'+(credit===null?'—':fmtS(credit))+'</td>';
+    tb.appendChild(tr);
+  });
+}
+function renderChurnerPositions(d){
+  var rows=((d&&d.churner&&d.churner.ownedPositions)||((d&&d.churnerOwnedPositions)||[]));
+  renderPositionRows_(rows,'No Churner-owned open contracts');
+}
+function renderPositions(d){
+  if(isChurnerMode()){renderChurnerPositions(d);return;}
+  renderPositionRows_((d&&d.legacyOwnedPositions)||[],'No Legacy-owned open contracts');
+}
 function churnerHistoryTotalsClient_(rows){
 var map = {};
 (rows || []).forEach(function(r){

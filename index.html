@@ -6,7 +6,7 @@
 <!-- RIKI_INDEX_DESKTOP_GRAND_TOTAL_ALIGNED_V5_1_10_VERIFIED -->
 <!-- RIKI_INDEX_ACCOUNT_EXPIRY_TICKER_WORTHLESS_V5_1_11_VERIFIED -->
 <!-- RIKI_INDEX_UNIFIED_PASTEL_YELLOW_ACCOUNTS_V5_1_13_VERIFIED -->
-<!-- RIKI_INDEX_POSITIONS_EXPIRY_SORTABLE_HEADERS_V5_1_14_VERIFIED -->
+<!-- RIKI_INDEX_POSITIONS_ACCT_SORTABLE_V5_1_15_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -867,8 +867,8 @@ color-scheme:light;
 }
 </style>
 
-<style id="riki-positions-expiry-sortable-v514">
-/* RIKI_POSITIONS_EXPIRY_SORTABLE_HEADERS_V5_1_14
+<style id="riki-positions-expiry-sortable-v515">
+/* RIKI_POSITIONS_ACCT_SORTABLE_V5_1_15
    Frontend-only: existing open-credit payload fields, modern sorting, readable headers. */
 #pp table,#hc table{border-collapse:separate;border-spacing:0;}
 #pp thead th,#hc thead th{
@@ -2320,7 +2320,7 @@ inner+='</div>';panel.innerHTML=inner;dcp.appendChild(panel);
 }
 }
 var posSort={col:'expiryDate',dir:1};
-var POS_SORT_DEFAULT_DIR={ticker:1,type:1,strike:1,expiryDate:1,open:-1,expiry:-1};
+var POS_SORT_DEFAULT_DIR={acct:1,ticker:1,type:1,strike:1,expiryDate:1,open:-1,expiry:-1};
 function posSortBy(col){
   if(!Object.prototype.hasOwnProperty.call(POS_SORT_DEFAULT_DIR,col))return;
   if(posSort.col===col)posSort.dir*=-1;
@@ -2342,6 +2342,7 @@ function positionExpiryCredit_(p){
   return null;
 }
 function positionSortValue_(p,col){
+  if(col==='acct')return positionAccount_(p);
   if(col==='ticker')return String(p&&p.ticker||'').toUpperCase();
   if(col==='type')return positionType_(p);
   if(col==='strike')return Number(p&&p.strike||0);
@@ -2370,7 +2371,7 @@ function positionSortHeader_(label,col){
   return '<th><button type="button" class="pos-sort-btn'+(active?' active '+dir:'')+'" onclick="posSortBy(\''+col+'\')" aria-label="Sort by '+escHtml(label)+'" aria-sort="'+(active?(dir==='asc'?'ascending':'descending'):'none')+'"><span>'+escHtml(label)+'</span><span class="pos-sort-caret" aria-hidden="true"></span></button></th>';
 }
 function positionHeaderHtml_(){
-  return '<tr><th>Acct</th>'+positionSortHeader_('Ticker','ticker')+positionSortHeader_('Type','type')+positionSortHeader_('Strike','strike')+positionSortHeader_('Expiry Date','expiryDate')+positionSortHeader_('Open','open')+positionSortHeader_('Expiry','expiry')+'</tr>';
+  return '<tr>'+positionSortHeader_('Acct','acct')+positionSortHeader_('Ticker','ticker')+positionSortHeader_('Type','type')+positionSortHeader_('Strike','strike')+positionSortHeader_('Expiry Date','expiryDate')+positionSortHeader_('Open','open')+positionSortHeader_('Expiry','expiry')+'</tr>';
 }
 function renderPositionRows_(rows,emptyText){
   ge('pth').innerHTML=positionHeaderHtml_();

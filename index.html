@@ -8,6 +8,7 @@
 <!-- RIKI_INDEX_UNIFIED_PASTEL_YELLOW_ACCOUNTS_V5_1_13_VERIFIED -->
 <!-- RIKI_INDEX_POSITIONS_ACCT_SORTABLE_V5_1_15_VERIFIED -->
 <!-- RIKI_INDEX_GLOBAL_PERSISTENT_AUDIT_BACKUP_BANNERS_V5_1_16_VERIFIED -->
+<!-- RIKI_INDEX_RAW_GITHUB_JSON_FOREGROUND_POLL_V5_1_17_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1084,7 +1085,10 @@ data-width="320">
 </div>
 <script>
 var BACKEND = 'https://script.google.com/macros/s/AKfycby9ObqHh3pLF_Ku3C_udLds3wGK0Ig3EkItKqx1ZYZF2UFEtjUB7MC9ljA49VUnGYZ-mQ/exec';
-var DATA_JSON = 'https://rikialpha.github.io/tradingincome/d8f3a.json';
+var DATA_JSON = 'https://raw.githubusercontent.com/RiKiAlpha/tradingincome/main/d8f3a.json';
+var RIKI_STATIC_JSON_POLL_MS = 60000;
+var RIKI_STATIC_JSON_POLL_TIMER = null;
+var RIKI_STATIC_JSON_POLL_IN_FLIGHT = false;
 var RIKI_V5_HISTORY_BASE = 'https://rikialpha.github.io/tradingincome/history';
 var RIKI_V5_HISTORY_CACHE = {};
 var RIKI_V5_LEGACY_WEEK_CACHE = {};
@@ -2830,6 +2834,52 @@ var gm = rikiDataFreshnessMs_(githubData);
 var cm = rikiDataFreshnessMs_(cachedData);
 return !!(gm && (!cm || gm >= cm));
 }
+// RIKI_RAW_GITHUB_JSON_FOREGROUND_POLL_V1
+// Static-only synchronization: no GAS, Schwab, or Sheets call. The strict
+// freshness comparison prevents an older/equal GitHub snapshot from replacing
+// a newer manual Refresh result already displayed in this browser.
+function rikiRefreshStaticJsonIfNewer_(reason, showSync){
+if(RIKI_STATIC_JSON_POLL_IN_FLIGHT) return Promise.resolve(false);
+if(!DATA || !isAuthed()) return Promise.resolve(false);
+RIKI_STATIC_JSON_POLL_IN_FLIGHT = true;
+if(showSync) rikiShowTimestampSyncing_();
+return rikiFetchGithubFallback_()
+.then(function(githubData){
+var incomingMs = rikiDataFreshnessMs_(githubData);
+var currentMs = rikiDataFreshnessMs_(DATA);
+if(!githubData || githubData.error || githubData.tokenExpired || !incomingMs || incomingMs <= currentMs){
+if(showSync && DATA) renderHeader(DATA);
+return false;
+}
+githubData = rikiPrepareIncomingData_(githubData);
+githubData.dataSource = githubData.dataSource || 'GitHubRaw:d8f3a.json';
+DATA = githubData;
+renderAll(githubData);
+saveCache(githubData);
+setTimeout(rikiSyncLocalBannerDismissals_,0);
+_lastFetch = Date.now();
+return true;
+})
+.catch(function(e){
+if(showSync && DATA) renderHeader(DATA);
+try{ console.warn('Static JSON '+String(reason||'sync')+' unavailable', e); }catch(x){}
+return false;
+})
+.then(function(result){
+RIKI_STATIC_JSON_POLL_IN_FLIGHT = false;
+return result;
+}, function(e){
+RIKI_STATIC_JSON_POLL_IN_FLIGHT = false;
+throw e;
+});
+}
+function rikiStartStaticJsonPolling_(){
+if(RIKI_STATIC_JSON_POLL_TIMER) return;
+RIKI_STATIC_JSON_POLL_TIMER = setInterval(function(){
+if(document.visibilityState !== 'visible' || !DATA || !isAuthed()) return;
+rikiRefreshStaticJsonIfNewer_('foreground-poll', false);
+}, RIKI_STATIC_JSON_POLL_MS);
+}
 // RIKI_V8_1_INITAPP_AND_TOKEN_STATUS_DISPLAY_FIX
 // Boot must never fail if a legacy initApp wrapper was missing.
 // Token-status refresh is metadata-only: Apps Script/UserProperties read, no Schwab call.
@@ -2991,7 +3041,7 @@ if(!rikiShouldPaintGithubFirst_(githubData, DATA)){
  return;
 }
 githubData = rikiPrepareIncomingData_(githubData);
-githubData.dataSource = githubData.dataSource || 'GitHub:d8f3a.json';
+githubData.dataSource = githubData.dataSource || 'GitHubRaw:d8f3a.json';
 DATA = githubData;
 renderAll(githubData);
 saveCache(githubData);
@@ -3008,31 +3058,18 @@ try{ console.warn('GitHub first-paint fallback failed', e); }catch(x){}
 });
 // The scheduled V5 snapshot is published to GitHub JSON.
 // App open intentionally stops here: localStorage + static JSON only, no GAS execution.
+rikiStartStaticJsonPolling_();
 }
 var _lastFetch = Date.now();
 // RIKI_STATIC_JSON_OPEN_NO_GAS_V343
-// No interval polling and no GAS call on iPhone wake. Rehydrate from the static
-// scheduled JSON only. Explicit buttons still call GAS when the user asks.
+// Poll GitHub Raw once per minute only while this authenticated tab is visible.
+// This never calls GAS, Schwab, or Sheets. Explicit buttons still call GAS.
 document.addEventListener('visibilitychange', function(){
 if(document.visibilityState !== 'visible') return;
 if(!isAuthed()){ showAuthScreen(); return; }
 if(checkLock()) return;
 rikiMaybeRefreshAuthDisplay_('visibility');
-rikiShowTimestampSyncing_();
-rikiFetchGithubFallback_()
-.then(function(githubData){
-if(!rikiShouldPaintGithubFirst_(githubData, DATA)){
- renderHeader(DATA);
- return;
-}
-githubData = rikiPrepareIncomingData_(githubData);
-githubData.dataSource = githubData.dataSource || 'GitHub:d8f3a.json';
-DATA = githubData;
-renderAll(githubData);
-saveCache(githubData);
-setTimeout(rikiSyncLocalBannerDismissals_,0);
-})
-.catch(function(e){ renderHeader(DATA); try{ console.warn('Static visibility hydration unavailable', e); }catch(x){} });
+rikiRefreshStaticJsonIfNewer_('visibility', true);
 });
 // Update the original RiKi tab as soon as the separate Schwab callback tab finishes.
 window.addEventListener('storage', function(e){

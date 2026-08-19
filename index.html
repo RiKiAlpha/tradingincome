@@ -9,6 +9,7 @@
 <!-- RIKI_INDEX_POSITIONS_ACCT_SORTABLE_V5_1_15_VERIFIED -->
 <!-- RIKI_INDEX_GLOBAL_PERSISTENT_AUDIT_BACKUP_BANNERS_V5_1_16_VERIFIED -->
 <!-- RIKI_INDEX_RAW_GITHUB_JSON_FOREGROUND_POLL_V5_1_17_VERIFIED -->
+<!-- RIKI_INDEX_PAUSED_CHURNER_HISTORY_ALL_MONTHS_V5_1_18_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1217,6 +1218,8 @@ var DATA=null, activeTab='d', histMode='weeks';
 var RIKI_HISTORY_SELECTED_PERIOD={daily:'',weeks:'',monthly:''};
 var RIKI_CHURNER_HISTORY_LOAD_STATE={};
 var RIKI_CHURNER_HISTORY_MONTH_CACHE={};
+var RIKI_PAUSED_CHURNER_HISTORY_HYDRATING=false;
+var RIKI_PAUSED_CHURNER_HISTORY_READY=false;
 var RIKI_V5_LEGACY_MULTI_TICKER_START='2026-07-17';
 var RIKI_V5_LEGACY_YEAR_CACHE={};
 var RIKI_V5_LEGACY_MONTH_LOAD_STATE={};
@@ -1249,6 +1252,9 @@ localStorage.setItem('riki_app_mode', appMode);
 if(appMode === 'legacy' && histMode === 'daily') histMode = 'weeks';
 if(appMode === 'churner' && histMode !== 'daily' && histMode !== 'weeks' && histMode !== 'monthly') histMode = 'daily';
 if(DATA){ renderAll(DATA); }
+// V5.1.18: PAUSED Churner is still a readable historical ledger. Hydrate its
+// finalized static history without starting Churner, calling Schwab, or calling GAS.
+if(appMode === 'churner' && rikiV5ChurnerPaused_()) rikiV5EnsurePausedChurnerHistory_();
 // RIKI_V7_10_CHURNER_SINGLE_435_FINALIZER_V1
 // Manual-only mode: switching to Churner does not start an Apps Script job.
 // Use Load, Refresh, or Rebuild explicitly.
@@ -1275,6 +1281,10 @@ opts=opts||{};ticker=String(ticker||'').trim().toUpperCase();var inp=getChurnerT
 localStorage.setItem('riki_churner_ticker',ticker);localStorage.setItem('riki_churner_focus_ticker',ticker);localStorage.setItem('riki_churner_focus',ticker?'1':'0');
 var dateInput=getChurnerAsOfInput_(),asOf=dateInput&&dateInput.value?String(dateInput.value).trim():churnerTodayEt_();
 localStorage.setItem('riki_churner_asof',asOf);localStorage.setItem('riki_churner_asof_date',asOf);
+// V5.1.18: a paused Churner is read-only history. Resolve both today's view
+// and historical date/ticker drill-down from finalized static files only, while
+// retaining the complete multi-month history arrays in DATA.churner.
+if(rikiV5ChurnerPaused_()){rikiV5EnsurePausedChurnerHistory_(ticker,asOf);return;}
 if(asOf && asOf!==churnerTodayEt_()){rikiV5LoadHistoricalChurner_(asOf,ticker,opts);return;}
 var compact=ticker?'1':'0',url=BACKEND+'?action=churnerData&ticker='+encodeURIComponent(ticker)+'&focus='+(ticker?'1':'0')+'&compact='+compact+'&start=2026-06-01&fast=1&asOf='+encodeURIComponent(asOf)+'&_='+Date.now(),cacheKey=asOf+'|'+(ticker||'ALL');
 if(CHURNER_LOAD_INFLIGHT[cacheKey]){if(CHURNER_LOAD_CACHE[cacheKey]){DATA=DATA||{};DATA.churner=CHURNER_LOAD_CACHE[cacheKey];renderAll(DATA);}setChurnerBusy_(true,'Churner data is already loading…');return;}
@@ -1873,6 +1883,16 @@ return DATA && DATA.churner && DATA.churner.asOfDate ? String(DATA.churner.asOfD
 function loadChurnerLastState(forceTodayIfBlank){
 var ticker = churnerSavedTicker_();
 var asOf = churnerSavedAsOf_();
+// V5.1.18: when Churner is PAUSED, keep the last finalized saved date/history.
+// Do not force today, because there is intentionally no new Churner row today.
+if(rikiV5ChurnerPaused_()){
+ var pausedAsOf=churnerResultAsOf_()||asOf;
+ if(pausedAsOf){localStorage.setItem('riki_churner_asof_date',pausedAsOf);localStorage.setItem('riki_churner_asof',pausedAsOf);}
+ var pausedTickerEl=getChurnerTickerInput_();if(pausedTickerEl)pausedTickerEl.value=ticker;
+ var pausedAsOfEl=getChurnerAsOfInput_();if(pausedAsOfEl&&pausedAsOf)pausedAsOfEl.value=pausedAsOf;
+ rikiV5EnsurePausedChurnerHistory_(ticker);
+ return;
+}
 // CHURNER_NO_STALE_LEGACY_DEFAULT_V1
 // On boot/idle, default Churner to today ET rather than a stale Legacy DATA_JSON date.
 // Manual date picker selections are still honored when loadChurnerTicker() is called directly.
@@ -1897,6 +1917,7 @@ var churnerLastBootRefreshMs_ = 0;
 function churnerBootForceRefresh_(){
 try{
 if(appMode !== 'churner') return;
+if(rikiV5ChurnerPaused_()){rikiV5EnsurePausedChurnerHistory_(churnerSavedTicker_());return;}
 var nowMs = Date.now();
 if(churnerBootRefreshInFlight_) return;
 if(churnerLastBootRefreshMs_ && (nowMs - churnerLastBootRefreshMs_) < 1500) return;
@@ -2471,6 +2492,46 @@ function rikiV5StaticJson_(url){
 if(RIKI_V5_HISTORY_CACHE[url])return Promise.resolve(RIKI_V5_HISTORY_CACHE[url]);
 return fetch(url+'?_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(j){RIKI_V5_HISTORY_CACHE[url]=j;return j;});
 }
+// RIKI_INDEX_PAUSED_CHURNER_HISTORY_ALL_MONTHS_V5_1_18_VERIFIED
+function rikiV5ChurnerPaused_(){
+return String((DATA&&DATA.churnerEngineControl&&DATA.churnerEngineControl.mode)||'').toUpperCase()==='PAUSED';
+}
+function rikiV5ChurnerHistoryStartMonth_(){
+var start=String((DATA&&DATA.churner&&DATA.churner.churnerStartDate)||localStorage.getItem('riki_churner_start_date')||'2026-06-01').substring(0,7);
+return /^\d{4}-\d{2}$/.test(start)?start:'2026-06';
+}
+function rikiV5MonthRange_(startMonth,endMonth){
+var out=[],m=String(startMonth||'').match(/^(\d{4})-(\d{2})$/),e=String(endMonth||'').match(/^(\d{4})-(\d{2})$/);if(!m||!e)return out;
+var y=Number(m[1]),mo=Number(m[2])-1,ey=Number(e[1]),em=Number(e[2])-1,guard=0;
+while((y<ey||(y===ey&&mo<=em))&&guard++<120){out.push(String(y)+'-'+String(mo+1).padStart(2,'0'));mo++;if(mo>11){mo=0;y++;}}
+return out;
+}
+function rikiV5PausedChurnerMonths_(){return rikiV5MonthRange_(rikiV5ChurnerHistoryStartMonth_(),churnerTodayEt_().substring(0,7));}
+function rikiV5ZeroChurnerTotalRow_(period){
+return {period:period,tickers:[],tickerCount:0,opened:0,closed:0,open:0,banked:0,dayTradeBanked:0,dayTradeContracts:0,a1Opened:0,a2Opened:0,a1Closed:0,a2Closed:0,a1Open:0,a2Open:0,a1Banked:0,a2Banked:0,a1DayTradeBanked:0,a2DayTradeBanked:0,a1DayTradeContracts:0,a2DayTradeContracts:0};
+}
+function rikiV5EnsureMonthlyTimeline_(rows){
+var map={};(rows||[]).forEach(function(r){if(r&&/^\d{4}-\d{2}$/.test(String(r.period||'')))map[String(r.period)]=r;});
+rikiV5PausedChurnerMonths_().forEach(function(p){if(!map[p])map[p]=rikiV5ZeroChurnerTotalRow_(p);});
+return Object.keys(map).sort(function(a,b){return b.localeCompare(a);}).map(function(k){return map[k];});
+}
+function rikiV5BuildPausedHistoryPayload_(files,ticker,requestedAsOf){
+requestedAsOf=String(requestedAsOf||'').trim();var latestDay='',latestRaw=null,requestedRaw=null,base={success:true,source:'GitHub:V5_FINALIZED_HISTORY',noSchwabFetch:true,status:'PAUSED',churnerStartDate:rikiV5ChurnerHistoryStartMonth_()+'-01',historyDaily:[],historyWeekly:[],historyMonthly:[],historyDailyTotals:[],historyWeeklyTotals:[],historyMonthlyTotals:[]};
+(files||[]).forEach(function(file){if(!file)return;Object.keys(file.days||{}).forEach(function(day){if(day>latestDay){latestDay=day;latestRaw=file.days[day];}if(requestedAsOf&&day===requestedAsOf)requestedRaw=file.days[day];});['historyDaily','historyWeekly','historyMonthly'].forEach(function(k){base[k]=rikiV5MergeHistoryRows_(base[k],file[k],false);});['historyDailyTotals','historyWeeklyTotals','historyMonthlyTotals'].forEach(function(k){base[k]=rikiV5MergeHistoryRows_(base[k],file[k],true);});});
+var displayRaw=requestedRaw||latestRaw,displayDay=requestedRaw?requestedAsOf:latestDay;
+if(displayRaw){var day=JSON.parse(JSON.stringify(displayRaw));['historyDaily','historyWeekly','historyMonthly','historyDailyTotals','historyWeeklyTotals','historyMonthlyTotals'].forEach(function(k){day[k]=base[k]||[];});base=day;base.asOfDate=displayDay;base.source=base.source||'GitHub:V5_FINALIZED_HISTORY';base.noSchwabFetch=true;base.status='PAUSED';base.churnerStartDate=base.churnerStartDate||rikiV5ChurnerHistoryStartMonth_()+'-01';}
+else{base.asOfDate='';base.summary=base.summary||{openedToday:0,closedToday:0,stillOpen:0,stillOpenFromToday:0,bankedToday:0,totalBankedToday:0,dayTradeBankedToday:0,dayTradeContractsToday:0,olderOpenBankedToday:0,olderOpenClosedTodayContracts:0,potentialAt3c:0,potentialAt3cFromToday:0,unmatchedBtcToday:0,expiredWorthlessContractsToday:0,expiredWorthlessBankedToday:0};}
+var filtered=rikiV5FilterHistoricalChurner_(base,ticker||'');filtered.status='PAUSED';filtered.noSchwabFetch=true;filtered.pausedHistoryOnly=true;filtered.historyMonthlyTotals=rikiV5EnsureMonthlyTimeline_(filtered.historyMonthlyTotals||[]);return {payload:filtered,latestDay:latestDay,displayDay:displayDay,requestedFound:!!requestedRaw};
+}
+function rikiV5EnsurePausedChurnerHistory_(ticker,requestedAsOf){
+if(!rikiV5ChurnerPaused_())return Promise.resolve(false);ticker=String(ticker||churnerSavedTicker_()||'').trim().toUpperCase();requestedAsOf=String(requestedAsOf||'').trim();
+if(RIKI_PAUSED_CHURNER_HISTORY_HYDRATING)return Promise.resolve(false);
+function applyBuilt_(files){var built=rikiV5BuildPausedHistoryPayload_(files,ticker,requestedAsOf);DATA=DATA||{};DATA.churner=built.payload;DATA.churner.requestedTicker=ticker;DATA.churner.requestedAsOf=requestedAsOf;DATA.churnerLoadedAtEt=DATA.churner.generatedAt||'';DATA.churnerSource=DATA.churner.source||'GitHub:V5_FINALIZED_HISTORY';var useDay=built.displayDay||built.latestDay;if(useDay){localStorage.setItem('riki_churner_asof_date',useDay);localStorage.setItem('riki_churner_asof',useDay);var el=getChurnerAsOfInput_();if(el)el.value=useDay;}saveCache(DATA);renderAll(DATA);return built;}
+if(RIKI_PAUSED_CHURNER_HISTORY_READY&&DATA&&DATA.churner){var sameTicker=ticker===String((DATA.churner.requestedTicker||'')).toUpperCase(),sameAsOf=requestedAsOf===String(DATA.churner.requestedAsOf||'');if(!sameTicker||!sameAsOf){var cachedFiles=Object.keys(RIKI_CHURNER_HISTORY_MONTH_CACHE).map(function(k){return RIKI_CHURNER_HISTORY_MONTH_CACHE[k];});applyBuilt_(cachedFiles);}return Promise.resolve(true);}
+RIKI_PAUSED_CHURNER_HISTORY_HYDRATING=true;var months=rikiV5PausedChurnerMonths_();setChurnerBusy_(true,'Loading finalized Churner history…');
+var jobs=months.map(function(month){var url=RIKI_V5_HISTORY_BASE+'/churner/'+month+'.json';return rikiV5StaticJson_(url).then(function(file){RIKI_CHURNER_HISTORY_MONTH_CACHE[month]=file||{};return file||{};}).catch(function(){RIKI_CHURNER_HISTORY_MONTH_CACHE[month]={};return {};});});
+return Promise.all(jobs).then(function(files){applyBuilt_(files);RIKI_PAUSED_CHURNER_HISTORY_READY=true;return true;}).catch(function(){return false;}).then(function(ok){RIKI_PAUSED_CHURNER_HISTORY_HYDRATING=false;setChurnerBusy_(false);return ok;});
+}
 function rikiV5FilterHistoricalChurner_(day,ticker){
 var out=JSON.parse(JSON.stringify(day||{})),t=String(ticker||'').toUpperCase();if(!t)return out;
 out.tickers=[t];out.tickerDayTradeRows=(out.tickerDayTradeRows||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.expiryRows=(out.expiryRows||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.historyDaily=(out.historyDaily||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.historyWeekly=(out.historyWeekly||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});out.historyMonthly=(out.historyMonthly||[]).filter(function(r){return String(r.ticker||'').toUpperCase()===t;});
@@ -2483,7 +2544,7 @@ var j=rikiV5FilterHistoricalChurner_(day,ticker);j.success=true;j.source=j.sourc
 function rikiV5LoadHistoricalChurner_(asOf,ticker,opts){
 opts=opts||{};var month=String(asOf||'').substring(0,7),url=RIKI_V5_HISTORY_BASE+'/churner/'+month+'.json',key=asOf+'|'+(ticker||'ALL');
 if(CHURNER_LOAD_INFLIGHT[key])return;CHURNER_LOAD_INFLIGHT[key]=true;setChurnerBusy_(true,'Loading finalized history…');
-rikiV5StaticJson_(url).then(function(file){var raw=file&&file.days&&file.days[asOf];if(!raw)throw new Error('Date not in static history');var day=JSON.parse(JSON.stringify(raw)),keys=['historyDaily','historyWeekly','historyMonthly','historyDailyTotals','historyWeeklyTotals','historyMonthlyTotals'];keys.forEach(function(k){if(Array.isArray(file[k]))day[k]=file[k];});delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);rikiV5ApplyHistoricalChurner_(day,ticker);}).catch(function(){fetch(BACKEND+'?action=v5ChurnerHistory&asOf='+encodeURIComponent(asOf)+'&ticker='+encodeURIComponent(ticker||'')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);if(!j||!j.success){toast((j&&j.error)||'No finalized history for '+asOf);return;}rikiV5ApplyHistoricalChurner_(j,ticker);}).catch(function(){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);toast('Historical Churner load failed');});});
+rikiV5StaticJson_(url).then(function(file){var raw=file&&file.days&&file.days[asOf];if(!raw)throw new Error('Date not in static history');var day=JSON.parse(JSON.stringify(raw)),keys=['historyDaily','historyWeekly','historyMonthly','historyDailyTotals','historyWeeklyTotals','historyMonthlyTotals'];keys.forEach(function(k){if(Array.isArray(file[k]))day[k]=file[k];});delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);rikiV5ApplyHistoricalChurner_(day,ticker);}).catch(function(){if(rikiV5ChurnerPaused_()){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);toast('No finalized Churner history for '+asOf,4200);return;}fetch(BACKEND+'?action=v5ChurnerHistory&asOf='+encodeURIComponent(asOf)+'&ticker='+encodeURIComponent(ticker||'')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);if(!j||!j.success){toast((j&&j.error)||'No finalized history for '+asOf);return;}rikiV5ApplyHistoricalChurner_(j,ticker);}).catch(function(){delete CHURNER_LOAD_INFLIGHT[key];setChurnerBusy_(false);toast('Historical Churner load failed');});});
 }
 function rikiV5LegacyArchiveWeekMap_(){
 var out={};((DATA&&DATA.allClosed)||[]).forEach(function(row){var week=rikiCleanHistoryPeriod_(row&&row[0]);if(!/^\d{4}-\d{2}-\d{2}$/.test(week))return;out[week]={weekEnd:week,a1:money(row[1]),a2:money(row[3]),total:money(row[6])};});return out;
@@ -2567,14 +2628,15 @@ function rikiV5HydrateChurnerHistoryPeriod_(period,mode){
 period=String(period||'');if(!period)return;var key=mode+'|'+period,state=RIKI_CHURNER_HISTORY_LOAD_STATE[key];if(state==='loading'||state==='done'||state==='empty')return;
 RIKI_CHURNER_HISTORY_LOAD_STATE[key]='loading';var c=chData()||{},month=period.substring(0,7),url=RIKI_V5_HISTORY_BASE+'/churner/'+month+'.json';
 function finish_(payload){rikiV5MergeChurnerHistoryPayload_(payload);var ready=rikiV5ChurnerPeriodHasDetail_(chData()||{},mode,period);RIKI_CHURNER_HISTORY_LOAD_STATE[key]=ready?'done':'empty';renderChurnerHist();return ready;}
-function gasFallback_(){var asOf=rikiV5ChurnerHistoryAsOf_(period,mode,c);if(!asOf){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();return;}
+function gasFallback_(){if(rikiV5ChurnerPaused_()){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();return;}var asOf=rikiV5ChurnerHistoryAsOf_(period,mode,c);if(!asOf){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();return;}
 fetch(BACKEND+'?action=v5ChurnerHistory&asOf='+encodeURIComponent(asOf)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){if(!j||!j.success){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();return;}finish_(j);}).catch(function(){RIKI_CHURNER_HISTORY_LOAD_STATE[key]='empty';renderChurnerHist();});}
 var cached=RIKI_CHURNER_HISTORY_MONTH_CACHE[month];if(cached){if(!finish_(cached))gasFallback_();return;}
 rikiV5StaticJson_(url).then(function(file){RIKI_CHURNER_HISTORY_MONTH_CACHE[month]=file||{};if(!finish_(file))gasFallback_();}).catch(gasFallback_);
 }
 function renderChurnerHist(){
-var c=chData();var el=ge('hc');el.innerHTML='';if(!c){el.innerHTML='<div class="empty">No Churner data</div>';return;}
+var c=chData();var el=ge('hc');el.innerHTML='';if(!c){if(rikiV5ChurnerPaused_()){el.innerHTML='<div class="empty">Loading finalized Churner history…</div>';rikiV5EnsurePausedChurnerHistory_();return;}el.innerHTML='<div class="empty">No Churner data</div>';return;}
 var rows=rikiV5ChurnerHistoryRows_(c,histMode).slice();var totalRows=rikiV5ChurnerHistoryTotals_(c,histMode).slice();if(!totalRows.length)totalRows=churnerHistoryTotalsClient_(rows);
+if(histMode==='monthly')totalRows=rikiV5EnsureMonthlyTimeline_(totalRows);
 totalRows=totalRows.slice().sort(function(a,b){return String(b.period||'').localeCompare(String(a.period||''));});
 var selected=String(RIKI_HISTORY_SELECTED_PERIOD[histMode]||'');if(histMode==='daily'&&!selected)selected=String(c.asOfDate||'');if(!selected||!totalRows.some(function(r){return String(r.period||'')===selected;}))selected=totalRows.length?String(totalRows[0].period||''):'';RIKI_HISTORY_SELECTED_PERIOD[histMode]=selected;
 var periodTitle=histMode==='daily'?'Date':histMode==='monthly'?'Month':'Week Ending';var totalTitle=histMode==='daily'?'Daily History':histMode==='monthly'?'Monthly History':'Weekly History';

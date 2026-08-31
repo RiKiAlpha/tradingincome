@@ -10,7 +10,7 @@
 <!-- RIKI_INDEX_GLOBAL_PERSISTENT_AUDIT_BACKUP_BANNERS_V5_1_16_VERIFIED -->
 <!-- RIKI_INDEX_RAW_GITHUB_JSON_FOREGROUND_POLL_V5_1_17_VERIFIED -->
 <!-- RIKI_INDEX_PAUSED_CHURNER_HISTORY_ALL_MONTHS_V5_1_18_VERIFIED -->
-<!-- RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V1_2026_08_30_VERIFIED -->
+<!-- RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V2_1_WORKSPACE_URL_FIX_2026_08_31_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1160,11 +1160,12 @@ var RIKI_V5_LEGACY_WEEK_CACHE = {};
 var CLIENT_ID = '632213689535-vlhn0mn0bkg4dntjul9fi1kb31i3kcos.apps.googleusercontent.com';
 var ALLOWED_EMAIL = 'gprasaad88@gmail.com';
 var RIKI_GOOGLE_CONNECTIONS_URL = 'https://accounts.google.com/AccountChooser?continue=https%3A%2F%2Fmyaccount.google.com%2Fconnections';
-var RIKI_GOOGLE_REPAIR_STAGE_KEY = 'riki_google_repair_stage_v1';
+var RIKI_GOOGLE_REPAIR_STAGE_KEY = 'riki_google_repair_stage_v2';
+var RIKI_GOOGLE_AUTH_BOOTSTRAP_URL_KEY = 'riki_google_auth_bootstrap_url_v2';
 var RIKI_BACKEND_STALE_MS = 50 * 60 * 1000;
 var RIKI_BACKEND_WATCH_READY = false;
 var RIKI_MANUAL_BACKEND_FAILURE_AT_MS = 0;
-var RIKI_GOOGLE_REPAIR_VERSION = 'RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V1_2026_08_30';
+var RIKI_GOOGLE_REPAIR_VERSION = 'RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V2_1_WORKSPACE_URL_FIX_2026_08_31';
 function ge(id){ return document.getElementById(id); }
 function money(v){
 if(v == null || v === '') return 0;
@@ -1184,19 +1185,31 @@ return s.replace(/^(TypeError|Error|ReferenceError|SyntaxError):\s*/i,'').trim()
 }
 function rikiGoogleRepairStage_(){try{return String(localStorage.getItem(RIKI_GOOGLE_REPAIR_STAGE_KEY)||'');}catch(e){return '';}}
 function rikiSetGoogleRepairStage_(stage){try{if(stage)localStorage.setItem(RIKI_GOOGLE_REPAIR_STAGE_KEY,String(stage));else localStorage.removeItem(RIKI_GOOGLE_REPAIR_STAGE_KEY);}catch(e){}}
+function rikiNormalizeGoogleBootstrapUrl_(url){var u=String(url||'').trim().replace(/[?#].*$/,'');return /^https:\/\/script\.google\.com\/(?:macros\/s|a\/macros\/rikiterminal\.com\/s)\/[A-Za-z0-9_-]+\/exec$/.test(u)?u:'';}
+function rikiGoogleBootstrapUrl_(){try{return rikiNormalizeGoogleBootstrapUrl_(localStorage.getItem(RIKI_GOOGLE_AUTH_BOOTSTRAP_URL_KEY)||'');}catch(e){return '';}}
+function rikiCacheGoogleBootstrapUrl_(url){var u=rikiNormalizeGoogleBootstrapUrl_(url);if(!u)return false;try{localStorage.setItem(RIKI_GOOGLE_AUTH_BOOTSTRAP_URL_KEY,u);}catch(e){}return true;}
+function rikiPrimeGoogleBootstrapUrl_(){
+ var cached=rikiGoogleBootstrapUrl_();if(cached)return Promise.resolve(cached);
+ return fetch(BACKEND+'?action=googleAuthBootstrapConfig&_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('GAS HTTP '+r.status);return r.json();}).then(function(d){if(!d||d.success===false||!d.configured||!d.url)return '';rikiCacheGoogleBootstrapUrl_(d.url);return rikiGoogleBootstrapUrl_();}).catch(function(){return '';});
+}
 function rikiShowGoogleRepairBanner_(reason){
 var b=ge('riki-google-repair-banner'),sub=ge('riki-google-repair-banner-sub');
 if(sub)sub.textContent=String(reason||'Google Apps Script may need permission again.');
 if(b)b.classList.add('on');
 }
 function rikiHideGoogleRepairBanner_(){var b=ge('riki-google-repair-banner');if(b)b.classList.remove('on');}
-function rikiOpenGoogleRepair_(){haptic();var m=ge('riki-google-repair-modal');if(m)m.classList.add('on');rikiUpdateGoogleRepairModal_();}
+function rikiOpenGoogleRepair_(){
+ haptic();var m=ge('riki-google-repair-modal');if(m)m.classList.add('on');rikiUpdateGoogleRepairModal_();
+ rikiPrimeGoogleBootstrapUrl_().then(function(url){
+  if(!url){var sub=ge('riki-google-repair-modal-sub');if(sub)sub.textContent='Repair link is not cached on this device yet. While GAS is working, configure the RiKi authorization deployment and open Repair RiKi once.';}
+ });
+}
 function rikiCloseGoogleRepair_(){var m=ge('riki-google-repair-modal');if(m)m.classList.remove('on');}
 function rikiUpdateGoogleRepairModal_(){
 var stage=rikiGoogleRepairStage_(),sub=ge('riki-google-repair-modal-sub');
 if(!sub)return;
 if(stage==='REMOVE_OPENED')sub.textContent='After you remove RiKi in Google, come back here and tap Allow RiKi.';
-else if(stage==='ALLOW_OPENED')sub.textContent='Finish Google’s Allow RiKi screen. When you return, RiKi will check the permission and refresh.';
+else if(stage==='ALLOW_OPENED')sub.textContent='Finish Google’s Allow RiKi screen. When you return, RiKi will verify the permission.';
 else sub.textContent='Remove RiKi from Google permissions, then return here and tap Allow RiKi.';
 }
 function rikiOpenGooglePermissions_(){
@@ -1208,21 +1221,22 @@ function rikiFetchGoogleAuthInfo_(){
 return fetch(BACKEND+'?action=googleAuthInfo&_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('GAS HTTP '+r.status);return r.json();});
 }
 function rikiAllowRiki_(){
-haptic();var btn=ge('riki-google-allow-btn');if(btn){btn.disabled=true;btn.textContent='Checking…';}
-return rikiFetchGoogleAuthInfo_().then(function(d){
-if(!d||d.success===false)throw new Error((d&&d.error)||'Unable to check RiKi authorization');
-if(!d.required){
-toast('RiKi permission is still active · remove it first',5200);
-rikiSetGoogleRepairStage_('REMOVE_OPENED');rikiUpdateGoogleRepairModal_();
-return;
-}
-if(!d.url)throw new Error('Google authorization link unavailable');
-rikiSetGoogleRepairStage_('ALLOW_OPENED');rikiUpdateGoogleRepairModal_();
-var w=window.open(d.url,'riki_google_allow');if(!w)window.location.assign(d.url);
-}).catch(function(e){
-rikiShowGoogleRepairBanner_('RiKi still needs Google permission. Open Repair RiKi and try Allow RiKi again.');
-toast('Allow RiKi error · '+errMsg(e),6500);
-}).then(function(){if(btn){btn.disabled=false;btn.textContent='Allow RiKi';}});
+ haptic();
+ var btn=ge('riki-google-allow-btn');if(btn){btn.disabled=true;btn.textContent='Opening…';}
+ var bootstrap=rikiGoogleBootstrapUrl_();
+ if(!bootstrap){
+  rikiPrimeGoogleBootstrapUrl_().then(function(url){
+   if(!url){toast('RiKi repair link is not configured on this device',6500);rikiShowGoogleRepairBanner_('Repair link missing. Configure the RiKi authorization deployment while GAS is working.');if(btn){btn.disabled=false;btn.textContent='Allow RiKi';}return;}
+   rikiAllowRiki_();
+  });
+  return;
+ }
+ rikiSetGoogleRepairStage_('ALLOW_OPENED');rikiUpdateGoogleRepairModal_();
+ var target=bootstrap+'?action=googleAuthBootstrap&_='+Date.now();
+ var chooser='https://accounts.google.com/AccountChooser?continue='+encodeURIComponent(target);
+ var w=window.open(chooser,'riki_google_allow');
+ if(!w)window.location.assign(chooser);
+ if(btn){btn.disabled=false;btn.textContent='Allow RiKi';}
 }
 function rikiVerifyGoogleAuthAfterAllow_(){
 if(rikiGoogleRepairStage_()!=='ALLOW_OPENED')return Promise.resolve(false);
@@ -1629,6 +1643,7 @@ fetch(BACKEND+'?action=v5RefreshLive&_='+Date.now(),{cache:'no-store'}).then(fun
 hideOverlay();
 if(fresh&&fresh.tokenExpired){showTokenExpired();return;}
 if(!fresh||fresh.success===false){RIKI_MANUAL_BACKEND_FAILURE_AT_MS=Date.now();rikiShowGoogleRepairBanner_('Manual Refresh could not update RiKi. Repair Google permission.');toast('Live refresh failed: '+((fresh&&fresh.error)||'unknown'),6000);return;}
+if(fresh.googleAuthBootstrapUrl)rikiCacheGoogleBootstrapUrl_(fresh.googleAuthBootstrapUrl);
 RIKI_MANUAL_BACKEND_FAILURE_AT_MS=0;rikiHideGoogleRepairBanner_();
 CHURNER_LOAD_CACHE={};
 rikiRenderFreshData_(fresh,true);

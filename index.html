@@ -10,7 +10,7 @@
 <!-- RIKI_INDEX_GLOBAL_PERSISTENT_AUDIT_BACKUP_BANNERS_V5_1_16_VERIFIED -->
 <!-- RIKI_INDEX_RAW_GITHUB_JSON_FOREGROUND_POLL_V5_1_17_VERIFIED -->
 <!-- RIKI_INDEX_PAUSED_CHURNER_HISTORY_ALL_MONTHS_V5_1_18_VERIFIED -->
-<!-- RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V2_4_RESTORE_PUBLIC_BACKEND_KEEP_AUTH_REPAIR_2026_08_31_VERIFIED -->
+<!-- RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V2_5_CURRENT_PROD_BACKEND_2026_08_31_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1149,7 +1149,7 @@ data-width="320">
 </svg>
 </div>
 <script>
-var BACKEND = 'https://script.google.com/macros/s/AKfycby9ObqHh3pLF_Ku3C_udLds3wGK0Ig3EkItKqx1ZYZF2UFEtjUB7MC9ljA49VUnGYZ-mQ/exec';
+var BACKEND = 'https://script.google.com/a/macros/rikiterminal.com/s/AKfycby6iCcORpApTWFEbb4YQqrS3fgeDPOB9G--anUFsT9F30WVhHVNRF1JwfjqURK5FeTeWQ/exec';
 var DATA_JSON = 'https://raw.githubusercontent.com/RiKiAlpha/tradingincome/main/d8f3a.json';
 var RIKI_STATIC_JSON_POLL_MS = 60000;
 var RIKI_STATIC_JSON_POLL_TIMER = null;
@@ -1165,7 +1165,7 @@ var RIKI_GOOGLE_AUTH_BOOTSTRAP_URL = 'https://script.google.com/a/macros/rikiter
 var RIKI_BACKEND_STALE_MS = 50 * 60 * 1000;
 var RIKI_BACKEND_WATCH_READY = false;
 var RIKI_MANUAL_BACKEND_FAILURE_AT_MS = 0;
-var RIKI_GOOGLE_REPAIR_VERSION = 'RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V2_4_RESTORE_PUBLIC_BACKEND_KEEP_AUTH_REPAIR_2026_08_31';
+var RIKI_GOOGLE_REPAIR_VERSION = 'RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V2_5_CURRENT_PROD_BACKEND_2026_08_31';
 function ge(id){ return document.getElementById(id); }
 function money(v){
 if(v == null || v === '') return 0;
@@ -1650,7 +1650,7 @@ if(pub.success===false){
  var refreshStamp=ge('utime')?String(ge('utime').textContent||'').trim():'';
  if(refreshStamp)toast(refreshStamp,2400);
 }
-}).catch(function(e){hideOverlay();RIKI_MANUAL_BACKEND_FAILURE_AT_MS=Date.now();rikiShowGoogleRepairBanner_('Manual Refresh could not reach RiKi. Repair Google permission.');toast('Live refresh error: '+errMsg(e),6000);});
+}).catch(function(e){hideOverlay();RIKI_MANUAL_BACKEND_FAILURE_AT_MS=Date.now();rikiShowGoogleRepairBanner_('Manual Refresh could not reach RiKi backend. If Google permission was removed, use Repair RiKi.');toast('Live refresh error: '+errMsg(e),6000);});
 }
 function doAuth(){
 haptic();

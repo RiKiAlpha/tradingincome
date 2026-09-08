@@ -11,6 +11,7 @@ Status:
 - Panic engine unchanged
 Fallback: restore this Apps Script deployment version if future UI patches break behavior.
 -->
+<!-- RIKI_MAIN_TEST_ACCOUNT_TERMINAL_A3_V1_2026_09_08 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,6 +126,11 @@ Fallback: restore this Apps Script deployment version if future UI patches break
     .binp{flex:1;height:24px;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:14px;font-weight:700;text-align:center;outline:none;}
     .tog-divider{width:1px;background:var(--border);height:18px;flex-shrink:0;margin:0 2px;}
     .ratio-sep{font-family:var(--mono);font-size:18px;color:var(--text3);flex-shrink:0;}
+    @media(max-width:720px){
+      .ratio-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;}
+      .ratio-body .ratio-sep{display:none;}
+      .ratio-body #a3-block{grid-column:1/-1;}
+    }
     .mbtn{flex:1;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;touch-action:manipulation;text-align:center;line-height:26px;}
     .mbtn.on{border-color:rgba(61,156,255,.5);background:rgba(61,156,255,.12);color:var(--blue);}
     .minp{width:44px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;text-align:center;outline:none;}
@@ -536,6 +542,7 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
     .acct-qty-row{display:flex;gap:8px;margin-bottom:14px;justify-content:center;width:100%;}
     .aqcol{flex:1;min-width:0;max-width:140px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;}
     .aqcol.off{opacity:.4;}
+    @media(max-width:720px){.acct-qty-row{flex-wrap:wrap;}.aqcol{max-width:none;min-width:calc(33.333% - 6px);padding:7px 5px;}}
     .aqlbl{font-size:8px;font-weight:800;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;margin-bottom:6px;}
     .aqrow{display:flex;align-items:center;gap:3px;width:100%;}
     .aqstep{width:24px;height:26px;min-width:24px;border-radius:6px;border:1px solid var(--border);background:var(--bg4);color:var(--text);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;user-select:none;flex-shrink:0;}
@@ -833,6 +840,7 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
     <div class="bp-hdr">
       <div class="bp-hdr-col"><div class="bp-hdr-lbl">A1 Buying Power</div><div class="bp-hdr-val" id="hdr-bp1">—</div></div>
       <div class="bp-hdr-col"><div class="bp-hdr-lbl">A2 Buying Power</div><div class="bp-hdr-val" id="hdr-bp2">—</div></div>
+      <div class="bp-hdr-col"><div class="bp-hdr-lbl">A3 Test BP</div><div class="bp-hdr-val" id="hdr-bp3">—</div></div>
     </div>
     <div class="ratio-card">
       <div class="ratio-top">
@@ -859,6 +867,17 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
             <div class="bstep" onclick="adjBase(2,1)">+</div>
             <div class="tog-divider"></div>
             <div class="acct-tog on" id="a2-tog" onclick="toggleAcct(2)"><div class="acct-tog-thumb"></div></div>
+          </div>
+        </div>
+        <div class="ratio-sep">:</div>
+        <div class="acct-block disabled" id="a3-block" title="Configure the Main Test Account to enable A3">
+          <div class="base-row">
+            <span id="a3-slot-label" style="font-family:var(--mono);font-size:11px;font-weight:800;color:var(--blue);letter-spacing:.04em;flex-shrink:0;">A3</span>
+            <div class="bstep" onclick="adjBase(3,-1)">-</div>
+            <input class="binp" type="number" id="base3" value="1" min="0" max="99" oninput="onBaseInput(3,this.value)">
+            <div class="bstep" onclick="adjBase(3,1)">+</div>
+            <div class="tog-divider"></div>
+            <div class="acct-tog" id="a3-tog" onclick="toggleAcct(3)"><div class="acct-tog-thumb"></div></div>
           </div>
         </div>
       </div>
@@ -992,7 +1011,7 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
   <div class="quick-btc-top">
     <div>
       <div class="quick-btc-title">Quick BTC</div>
-      <div class="quick-btc-sub">Entered tickers only · Schwab A1/A2 only · Tradier blocked</div>
+      <div class="quick-btc-sub">Entered tickers only · Schwab A1/A2/A3 · Tradier blocked</div>
     </div>
     <label class="panic-lbl">
       <input type="checkbox" id="panic-slice-cb" class="panic-cb">
@@ -1074,6 +1093,14 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
           <div class="aqstep" onclick="adjAQ(2,1)">+</div>
         </div>
       </div>
+      <div class="aqcol off" id="aq3-col">
+        <div class="aqlbl" id="aq3-label">Account 3</div>
+        <div class="aqrow">
+          <div class="aqstep" onclick="adjAQ(3,-1)">-</div>
+          <input class="aqinp" type="number" id="aq3" value="0" min="0" oninput="onAQInput(3,this.value)">
+          <div class="aqstep" onclick="adjAQ(3,1)">+</div>
+        </div>
+      </div>
     </div>
     <div class="flbl">Limit Price</div>
     <div class="pfw">
@@ -1093,6 +1120,7 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
     <div class="bprow">
       <div class="bpcol"><div class="bpacct">A1 BP</div><div class="bpval" id="bp1">—</div></div>
       <div class="bpcol"><div class="bpacct">A2 BP</div><div class="bpval" id="bp2">—</div></div>
+      <div class="bpcol"><div class="bpacct">A3 BP</div><div class="bpval" id="bp3">—</div></div>
     </div>
     <button class="stgbtn c" id="stgbtn" onclick="doStage()">Stage Order</button>
   </div>
@@ -1106,6 +1134,7 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
     <div class="bprow">
       <div class="bpcol"><div class="bpacct">A1 BP</div><div class="bpval" id="cf-bp1">—</div></div>
       <div class="bpcol"><div class="bpacct">A2 BP</div><div class="bpval" id="cf-bp2">—</div></div>
+      <div class="bpcol"><div class="bpacct">A3 BP</div><div class="bpval" id="cf-bp3">—</div></div>
     </div>
     <button class="bkbtn" onclick="doBack()">Edit Order</button>
     <button class="cfbtn c" id="cfbtn" onclick="doFire()">CONFIRM &amp; SEND</button>
@@ -1115,7 +1144,7 @@ select.tradier-test-inp{appearance:none;-webkit-appearance:none;}
       <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
         <path class="fspin" d="M22 5 A17 17 0 0 1 39 22" stroke="var(--call)" stroke-width="3.5" stroke-linecap="round"/>
       </svg>
-      <div class="firelbl">Sending orders to both accounts…</div>
+      <div class="firelbl">Sending orders to selected accounts…</div>
     </div>
   </div>
   <div id="sr" class="sp">
@@ -1228,10 +1257,12 @@ var S = {
   rangeMax: parseFloat(localStorage.getItem('tr_rmax')) || 80,
   base1: parseInt(localStorage.getItem('tr_b1')) || 4,
   base2: parseInt(localStorage.getItem('tr_b2')) || 3,
+  base3: parseInt(localStorage.getItem('tr_b3')) || 1,
   mult: parseInt(localStorage.getItem('tr_mult')) || 1,
   en1: localStorage.getItem('tr_en1') !== '0',
   en2: localStorage.getItem('tr_en2') !== '0',
-   expanded: false, sheetState:null, strike:null, qtyA1:4, qtyA2:3,
+  en3: localStorage.getItem('tr_en3') === '1',
+   expanded: false, sheetState:null, strike:null, qtyA1:4, qtyA2:3, qtyA3:0,
   price:0.02, expiryDates:null, data:null, bpMap:{}, marketOpen:false,
   pollTimer:null, cdTimer:null, cdSecs:10, fetching:false,
   basketMode:false,
@@ -1241,7 +1272,7 @@ var S = {
   basketPendingPayload:null,
   basketLastPayload:null,
   basketLastResult:null,
-  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:'', churnerInlineReviewActive:false, churnerCloseAfterBasketResult:false, brokerMode:localStorage.getItem('riki_broker_mode') || 'SCHWAB', tradierStatus:null, tradierDiagnostics:null, tradierLastAction:''};
+  basketResumeCanContinue:false,  basketRetryTimerId:null,    churnerAnalysis:null,  churnerInlineReviewed:false,  activeSpot:0,  lowFetchMode:localStorage.getItem('tr_low_fetch_mode') === '1',  quoteMode:'SLEEP', quoteLiveStartedAt:0, quoteLiveMaxMs:60*60*1000, quotePollMs:0, quoteTimer:null, bidAskRefreshing:false, lastQuoteFetchAt:0, lastQuoteFetchLabel:'', quickStoScorecardRows:[], quickStoScorecardUpdatedAt:'', churnerInlineReviewActive:false, churnerCloseAfterBasketResult:false, brokerMode:localStorage.getItem('riki_broker_mode') || 'SCHWAB', tradierStatus:null, tradierDiagnostics:null, tradierLastAction:'', testAccount:{configured:false,ready:false,last4:'',label:'Account 3',terminalOnly:true,error:''}};
 
 // ==========================================================
 // RIKI_V6_2_BIDASK_JSON_AND_ANALYZE_MODAL_CLOSE_FIX_V1
@@ -1256,9 +1287,43 @@ function fmtPct(n){ n=parseFloat(n)||0; return (n>=0?'+':'')+n.toFixed(1)+'%'; }
 function fmtOI(n){ n=parseInt(n)||0; return n>=1000?(n/1000).toFixed(1)+'k':String(n); }
 function fmtStrike(n){ return n%1===0?n.toFixed(0):n.toFixed(2); }
 function toast(msg,ms){ var t=ge('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('on');},ms||2200); }
+function rikiTestAccountReady_(){
+  return !!(S && S.testAccount && S.testAccount.ready && /^\d{4}$/.test(String(S.testAccount.last4 || '')));
+}
+function rikiAccountLast4_(slot){
+  if(slot===1) return '5260';
+  if(slot===2) return '4987';
+  if(slot===3 && rikiTestAccountReady_()) return String(S.testAccount.last4 || '');
+  return '';
+}
+function rikiAccountDisplay_(slot){
+  var last4 = rikiAccountLast4_(slot);
+  return 'Account '+slot+(last4 ? ' ('+last4+')' : '');
+}
+function rikiAccountBpText_(slot){
+  var last4 = rikiAccountLast4_(slot);
+  if(!last4 || !S.bpMap || !Object.prototype.hasOwnProperty.call(S.bpMap,last4)) return '—';
+  return fmtM(S.bpMap[last4]);
+}
+function rikiApplyMainTestAccountStatus_(status){
+  status = status || {};
+  S.testAccount = {
+    configured: !!status.configured,
+    ready: !!status.ready,
+    last4: String(status.last4 || ''),
+    label: String(status.label || 'Account 3'),
+    terminalOnly: true,
+    updatedAtEt: String(status.updatedAtEt || ''),
+    error: String(status.error || '')
+  };
+  if(!rikiTestAccountReady_()){
+    S.en3 = false;
+    savePref('tr_en3','0');
+  }
+}
 // RIKI_V11_3_STO_CHECK_EXACT_AVAILABILITY_FRONTEND_V1
 // TRADE_QUICK_STO_FILLED_COUNT_TX_V3_NO_ORDER_CAP
-// Click-only read from Schwab transactions. Counts ALL filled OPTION STO contracts for today across A1/A2.
+// Click-only read from Schwab transactions. Counts ALL filled OPTION STO contracts for today across A1/A2/A3.
 // Uses executed transactions instead of orders so high-volume RiKi days do not hit order-result caps.
 function quickStoTodayEt_(){
   var parts = new Intl.DateTimeFormat('en-CA', { timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
@@ -1737,8 +1802,8 @@ function savePref(k,v){ localStorage.setItem(k,String(v)); }
 function saveAll(){
   savePref('tr_ticker',S.ticker); savePref('tr_exp',S.expiryIdx); savePref('tr_filter',S.filter);
   savePref('tr_rmin',S.rangeMin); savePref('tr_rmax',S.rangeMax);
-  savePref('tr_b1',S.base1); savePref('tr_b2',S.base2); savePref('tr_mult',S.mult);
-  savePref('tr_en1',S.en1?'1':'0'); savePref('tr_en2',S.en2?'1':'0');
+  savePref('tr_b1',S.base1); savePref('tr_b2',S.base2); savePref('tr_b3',S.base3); savePref('tr_mult',S.mult);
+  savePref('tr_en1',S.en1?'1':'0'); savePref('tr_en2',S.en2?'1':'0'); savePref('tr_en3',S.en3?'1':'0');
 }
 function editTicker(){
   var badge=ge('tkr-badge'),inp=ge('tkr-inp');
@@ -1900,26 +1965,47 @@ function rikiRefreshBrokerUi(){
 }
 function rikiApplyBrokerAccountUiV5_4(){
   var isTradier = rikiGetBrokerMode() === 'TRADIER';
+  var a3Ready = rikiTestAccountReady_();
   var hdrLbls = document.querySelectorAll('.bp-hdr-lbl');
   if(hdrLbls && hdrLbls[0]) hdrLbls[0].textContent = isTradier ? 'Tradier Buying Power' : 'A1 Buying Power';
   if(hdrLbls && hdrLbls[1]) hdrLbls[1].textContent = isTradier ? 'Unused' : 'A2 Buying Power';
-  if(isTradier){ var hdr2 = ge('hdr-bp2'); if(hdr2) hdr2.textContent = '—'; }
-  var a1 = ge('a1-block'), a2 = ge('a2-block'), a1Tog = ge('a1-tog'), a2Tog = ge('a2-tog');
+  if(hdrLbls && hdrLbls[2]) hdrLbls[2].textContent = isTradier ? 'Unused' : (a3Ready ? 'A3 Test BP' : 'A3 Not Ready');
+  if(isTradier){
+    var hdr2 = ge('hdr-bp2'); if(hdr2) hdr2.textContent = '—';
+    var hdr3 = ge('hdr-bp3'); if(hdr3) hdr3.textContent = '—';
+  }
+  var a1 = ge('a1-block'), a2 = ge('a2-block'), a3 = ge('a3-block');
+  var a1Tog = ge('a1-tog'), a2Tog = ge('a2-tog'), a3Tog = ge('a3-tog');
   var a1Lbl = a1 ? a1.querySelector('span') : null;
   var a2Lbl = a2 ? a2.querySelector('span') : null;
+  var a3Lbl = ge('a3-slot-label');
   if(a1Lbl) a1Lbl.textContent = isTradier ? 'TRADIER' : 'A1';
   if(a2Lbl) a2Lbl.textContent = isTradier ? '—' : 'A2';
+  if(a3Lbl) a3Lbl.textContent = isTradier ? '—' : (a3Ready ? 'A3·'+rikiAccountLast4_(3) : 'A3');
   if(isTradier){
-    if(typeof S !== 'undefined'){ S.en1 = true; S.en2 = false; }
+    if(typeof S !== 'undefined'){ S.en1 = true; S.en2 = false; S.en3 = false; savePref('tr_en3','0'); }
     if(a1){ a1.className = 'acct-block'; a1.title = 'Tradier single account'; }
     if(a2){ a2.className = 'acct-block disabled'; a2.title = 'Tradier uses one account in RiKi V11'; }
+    if(a3){ a3.className = 'acct-block disabled'; a3.title = 'Tradier uses one account in RiKi V11'; }
     if(a1Tog){ a1Tog.className = 'acct-tog on'; a1Tog.style.pointerEvents = 'none'; a1Tog.title = 'Tradier single account locked on'; }
     if(a2Tog){ a2Tog.className = 'acct-tog'; a2Tog.style.pointerEvents = 'none'; a2Tog.title = 'Tradier single-account mode'; }
+    if(a3Tog){ a3Tog.className = 'acct-tog'; a3Tog.style.pointerEvents = 'none'; a3Tog.title = 'Tradier single-account mode'; }
   } else {
     if(a1){ a1.title = ''; a1.className = 'acct-block ' + (S.en1 ? '' : 'disabled'); }
     if(a2){ a2.title = ''; a2.className = 'acct-block ' + (S.en2 ? '' : 'disabled'); }
     if(a1Tog){ a1Tog.style.pointerEvents = ''; a1Tog.title = ''; a1Tog.className = 'acct-tog ' + (S.en1 ? 'on' : ''); }
     if(a2Tog){ a2Tog.style.pointerEvents = ''; a2Tog.title = ''; a2Tog.className = 'acct-tog ' + (S.en2 ? 'on' : ''); }
+    if(a3){
+      a3.className = 'acct-block ' + (a3Ready && S.en3 ? '' : 'disabled');
+      a3.title = a3Ready
+        ? 'Main Test Account ending '+rikiAccountLast4_(3)+' — terminal only'
+        : ((S.testAccount && S.testAccount.error) || 'Configure RIKI_MAIN_TEST_ACCOUNT_LAST4, then refresh the account cache');
+    }
+    if(a3Tog){
+      a3Tog.className = 'acct-tog ' + (a3Ready && S.en3 ? 'on' : '');
+      a3Tog.style.pointerEvents = a3Ready ? '' : 'none';
+      a3Tog.title = a3 ? a3.title : '';
+    }
   }
 }
 function rikiSetTradierStatusText(txt){ var el = ge('tradierStatusLine'); if(el) el.textContent = String(txt || ''); }
@@ -2072,6 +2158,7 @@ function quickBtcSelectedAccounts_(){
 
   if(S.en1) out.push('5260');
   if(S.en2) out.push('4987');
+  if(S.en3 && rikiTestAccountReady_()) out.push(rikiAccountLast4_(3));
 
   return out;
 }
@@ -2212,7 +2299,7 @@ function panicFetchAbort_(run){
 }
 function basketOrderCount_(){
   var selected = S && S.basketSelected ? Object.keys(S.basketSelected).length : 0;
-  var accts = (S && S.en1 ? 1 : 0) + (S && S.en2 ? 1 : 0);
+  var accts = (S && S.en1 ? 1 : 0) + (S && S.en2 ? 1 : 0) + (S && S.en3 && rikiTestAccountReady_() ? 1 : 0);
   return selected * Math.max(0, accts);
 }
 
@@ -2803,9 +2890,10 @@ function buildBasketPayloadFromContracts(contracts, existingRows, keepBasketId){
   } else {
     if(S.en1) accounts.push('5260');
     if(S.en2) accounts.push('4987');
+    if(S.en3 && rikiTestAccountReady_()) accounts.push(rikiAccountLast4_(3));
   }
 
-  if(accounts.length === 0) throw new Error('Turn on Account 1, Account 2, or both.');
+  if(accounts.length === 0) throw new Error('Turn on at least one Schwab account.');
   if(Number(S.basketCallPrice || 0) <= 0 || Number(S.basketPutPrice || 0) <= 0) throw new Error('Call and Put prices must be greater than zero.');
 
   var expDate = getSelectedExpiry();
@@ -3801,7 +3889,7 @@ function triggerPanicClose() {
 
   var accounts = quickBtcSelectedAccounts_();
   if(!accounts.length){
-    alert('Turn on Account 1, Account 2, or both.');
+    alert('Turn on at least one Schwab account.');
     return;
   }
 
@@ -3912,31 +4000,42 @@ function updateRatioPreview(){
     rikiApplyBrokerAccountUiV5_4();
     return;
   }
-  var q1=calcQty(S.base1,S.en1),q2=calcQty(S.base2,S.en2);
-  ge('ratio-preview').innerHTML='A1: <b>'+q1+'</b> &middot; A2: <b>'+q2+'</b>';
+  var q1=calcQty(S.base1,S.en1),q2=calcQty(S.base2,S.en2),q3=calcQty(S.base3,S.en3&&rikiTestAccountReady_());
+  ge('ratio-preview').innerHTML='A1: <b>'+q1+'</b> &middot; A2: <b>'+q2+'</b> &middot; A3: <b>'+q3+'</b>';
   rikiApplyBrokerAccountUiV5_4();
 }
 
 function adjBase(acct,amt){
   haptic();
   if(acct===1){ S.base1=Math.max(0,S.base1+amt); ge('base1').value=S.base1; }
-  else { S.base2=Math.max(0,S.base2+amt); ge('base2').value=S.base2; }
+  else if(acct===2){ S.base2=Math.max(0,S.base2+amt); ge('base2').value=S.base2; }
+  else { S.base3=Math.max(0,S.base3+amt); ge('base3').value=S.base3; }
   saveAll(); updateRatioPreview();
 }
 function onBaseInput(acct,v){
   var n=parseInt(v)||0;
-  if(acct===1) S.base1=n; else S.base2=n;
+  if(acct===1) S.base1=n; else if(acct===2) S.base2=n; else S.base3=n;
   saveAll(); updateRatioPreview();
 }
 function toggleAcct(acct){
   haptic();
   if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
-    toast('Tradier uses one account here — A1/A2 toggles are disabled.', 3000);
+    toast('Tradier uses one account here — Schwab account toggles are disabled.', 3000);
     rikiApplyBrokerAccountUiV5_4();
     return;
   }
   if(acct===1){ S.en1=!S.en1; ge('a1-tog').className='acct-tog '+(S.en1?'on':''); ge('a1-block').className='acct-block '+(S.en1?'':'disabled'); }
-  else { S.en2=!S.en2; ge('a2-tog').className='acct-tog '+(S.en2?'on':''); ge('a2-block').className='acct-block '+(S.en2?'':'disabled'); }
+  else if(acct===2){ S.en2=!S.en2; ge('a2-tog').className='acct-tog '+(S.en2?'on':''); ge('a2-block').className='acct-block '+(S.en2?'':'disabled'); }
+  else {
+    if(!rikiTestAccountReady_()){
+      toast((S.testAccount&&S.testAccount.error)||'Main Test Account is not ready', 4000);
+      rikiApplyBrokerAccountUiV5_4();
+      return;
+    }
+    S.en3=!S.en3;
+    ge('a3-tog').className='acct-tog '+(S.en3?'on':'');
+    ge('a3-block').className='acct-block '+(S.en3?'':'disabled');
+  }
   saveAll(); updateRatioPreview();
 }
 function setMult(m){
@@ -4212,6 +4311,11 @@ function doFetch(firstTime, opts){
 
       console.log('[RiKi] doFetch: parsed OK. keys='+Object.keys(d).join(',')+' reqTicker='+reqTicker+' responseTicker='+(d.ticker||''));
 
+      if(d.testAccount){
+        rikiApplyMainTestAccountStatus_(d.testAccount);
+        rikiApplyBrokerAccountUiV5_4();
+      }
+
       // Hard reject any response that does not belong to the requested/current ticker.
       var respTicker = String(d.ticker || reqTicker || '').trim().toUpperCase();
 
@@ -4303,9 +4407,12 @@ function doFetch(firstTime, opts){
       if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
         ge('hdr-bp1').textContent = fmtM(d.bpMap && (d.bpMap['TRADIER'] || d.bpMap['5260']));
         ge('hdr-bp2').textContent = '—';
+        ge('hdr-bp3').textContent = '—';
       } else {
-        ge('hdr-bp1').textContent = fmtM(d.bpMap && d.bpMap['5260']);
-        ge('hdr-bp2').textContent = fmtM(d.bpMap && d.bpMap['4987']);
+        S.bpMap = d.bpMap || {};
+        ge('hdr-bp1').textContent = rikiAccountBpText_(1);
+        ge('hdr-bp2').textContent = rikiAccountBpText_(2);
+        ge('hdr-bp3').textContent = rikiAccountBpText_(3);
       }
 
       S.bpMap = d.bpMap || {};
@@ -4566,13 +4673,17 @@ function openOrderSheet(type,sKey){
   if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
     S.qtyA1=calcQty(S.base1,true);
     S.qtyA2=0;
+    S.qtyA3=0;
   } else {
     S.qtyA1=calcQty(S.base1,S.en1);
     S.qtyA2=calcQty(S.base2,S.en2);
+    S.qtyA3=calcQty(S.base3,S.en3&&rikiTestAccountReady_());
   }
-  ge('aq1').value=S.qtyA1; ge('aq2').value=S.qtyA2;
+  ge('aq1').value=S.qtyA1; ge('aq2').value=S.qtyA2; ge('aq3').value=S.qtyA3;
   ge('aq1-col').className='aqcol '+((rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER') || S.en1?'':'off');
   ge('aq2-col').className='aqcol '+(S.en2?'':'off');
+  ge('aq3-col').className='aqcol '+(S.en3&&rikiTestAccountReady_()?'':'off');
+  ge('aq3-label').textContent=rikiTestAccountReady_()?'Account 3 · '+rikiAccountLast4_(3):'Account 3';
   rikiApplyBrokerAccountUiV5_4();
   
   S.price=Math.max(0.02,Math.round(o.mid*100)/100);
@@ -4588,26 +4699,27 @@ function updateSheetCalcs(){
   ge('phint').innerHTML='Bid: <span class="qbid">'+o.bid.toFixed(2)+'</span> &middot; Mid: <span class="qmid">'+o.mid.toFixed(2)+'</span> &middot; Ask: <span class="qask">'+o.ask.toFixed(2)+'</span>';
   if(S.price<(o.mid*0.5)) ge('pwarn').style.display='block'; else ge('pwarn').style.display='none';
   
-  var totalContracts=S.qtyA1+S.qtyA2;
+  var totalContracts=S.qtyA1+S.qtyA2+S.qtyA3;
   var totalCredit=totalContracts*S.price*100;
   ge('st-exp-val').textContent=fmtM(totalCredit);
   ge('st-exp-sub').textContent=totalContracts+' contract'+(totalContracts===1?'':'s')+' total @ $'+S.price.toFixed(2);
   
   if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
-    ge('bp1').textContent=fmtM(S.bpMap['TRADIER'] || S.bpMap['5260']); ge('bp2').textContent='—';
+    ge('bp1').textContent=fmtM(S.bpMap['TRADIER'] || S.bpMap['5260']); ge('bp2').textContent='—'; ge('bp3').textContent='—';
   } else {
-    ge('bp1').textContent=fmtM(S.bpMap['5260']); ge('bp2').textContent=fmtM(S.bpMap['4987']);
+    ge('bp1').textContent=rikiAccountBpText_(1); ge('bp2').textContent=rikiAccountBpText_(2); ge('bp3').textContent=rikiAccountBpText_(3);
   }
 }
 
 function adjAQ(acct,amt){
   haptic();
   if(acct===1){ S.qtyA1=Math.max(0,S.qtyA1+amt); ge('aq1').value=S.qtyA1; }
-  else { S.qtyA2=Math.max(0,S.qtyA2+amt); ge('aq2').value=S.qtyA2; }
+  else if(acct===2){ S.qtyA2=Math.max(0,S.qtyA2+amt); ge('aq2').value=S.qtyA2; }
+  else { S.qtyA3=Math.max(0,S.qtyA3+amt); ge('aq3').value=S.qtyA3; }
   updateSheetCalcs();
 }
 function onAQInput(acct,v){
-  var n=parseInt(v)||0; if(acct===1)S.qtyA1=n; else S.qtyA2=n; updateSheetCalcs();
+  var n=parseInt(v)||0; if(acct===1)S.qtyA1=n; else if(acct===2)S.qtyA2=n; else S.qtyA3=n; updateSheetCalcs();
 }
 function adjPrice(dir){ haptic(); var step=0.01; S.price=Math.max(0.02,Math.round((S.price+(dir*step))*100)/100); ge('pi').value=S.price.toFixed(2); updateSheetCalcs(); }
 function onPriceInput(v){ var n=parseFloat(v)||0; S.price=n; updateSheetCalcs(); }
@@ -4627,7 +4739,7 @@ function doBack(){ haptic(); clearInterval(S.cdTimer); setState('stage'); }
 function doStage(){
   if(rikiBlockTradierOrdersIfLockedV11_('Normal STO Stage')) return;
   haptic();
-  if((S.qtyA1+S.qtyA2)<=0){ alert('Total allocation count must be greater than zero.'); return; }
+  if((S.qtyA1+S.qtyA2+S.qtyA3)<=0){ alert('Total allocation count must be greater than zero.'); return; }
   if(S.price<=0.01){ alert('Minimum limit price field constraint is $0.02.'); return; }
   
   var o=S.activeContract;
@@ -4638,17 +4750,18 @@ function doStage(){
   } else {
     if(S.qtyA1>0) html+='<div class="sr"><span class="sk">Account 1 (5260)</span><span class="sv">'+S.qtyA1+' short contract'+(S.qtyA1===1?'':'s')+'</span></div>';
     if(S.qtyA2>0) html+='<div class="sr"><span class="sk">Account 2 (4987)</span><span class="sv">'+S.qtyA2+' short contract'+(S.qtyA2===1?'':'s')+'</span></div>';
+    if(S.qtyA3>0) html+='<div class="sr"><span class="sk">'+rikiAccountDisplay_(3)+'</span><span class="sv">'+S.qtyA3+' short contract'+(S.qtyA3===1?'':'s')+'</span></div>';
   }
   html+='<div class="sr"><span class="sk">Limit Price Execution</span><span class="sv" style="color:var(--gold); font-family:var(--mono);">$'+S.price.toFixed(2)+'</span></div>';
-  var totalContracts=S.qtyA1+S.qtyA2;
+  var totalContracts=S.qtyA1+S.qtyA2+S.qtyA3;
   html+='<div class="sr" style="margin-top:4px;padding-top:8px;border-top:1px dashed var(--border);"><span class="sk" style="font-weight:700;color:var(--text);">Net Premium Inflow</span><span class="sv" style="color:var(--call);font-size:14px;">'+fmtM(totalContracts*S.price*100)+'</span></div>';
   html+='</div>';
   ge('sumbox').innerHTML=html;
   
   if(rikiGetBrokerMode && rikiGetBrokerMode() === 'TRADIER'){
-    ge('cf-bp1').textContent=fmtM(S.bpMap['TRADIER'] || S.bpMap['5260']); ge('cf-bp2').textContent='—';
+    ge('cf-bp1').textContent=fmtM(S.bpMap['TRADIER'] || S.bpMap['5260']); ge('cf-bp2').textContent='—'; ge('cf-bp3').textContent='—';
   } else {
-    ge('cf-bp1').textContent=fmtM(S.bpMap['5260']); ge('cf-bp2').textContent=fmtM(S.bpMap['4987']);
+    ge('cf-bp1').textContent=rikiAccountBpText_(1); ge('cf-bp2').textContent=rikiAccountBpText_(2); ge('cf-bp3').textContent=rikiAccountBpText_(3);
   }
   
   var btn=ge('cfbtn'); btn.className='cfbtn '+S.activeType;
@@ -4703,7 +4816,7 @@ function doFire(){
 
   setState('firing');
 
-  var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2+'&broker='+encodeURIComponent(rikiGetBrokerMode());
+  var params='&ticker='+encodeURIComponent(S.ticker)+'&symbol='+encodeURIComponent(S.activeContract.symbol)+'&price='+S.price+'&qtyA1='+S.qtyA1+'&qtyA2='+S.qtyA2+'&qtyA3='+S.qtyA3+'&broker='+encodeURIComponent(rikiGetBrokerMode());
   fetch(BACKEND+'?action=placeOrder'+params).then(function(r){return r.json();}).then(function(d){
     if(d.error){ showErr(d.error); return; }
     console.log('[RiKi] NORMAL STO placeOrder result', d);
@@ -4713,7 +4826,8 @@ function doFire(){
         var html='';
     var accts=[
       {id:'5260',q:S.qtyA1,lbl:'Account 1',alt:'A1'},
-      {id:'4987',q:S.qtyA2,lbl:'Account 2',alt:'A2'}
+      {id:'4987',q:S.qtyA2,lbl:'Account 2',alt:'A2'},
+      {id:rikiAccountLast4_(3),q:S.qtyA3,lbl:'Account 3',alt:'A3'}
     ];
     accts.forEach(function(acct){
       if(acct.q<=0)return;
@@ -4781,12 +4895,13 @@ function showErr(msg){
 // RUNTIME INITIALIZATION
 ge('tkr-badge').textContent=S.ticker;
 if(ge('chain-fresh'))ge('chain-fresh').innerHTML='<span class="cf-sym">'+S.ticker+'</span><span class="cf-time">...</span>';
-ge('base1').value=S.base1; ge('base2').value=S.base2;
+ge('base1').value=S.base1; ge('base2').value=S.base2; ge('base3').value=S.base3;
 ge('mult-inp').value=S.mult; ge('r-min').value=S.rangeMin; ge('r-max').value=S.rangeMax;
 document.querySelectorAll('.mbtn').forEach(function(b){ if(parseInt(b.getAttribute('data-m'))===S.mult) b.classList.add('on'); else b.classList.remove('on'); });
 document.querySelectorAll('.sbtn').forEach(function(b){ b.classList.remove('ob','oc','op'); if(b.id==='sb-'+S.filter.toLowerCase()) b.classList.add(S.filter==='B'?'ob':(S.filter==='C'?'oc':'op')); });
 ge('a1-tog').className='acct-tog '+(S.en1?'on':''); ge('a1-block').className='acct-block '+(S.en1?'':'disabled');
 ge('a2-tog').className='acct-tog '+(S.en2?'on':''); ge('a2-block').className='acct-block '+(S.en2?'':'disabled');
+ge('a3-tog').className='acct-tog '+(S.en3?'on':''); ge('a3-block').className='acct-block '+(S.en3?'':'disabled');
 updateRatioPreview();
 rikiRefreshBrokerUi();
 paintBasketControls();

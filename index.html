@@ -13,6 +13,7 @@
 <!-- RIKI_INDEX_GOOGLE_PERMISSION_REPAIR_V2_5_CURRENT_PROD_BACKEND_2026_08_31_VERIFIED -->
 <!-- RIKI_INDEX_BLOCKED_BACKUP_ONE_SHOT_OVERRIDE_V5_1_22_VERIFIED -->
 <!-- RIKI_INDEX_AUDIT_GAIN_SOURCE_RESOLUTION_V5_1_23_VERIFIED -->
+<!-- RIKI_INDEX_AUDIT_ALERT_CLOSE_V5_1_24_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -231,6 +232,8 @@ border-radius:8px;color:var(--text3);cursor:pointer;user-select:none;-webkit-use
 font-size:12px;font-weight:500;display:-webkit-flex;display:flex;gap:9px;align-items:flex-start;
 background:rgba(244,197,66,.08);border:1px solid rgba(244,197,66,.2);color:var(--gold);}
 .warn.urg{background:rgba(229,83,83,.08);border-color:rgba(229,83,83,.2);color:var(--red);}
+.audit-alert-close{margin-left:auto;flex:0 0 30px;width:30px;height:30px;padding:0;border:0;border-radius:9px;background:rgba(229,83,83,.10);color:inherit;display:flex;align-items:center;justify-content:center;font:20px/1 'Inter',sans-serif;cursor:pointer;}
+.audit-alert-close:hover,.audit-alert-close:focus-visible{background:rgba(229,83,83,.20);outline:2px solid rgba(229,83,83,.4);outline-offset:2px;}
 #pd{padding-bottom:32px;}
 .wcard{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);
 border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
@@ -1308,6 +1311,9 @@ return task;
 }
 function dismissLegacyAudit_(tr){return rikiDismissPersistentBannerGlobal_('audit',tr);}
 function dismissWeeklyBackup_(br){return rikiDismissPersistentBannerGlobal_('backup',br);}
+function rikiAuditAlertCloseButton_(label,onClose){
+var button=document.createElement('button');button.type='button';button.className='audit-alert-close';button.textContent='×';button.title=label;button.setAttribute('aria-label',label);button.onclick=function(e){e.stopPropagation();onClose();};return button;
+}
 function rikiSyncLocalBannerDismissals_(){
 if(!DATA)return;var audit=DATA.tallyResult||DATA.legacyWeeklyAudit,backup=DATA.latestWeeklyBackup;
 if(audit&&!rikiBannerServerDismissed_(audit)&&rikiLocalBannerDismissed_(legacyAuditDismissKey_(audit)))rikiDismissPersistentBannerGlobal_('audit',audit,{quiet:true,noRender:true});
@@ -2285,14 +2291,21 @@ el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke
 ' '+w.ccReminder;
 dw.appendChild(el);
 }
-var tallyW=d.tallyWarnings||{};
+var tallyW=d.tallyWarnings||{},currentAudit=d.tallyResult||d.legacyWeeklyAudit;
 Object.keys(tallyW).filter(function(k){ return k.indexOf('checked:') < 0 && k.indexOf(':tally') > 0; }).forEach(function(k){
 var parts=k.split(':'),acct=parts[0]||'',expiry=parts[1]||'';
+var auditMatches=!!(currentAudit&&rikiCleanHistoryPeriod_(currentAudit.reportingWeekEnd||currentAudit.expiry||'')===expiry);
+var warningDismissKey='riki_tally_warning_dismiss:'+k;
+if((auditMatches&&isLegacyAuditDismissed_(currentAudit))||rikiLocalBannerDismissed_(warningDismissKey))return;
 var w=tallyW[k];
 var raw=Number(w.rawNet||0),arch=Number(w.archived||0),diffLabel=rikiAuditDifferenceLabel_({rawNet:raw,archBanked:arch});
 var el=document.createElement('div');el.className='warn urg';
-el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-' TALLY: '+acct+' \u00b7 '+expiry+' \u2014 '+diffLabel+' in Orders (Orders $'+raw.toFixed(2)+' vs Archive $'+arch.toFixed(2)+'). Verify fills.';
+el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+var warningText=document.createElement('span');warningText.textContent='TALLY: '+acct+' · '+expiry+' — '+diffLabel+' in Orders (Orders $'+raw.toFixed(2)+' vs Archive $'+arch.toFixed(2)+'). Verify fills.';el.appendChild(warningText);
+el.appendChild(rikiAuditAlertCloseButton_('Close tally audit alerts',function(){
+if(auditMatches){dismissLegacyAudit_(currentAudit);return;}
+try{localStorage.setItem(warningDismissKey,'1');}catch(e){}if(DATA)renderAll(DATA);
+}));
 dw.appendChild(el);
 });
 var tr=d.tallyResult;
@@ -2320,12 +2333,7 @@ if(!isPass&&dparts)auditText+=' · '+dparts;
 if(auditStamp)auditText+=' · '+auditStamp;
 tt.textContent=auditText;
 tl.appendChild(tt);
-var tc=document.createElement('div');
-tc.style.cssText='font-size:18px;opacity:0.5;margin-left:10px;cursor:pointer;';
-tc.textContent='x';
-tc.setAttribute('role','button');
-tc.setAttribute('aria-label','Dismiss audit banner');
-tc.onclick=function(e){e.stopPropagation();dismissLegacyAudit_(tr);};
+var tc=rikiAuditAlertCloseButton_('Close weekly audit alerts',function(){dismissLegacyAudit_(tr);});
 tp.appendChild(tl);
 tp.appendChild(tc);
 dw.appendChild(tp);

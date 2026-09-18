@@ -14,6 +14,7 @@
 <!-- RIKI_INDEX_BLOCKED_BACKUP_ONE_SHOT_OVERRIDE_V5_1_22_VERIFIED -->
 <!-- RIKI_INDEX_AUDIT_GAIN_SOURCE_RESOLUTION_V5_1_23_VERIFIED -->
 <!-- RIKI_INDEX_AUDIT_ALERT_CLOSE_V5_1_24_VERIFIED -->
+<!-- RIKI_INDEX_SYSTEM_AUDIT_REMINDER_CLOSE_V5_1_25_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1314,6 +1315,12 @@ function dismissWeeklyBackup_(br){return rikiDismissPersistentBannerGlobal_('bac
 function rikiAuditAlertCloseButton_(label,onClose){
 var button=document.createElement('button');button.type='button';button.className='audit-alert-close';button.textContent='×';button.title=label;button.setAttribute('aria-label',label);button.onclick=function(e){e.stopPropagation();onClose();};return button;
 }
+function rikiSplitAuditSystemReminders_(value){
+var audit=[],seen={},other=String(value||'').replace(/(?:^| · )(WEEKLY AUDIT (?:FAILED · week ending (\d{4}-\d{2}-\d{2}) · difference \$\d+\.\d{2} · \d+ mismatch\(es\)|INCOMPLETE · week ending (\d{4}-\d{2}-\d{2}) · accounting has not been certified))/g,function(full,message,failedWeek,incompleteWeek){
+var week=failedWeek||incompleteWeek,key=week+'|'+message;if(!seen[key]){seen[key]=true;audit.push({message:message,week:week,status:failedWeek?'FAIL':'INCOMPLETE'});}return '';
+});
+return {other:other.replace(/^\s*·\s*|\s*·\s*$/g,'').replace(/(?: · ){2,}/g,' · ').trim(),audit:audit};
+}
 function rikiSyncLocalBannerDismissals_(){
 if(!DATA)return;var audit=DATA.tallyResult||DATA.legacyWeeklyAudit,backup=DATA.latestWeeklyBackup;
 if(audit&&!rikiBannerServerDismissed_(audit)&&rikiLocalBannerDismissed_(legacyAuditDismissKey_(audit)))rikiDismissPersistentBannerGlobal_('audit',audit,{quiet:true,noRender:true});
@@ -2286,10 +2293,14 @@ el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke
 dw.appendChild(el);
 });
 if(w.ccReminder){
-var el=document.createElement('div');el.className='warn urg';
-el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-' '+w.ccReminder;
-dw.appendChild(el);
+var systemReminders=rikiSplitAuditSystemReminders_(w.ccReminder),reminderIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+if(systemReminders.other){var otherReminder=document.createElement('div');otherReminder.className='warn urg';otherReminder.innerHTML=reminderIcon;var otherText=document.createElement('span');otherText.textContent=systemReminders.other;otherReminder.appendChild(otherText);dw.appendChild(otherReminder);}
+systemReminders.audit.forEach(function(item){
+var activeAudit=d.tallyResult||d.legacyWeeklyAudit,matchingAudit=!!(activeAudit&&rikiCleanHistoryPeriod_(activeAudit.reportingWeekEnd||activeAudit.expiry||'')===item.week&&String(activeAudit.status||'').toUpperCase()===item.status),localKey='riki_system_audit_dismiss:'+item.week+'|'+item.message;
+if((matchingAudit&&isLegacyAuditDismissed_(activeAudit))||rikiLocalBannerDismissed_(localKey))return;
+var auditReminder=document.createElement('div');auditReminder.className='warn urg';auditReminder.innerHTML=reminderIcon;var auditText=document.createElement('span');auditText.textContent=item.message;auditReminder.appendChild(auditText);
+auditReminder.appendChild(rikiAuditAlertCloseButton_('Close weekly audit alerts',function(){if(matchingAudit){dismissLegacyAudit_(activeAudit);return;}try{localStorage.setItem(localKey,'1');}catch(e){}if(DATA)renderAll(DATA);}));dw.appendChild(auditReminder);
+});
 }
 var tallyW=d.tallyWarnings||{},currentAudit=d.tallyResult||d.legacyWeeklyAudit;
 Object.keys(tallyW).filter(function(k){ return k.indexOf('checked:') < 0 && k.indexOf(':tally') > 0; }).forEach(function(k){

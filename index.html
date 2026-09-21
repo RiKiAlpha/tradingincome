@@ -16,6 +16,7 @@
 <!-- RIKI_INDEX_AUDIT_ALERT_CLOSE_V5_1_24_VERIFIED -->
 <!-- RIKI_INDEX_SYSTEM_AUDIT_REMINDER_CLOSE_V5_1_25_VERIFIED -->
 <!-- RIKI_INDEX_AUDIT_REMINDER_SEPARATOR_REPAIR_V5_1_26_VERIFIED -->
+<!-- RIKI_INDEX_MANUAL_REFRESH_COMPLETION_WATCHDOG_V5_1_27_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1161,6 +1162,8 @@ var DATA_JSON = 'https://raw.githubusercontent.com/RiKiAlpha/tradingincome/main/
 var RIKI_STATIC_JSON_POLL_MS = 60000;
 var RIKI_STATIC_JSON_POLL_TIMER = null;
 var RIKI_STATIC_JSON_POLL_IN_FLIGHT = false;
+var RIKI_MANUAL_REFRESH_POLL_MS = 2500;
+var RIKI_MANUAL_REFRESH_TIMEOUT_MS = 180000;
 var RIKI_V5_HISTORY_BASE = 'https://rikialpha.github.io/tradingincome/history';
 var RIKI_V5_HISTORY_CACHE = {};
 var RIKI_V5_LEGACY_WEEK_CACHE = {};
@@ -1656,10 +1659,17 @@ if(asOf!==churnerTodayEt_()){loadChurnerTicker((getChurnerTickerInput_()||{}).va
 var legacyMode=String((DATA&&DATA.legacyEngineControl&&DATA.legacyEngineControl.mode)||DATA&&DATA.legacyMode||'ACTIVE');if(legacyMode==='PAUSED'){toast('Legacy is PAUSED — resume it in Settings first',4200);return;}
 }
 showOverlay();
-fetch(BACKEND+'?action=v5RefreshLive&_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('GAS HTTP '+r.status);return r.json();}).then(function(fresh){
+var refreshStartedMs=Date.now(),startingFreshMs=rikiDataFreshnessMs_(DATA),finished=false,pollTimer=null,watchdogTimer=null;
+function finishUi_(){
+if(pollTimer){clearInterval(pollTimer);pollTimer=null;}
+if(watchdogTimer){clearTimeout(watchdogTimer);watchdogTimer=null;}
 hideOverlay();
-if(fresh&&fresh.tokenExpired){showTokenExpired();return;}
-if(!fresh||fresh.success===false){RIKI_MANUAL_BACKEND_FAILURE_AT_MS=Date.now();rikiShowGoogleRepairBanner_('Manual Refresh could not update RiKi. Repair Google permission.');toast('Live refresh failed: '+((fresh&&fresh.error)||'unknown'),6000);return;}
+}
+function finishSuccess_(fresh,source){
+if(finished)return;
+if(fresh&&fresh.tokenExpired){finished=true;finishUi_();showTokenExpired();return;}
+if(!fresh||fresh.success===false){finishFailure_(new Error((fresh&&fresh.error)||'unknown'));return;}
+finished=true;finishUi_();
 RIKI_MANUAL_BACKEND_FAILURE_AT_MS=0;rikiHideGoogleRepairBanner_();
 CHURNER_LOAD_CACHE={};
 rikiRenderFreshData_(fresh,true);
@@ -1669,8 +1679,45 @@ if(pub.success===false){
 }else{
  var refreshStamp=ge('utime')?String(ge('utime').textContent||'').trim():'';
  if(refreshStamp)toast(refreshStamp,2400);
+ else if(source==='static')toast('Refresh completed · dashboard updated',2400);
 }
-}).catch(function(e){hideOverlay();RIKI_MANUAL_BACKEND_FAILURE_AT_MS=Date.now();rikiShowGoogleRepairBanner_('Manual Refresh could not reach RiKi backend. If Google permission was removed, use Repair RiKi.');toast('Live refresh error: '+errMsg(e),6000);});
+}
+function finishFailure_(e){
+if(finished)return;
+finished=true;finishUi_();
+RIKI_MANUAL_BACKEND_FAILURE_AT_MS=Date.now();
+rikiShowGoogleRepairBanner_('Manual Refresh could not reach RiKi backend. If Google permission was removed, use Repair RiKi.');
+toast('Live refresh error: '+errMsg(e),6000);
+}
+function checkPublishedSnapshot_(){
+if(finished)return;
+rikiFetchGithubFallback_().then(function(fresh){
+if(finished||!fresh||fresh.error||fresh.tokenExpired)return;
+var incomingFreshMs=rikiDataFreshnessMs_(fresh);
+if(incomingFreshMs&&incomingFreshMs>startingFreshMs)finishSuccess_(fresh,'static');
+}).catch(function(){});
+}
+pollTimer=setInterval(checkPublishedSnapshot_,RIKI_MANUAL_REFRESH_POLL_MS);
+setTimeout(checkPublishedSnapshot_,700);
+watchdogTimer=setTimeout(function(){
+if(finished)return;
+finished=true;finishUi_();
+toast('Refresh is still finishing in the background · dashboard unlocked',7000);
+rikiRefreshStaticJsonIfNewer_('manual-refresh-watchdog',true);
+},RIKI_MANUAL_REFRESH_TIMEOUT_MS);
+fetch(BACKEND+'?action=v5RefreshLive&_='+refreshStartedMs,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('GAS HTTP '+r.status);return r.json();}).then(function(fresh){
+if(finished)return;
+if(!fresh||fresh.success===false){finishFailure_(new Error((fresh&&fresh.error)||'unknown'));return;}
+finishSuccess_(fresh,'gas');
+}).catch(function(e){
+if(finished)return;
+rikiFetchGithubFallback_().then(function(fresh){
+if(finished)return;
+var incomingFreshMs=rikiDataFreshnessMs_(fresh);
+if(fresh&&!fresh.error&&!fresh.tokenExpired&&incomingFreshMs&&incomingFreshMs>startingFreshMs)finishSuccess_(fresh,'static');
+else finishFailure_(e);
+}).catch(function(){finishFailure_(e);});
+});
 }
 function doAuth(){
 haptic();

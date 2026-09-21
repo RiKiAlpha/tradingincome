@@ -15,6 +15,7 @@
 <!-- RIKI_INDEX_AUDIT_GAIN_SOURCE_RESOLUTION_V5_1_23_VERIFIED -->
 <!-- RIKI_INDEX_AUDIT_ALERT_CLOSE_V5_1_24_VERIFIED -->
 <!-- RIKI_INDEX_SYSTEM_AUDIT_REMINDER_CLOSE_V5_1_25_VERIFIED -->
+<!-- RIKI_INDEX_AUDIT_REMINDER_SEPARATOR_REPAIR_V5_1_26_VERIFIED -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1316,10 +1317,14 @@ function rikiAuditAlertCloseButton_(label,onClose){
 var button=document.createElement('button');button.type='button';button.className='audit-alert-close';button.textContent='×';button.title=label;button.setAttribute('aria-label',label);button.onclick=function(e){e.stopPropagation();onClose();};return button;
 }
 function rikiSplitAuditSystemReminders_(value){
-var audit=[],seen={},other=String(value||'').replace(/(?:^| · )(WEEKLY AUDIT (?:FAILED · week ending (\d{4}-\d{2}-\d{2}) · difference \$\d+\.\d{2} · \d+ mismatch\(es\)|INCOMPLETE · week ending (\d{4}-\d{2}-\d{2}) · accounting has not been certified))/g,function(full,message,failedWeek,incompleteWeek){
-var week=failedWeek||incompleteWeek,key=week+'|'+message;if(!seen[key]){seen[key]=true;audit.push({message:message,week:week,status:failedWeek?'FAIL':'INCOMPLETE'});}return '';
+var original=String(value||''),audit=[],seen={};
+var other=original.replace(/WEEKLY AUDIT\s+(FAILED|INCOMPLETE)[^A-Za-z0-9]*week ending\s+(\d{4}-\d{2}-\d{2})[^A-Za-z0-9]*(?:difference\s*\$?\s*[\d,.]+[^A-Za-z0-9]*\d+\s*mismatch\(es\)|accounting has not been certified)/gi,function(message,status,week){
+var key=week+'|'+message;if(!seen[key]){seen[key]=true;audit.push({message:message,week:week,status:String(status).toUpperCase()==='FAILED'?'FAIL':'INCOMPLETE'});}return '';
 });
-return {other:other.replace(/^\s*·\s*|\s*·\s*$/g,'').replace(/(?: · ){2,}/g,' · ').trim(),audit:audit};
+// Keep a close control even if the backend sends a new separator or wording.
+if(!audit.length){var loose=original.match(/WEEKLY AUDIT\s+(FAILED|INCOMPLETE)\b[\s\S]*?\bweek ending\s+(\d{4}-\d{2}-\d{2})/i);if(loose){audit.push({message:original.slice(loose.index).trim(),week:loose[2],status:loose[1].toUpperCase()==='FAILED'?'FAIL':'INCOMPLETE'});other=original.slice(0,loose.index);}}
+if(!audit.length)return {other:original,audit:audit};
+return {other:other.replace(/(\s*[·?\uFFFD|]\s*){2,}/g,' · ').replace(/^\s*[·?\uFFFD|]+\s*|\s*[·?\uFFFD|]+\s*$/g,'').trim(),audit:audit};
 }
 function rikiSyncLocalBannerDismissals_(){
 if(!DATA)return;var audit=DATA.tallyResult||DATA.legacyWeeklyAudit,backup=DATA.latestWeeklyBackup;

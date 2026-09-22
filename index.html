@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RIKI_DASHBOARD_PM_CLOSER_V1_1_0_2026_09_22 -->
+<!-- RIKI_DASHBOARD_PM_PUBLISH_MOBILE_V1_2_0_2026_09_22 -->
 <!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
 <!-- RIKI_INDEX_FINTECH_LEAN_STATUS_BANNERS_V5_1_7_VERIFIED -->
 <!-- RIKI_INDEX_MATCHED_WARNING_FONT_V5_1_8_VERIFIED -->
@@ -979,6 +979,18 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 [data-theme="light"] #riki-google-repair-banner{background:rgba(255,241,243,.98);box-shadow:0 10px 28px rgba(60,20,28,.12);}
 [data-theme="light"] .riki-google-repair-card{background:linear-gradient(180deg,#fff,#f7f7fb);box-shadow:0 26px 70px rgba(0,0,0,.18);}
 @media(max-width:600px){#riki-google-repair-banner{left:8px;right:8px;top:calc(env(safe-area-inset-top,0px) + 73px);padding:10px;}.riki-google-repair-sub{font-size:9px;}.riki-google-repair-btn{height:30px;padding:0 9px;font-size:9px;}}
+
+/* Mobile: Total keeps its own row; exit estimates sit below it. */
+@media(max-width:600px){
+ .account-dual-quote,.grand-dual-quote{flex-direction:column;align-items:flex-start;gap:5px;}
+ .account-dual-quote>.account-quote-slash,.grand-dual-quote>.grand-quote-slash{display:none;}
+ .account-dual-quote>.account-quote-leg:first-child,.grand-dual-quote>.grand-quote-leg:first-child{flex-shrink:0;}
+ .account-dual-quote>.exit-alternatives,.grand-dual-quote>.exit-alternatives{display:flex;flex-direction:row;flex-wrap:wrap;gap:4px 10px;justify-content:flex-start;text-align:left;}
+ .account-dual-quote .account-quote-primary{font-size:13px;}
+ .grand-dual-quote .grand-quote-primary{font-size:20px;}
+ .account-dual-quote .account-quote-secondary{font-size:10px;}
+ .grand-dual-quote .grand-quote-secondary{font-size:11px;}
+}
 </style>
 </head>
 <body>
@@ -3444,7 +3456,7 @@ try{ localStorage.setItem('riki_schwab_auth_seen_at', String(e.data.at || '')); 
 });
 // Start
 initApp();
-// RIKI_DASHBOARD_PM_CLOSER_V1_1_0_2026_09_22
+// RIKI_DASHBOARD_PM_PUBLISH_MOBILE_V1_2_0_2026_09_22
 var RIKI_PM_SETTINGS_LOCAL=null,RIKI_NICKEL_BUSY=false;
 function rikiExitEstimate_(expiryTotal,openContracts,cents){
   var totalCents=Math.round(Number(expiryTotal)*100),qty=Number(openContracts);
@@ -3477,6 +3489,9 @@ function rikiPmPost_(action,params){var body=new URLSearchParams();body.set('act
 function rikiPmRenderPanel_(host,d){
   var risk=d.pmRisk||{},settings=RIKI_PM_SETTINGS_LOCAL||risk.settings||{},tickers=((d.strategyConfig||{}).targetTickers||settings.tickers||[]).slice(),box=document.createElement('div');box.className='pm-panel';
   box.innerHTML='<div class="bp-head"><div><div class="bp-title">Portfolio risk estimates</div><div class="bp-sub">Options-only intrinsic model · PM account only · 10 pp warning buffer</div></div><button class="abtn" id="pm-refresh">Refresh risk</button></div><div class="ssub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+' · excludes shares, time value and pending orders. EPR is manually maintained. Updated with manual / 30-minute refresh; gray after 45 minutes.</div><details class="pm-settings"><summary>Set EPR by ticker</summary><div class="pm-controls"><label>Ticker<select id="pm-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return '<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label><label>Down EPR %<input id="pm-down" type="number" min="0.01" max="100" step="0.01" placeholder="50"></label><label>Up EPR %<input id="pm-up" type="number" min="0.01" max="1000" step="0.01" placeholder="50"></label><button class="abtn" id="pm-save">Save EPR</button></div><div class="ssub">Enter positive magnitudes. EPR 50% gives a warning below estimated PNR 60%. This cushion is a heuristic, not a guarantee.</div></details>';
+  var check=risk.publishCheck||{};
+  if(risk.error){var note=document.createElement('div');note.className='ssub';note.style.color='var(--red)';note.textContent='Risk refresh failed: '+risk.error;box.appendChild(note);}
+  else if(check.success){var note=document.createElement('div');note.className='ssub';note.textContent='Risk calculated before publication · '+Number(check.validRows||0)+' / '+Number(check.pmRows||0)+' PM ticker estimates have valid inputs.';box.appendChild(note);}
   host.appendChild(box);
   box.querySelector('#pm-ticker').onchange=function(){var cfg=(settings.epr||{})[this.value]||{};box.querySelector('#pm-down').value=cfg.down||'';box.querySelector('#pm-up').value=cfg.up||'';};
   box.querySelector('#pm-refresh').onclick=function(){var btn=this;btn.disabled=true;btn.textContent='Reading…';fetch(BACKEND+'?action=pmRiskRefresh&_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){if(!j.success)throw Error(j.error||'Risk refresh failed');DATA.pmRisk=j.pmRisk;DATA.accountBuyingPower=j.accountBuyingPower;RIKI_PM_SETTINGS_LOCAL=j.pmRisk.settings;saveCache(DATA);renderAll(DATA);}).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;btn.textContent='Refresh risk';});};

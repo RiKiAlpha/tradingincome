@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- RIKI_DASHBOARD_PM_MANUAL_CLOSER_V1_0_0_2026_09_22 -->
 <!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
 <!-- RIKI_INDEX_FINTECH_LEAN_STATUS_BANNERS_V5_1_7_VERIFIED -->
 <!-- RIKI_INDEX_MATCHED_WARNING_FONT_V5_1_8_VERIFIED -->
@@ -428,6 +429,26 @@ opacity:0;pointer-events:none;-webkit-transform:translateZ(0);transform:translat
 .ticker-row-margin{font-size:7.5px;color:var(--text3);font-weight:700;margin-top:2px;white-space:nowrap;}
 .ticker-row-margin strong{color:var(--text2);font-weight:800;}
 @media(max-width:600px){.ticker-row-margin{font-size:7px;white-space:normal;line-height:1.2}.ticker-total-cell .ticker-total-value{font-size:9px}}
+
+/* RIKI_PM_MANUAL_CLOSER_V1 */
+.exit-alternatives{display:flex;flex-direction:column;gap:5px;text-align:right;}
+.exit-note{font-size:8px;color:var(--text3);white-space:nowrap;}
+.exit-alternatives .account-quote-secondary{font-size:11px;}
+.exit-alternatives .grand-quote-secondary{font-size:14px;}
+.pm-panel{margin:14px 16px 0;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;}
+.pm-controls{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin-top:12px;}
+.pm-controls label{display:flex;flex:1;min-width:90px;flex-direction:column;gap:6px;font-size:10px;color:var(--text2);}
+.pm-controls select,.pm-controls input{width:100%;min-height:38px;padding:8px;border-radius:9px;background:var(--bg3);color:var(--text);border:1px solid var(--border);font:12px Inter,sans-serif;}
+.pm-settings summary{cursor:pointer;color:var(--text2);font-size:11px;margin-top:12px;}
+.pm-badges{display:flex;align-items:center;gap:4px;font-size:7px;color:var(--text2);margin-top:5px;}
+.pm-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.pm-dot.risk{background:var(--red)}.pm-dot.warn{background:var(--gold)}.pm-dot.outside{background:var(--green)}
+.pm-risk-detail{padding:12px;margin-bottom:10px;border:1px solid var(--border);border-radius:10px;font-size:11px;}
+.pm-risk-line{margin-top:6px}.pm-risk-line.risk{color:var(--red)}.pm-risk-line.warn{color:var(--gold)}.pm-risk-line.outside{color:var(--green)}.pm-risk-line.unknown{color:var(--text3)}
+.nc-enable{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--text2);}
+.nc-result{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 Inter,sans-serif;color:var(--text2);margin-top:10px;}
+.pm-panel .bp-head{flex-wrap:wrap;gap:8px;}.engine-actions{flex-wrap:wrap;}
+
 </style>
 <link rel="apple-touch-icon" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="https://rikialpha.github.io/tradingincome/riki-icon.png">
@@ -1753,7 +1774,7 @@ if(!confirm(msg))return;if(btn){btn.disabled=true;btn.textContent='Switching…'
 fetch(BACKEND+'?action=switchActiveEngine&target='+encodeURIComponent(target)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'engine switch failed');return refreshRootDataAfterControl_(d.message||('Switched to '+targetLabel));}).catch(function(e){toast('Engine switch error: '+errMsg(e),7000);if(btn){btn.disabled=false;btn.textContent='Switch to '+targetLabel;}});
 }
 function pauseAccountingEngine(engine,btn){haptic();engine=String(engine||'').toLowerCase();var label=engine==='churner'?'Churner':'Legacy';if(!confirm('Pause '+label+' without starting the other engine?\n\nA final checkpoint runs first. If positions remain, '+label+' enters DRAINING and continues only BTC/expiry processing.'))return;if(btn){btn.disabled=true;btn.textContent='Pausing…';}fetch(BACKEND+'?action=pauseAccountingEngine&engine='+encodeURIComponent(engine)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'pause failed');return refreshRootDataAfterControl_(d.message||label+' updated');}).catch(function(e){toast(label+' pause error: '+errMsg(e),7000);if(btn){btn.disabled=false;btn.textContent='Pause '+label;}});}
-function toggleLegacyAutoRefresh(pause,btn){haptic();if(!confirm((pause?'Pause':'Resume')+' the Legacy 30-minute auto refresh?\n\nManual Legacy Refresh, scheduled Nickel Closer, the 4:35 expiry finalizer, Wednesday audit and Churner are not paused.'))return;if(btn){btn.disabled=true;btn.textContent=pause?'Pausing…':'Resuming…';}fetch(BACKEND+'?action=toggleLegacyAutoRefresh&pause='+(pause?'1':'0')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'auto-refresh control failed');return refreshRootDataAfterControl_(d.message||'Auto refresh updated');}).catch(function(e){toast('Auto-refresh error: '+errMsg(e),6500);if(btn){btn.disabled=false;btn.textContent=pause?'Pause sync':'Resume sync';}});}
+function toggleLegacyAutoRefresh(pause,btn){haptic();if(!confirm((pause?'Pause':'Resume')+' the Legacy 30-minute auto refresh?\n\nManual Legacy Refresh, manual Nickel Closer, the 4:35 expiry finalizer, Wednesday audit and Churner are not paused.'))return;if(btn){btn.disabled=true;btn.textContent=pause?'Pausing…':'Resuming…';}fetch(BACKEND+'?action=toggleLegacyAutoRefresh&pause='+(pause?'1':'0')+'&_='+Date.now()).then(function(r){return r.json();}).then(function(d){if(!d||!d.success)throw new Error((d&&d.error)||'auto-refresh control failed');return refreshRootDataAfterControl_(d.message||'Auto refresh updated');}).catch(function(e){toast('Auto-refresh error: '+errMsg(e),6500);if(btn){btn.disabled=false;btn.textContent=pause?'Pause sync':'Resume sync';}});}
 function rikiAuditSignedDifference_(r){r=r||{};var n=r.signedDiff!==undefined&&r.signedDiff!==null?Number(r.signedDiff||0):(Number(r.rawNet||0)-Number(r.archBanked||0));return Math.round(n*100)/100;}
 function rikiAuditDifferenceLabel_(r){var n=rikiAuditSignedDifference_(r),amount='$'+Math.abs(n).toFixed(2);return n>0?amount+' extra':(n<0?amount+' short':'match');}
 function rikiAuditDifferenceSummary_(tr){var results=(tr&&tr.results)||{};return ['Account 1','Account 2'].map(function(account){return account.replace('Account ','A')+': '+rikiAuditDifferenceLabel_(results[account]||{});}).join(' · ');}
@@ -2498,16 +2519,16 @@ card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class
 '<div class="asect"><div class="alabel account-label account-label-a1"><svg class="account-bank-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8"/><path d="M3 18h18M2 21h20"/><path d="M12 3 3 8h18L12 3z"/></svg><span>Account 1</span></div><div class="anums">'+
 '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a1b)+'">'+fmt(a1b)+'</div></div>'+
 '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono '+cc(a1PotentialExpiry)+'">'+fmt(a1PotentialExpiry)+'</div>'+(a1pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a1pc+')</div>':'')+'</div>'+
-'<div class="aitem"><div class="anum-lbl">Total</div><div class="account-dual-quote"><div class="account-quote-leg"><div class="account-quote-primary '+cc(a1TotalExpiry)+'">'+fmtS(a1TotalExpiry)+'</div><div class="account-quote-label">Expiry</div></div><div class="account-quote-slash">/</div><div class="account-quote-leg"><div class="account-quote-secondary">'+fmtS(a1Total3c)+'</div><div class="account-quote-label">3¢ Exit</div></div></div></div></div>'+
+'<div class="aitem"><div class="anum-lbl">Total</div><div class="account-dual-quote"><div class="account-quote-leg"><div class="account-quote-primary '+cc(a1TotalExpiry)+'">'+fmtS(a1TotalExpiry)+'</div><div class="account-quote-label">Expiry</div></div><div class="account-quote-slash">/</div>'+rikiExitAlternatives_(a1TotalExpiry,a1OpenContracts,'account')+'</div></div></div>'+
 '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p1,100)+'%;background:'+pc(p1)+'"></div></div><div class="ppct" style="color:'+pc(p1)+'">'+p1+'%</div></div>'+
 '<div class="ptgt">of '+fmt(g1)+' target</div></div>'+
 '<div class="asect"><div class="alabel account-label account-label-a2"><svg class="account-bank-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h18"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8"/><path d="M3 18h18M2 21h20"/><path d="M12 3 3 8h18L12 3z"/></svg><span>Account 2</span></div><div class="anums">'+
 '<div class="aitem"><div class="anum-lbl">Banked</div><div class="anum-val mono '+cc(a2b)+'">'+fmt(a2b)+'</div></div>'+
 '<div class="aitem"><div class="anum-lbl">Potential</div><div class="anum-val mono '+cc(a2PotentialExpiry)+'">'+fmt(a2PotentialExpiry)+'</div>'+(a2pc?'<div style="font-size:9px;font-weight:700;color:var(--text2);margin-top:2px">('+a2pc+')</div>':'')+'</div>'+
-'<div class="aitem"><div class="anum-lbl">Total</div><div class="account-dual-quote"><div class="account-quote-leg"><div class="account-quote-primary '+cc(a2TotalExpiry)+'">'+fmtS(a2TotalExpiry)+'</div><div class="account-quote-label">Expiry</div></div><div class="account-quote-slash">/</div><div class="account-quote-leg"><div class="account-quote-secondary">'+fmtS(a2Total3c)+'</div><div class="account-quote-label">3¢ Exit</div></div></div></div></div>'+
+'<div class="aitem"><div class="anum-lbl">Total</div><div class="account-dual-quote"><div class="account-quote-leg"><div class="account-quote-primary '+cc(a2TotalExpiry)+'">'+fmtS(a2TotalExpiry)+'</div><div class="account-quote-label">Expiry</div></div><div class="account-quote-slash">/</div>'+rikiExitAlternatives_(a2TotalExpiry,a2OpenContracts,'account')+'</div></div></div>'+
 '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
 '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+
-'<div class="wtot"><div class="grand-total-row"><div class="grand-total-title-wrap"><div class="grand-total-title">Grand Total</div><div class="grand-total-pc">'+grandCalls+'C / '+grandPuts+'P</div></div><div class="grand-dual-quote"><div class="grand-quote-leg"><div class="grand-quote-primary '+cc(grandExpiry)+'">'+fmtS(grandExpiry)+'</div><div class="grand-quote-label">Expiry</div></div><div class="grand-quote-slash">/</div><div class="grand-quote-leg"><div class="grand-quote-secondary">'+fmtS(grandNet)+'</div><div class="grand-quote-label">3¢ Exit</div></div></div></div></div>'+
+'<div class="wtot"><div class="grand-total-row"><div class="grand-total-title-wrap"><div class="grand-total-title">Grand Total</div><div class="grand-total-pc">'+grandCalls+'C / '+grandPuts+'P</div></div><div class="grand-dual-quote"><div class="grand-quote-leg"><div class="grand-quote-primary '+cc(grandExpiry)+'">'+fmtS(grandExpiry)+'</div><div class="grand-quote-label">Expiry</div></div><div class="grand-quote-slash">/</div>'+rikiExitAlternatives_(grandExpiry,openContractsTotal,'grand')+'</div></div></div>'+
 hedgeRow;
 dc.appendChild(card);
 });
@@ -2515,21 +2536,22 @@ var dcp=ge('dcp');dcp.innerHTML='';
 var bp=d.accountBuyingPower||{};
 if(bp.accounts&&bp.accounts.length){
 var bpc=document.createElement('div');bpc.className='buying-power-card';
-var availableTotal=bp.accounts.reduce(function(sum,a){return sum+money(a.availableFunds||0);},0);
-var bph='<div class="bp-head"><div><div class="bp-title">Available Funds</div><div class="bp-sub">Actual Schwab account values</div></div><div class="bp-value">'+fmtS(availableTotal)+'</div></div><div class="bp-grid">';
+var availableTotal=bp.accounts.every(function(a){return a.availableFunds!==null&&a.availableFunds!==undefined;})?bp.accounts.reduce(function(sum,a){return sum+money(a.availableFunds);},0):null;
+var bph='<div class="bp-head"><div><div class="bp-title">Available Funds</div><div class="bp-sub">Actual Schwab account values</div></div><div class="bp-value">'+rikiPmMoney_(availableTotal)+'</div></div><div class="bp-grid">';
 bp.accounts.forEach(function(a){
-bph+='<div class="bp-account"><div class="bp-label">'+escHtml(a.account||'Account')+'</div><div class="bp-value">'+fmtS(a.availableFunds||0)+'</div></div>';
+bph+='<div class="bp-account"><div class="bp-label">'+escHtml(a.account||'Account')+(a.isPortfolioMargin===true?' · PM':a.isPortfolioMargin===false?' · Regular':'')+'</div><div class="bp-value '+(Number(a.availableFunds)<0?'neg':'')+'">'+rikiPmMoney_(a.availableFunds)+'</div><div class="bp-line">Maintenance '+rikiPmMoney_(a.maintenanceRequirement)+'</div><div class="bp-line">Net liquidation '+rikiPmMoney_(a.liquidationValue)+'</div></div>';
 });
 bph+='</div>';
 bpc.innerHTML=bph;dcp.appendChild(bpc);
 }
+rikiPmRenderPanel_(dcp,d);
 var tickerRows=(d.tickerBreakdown||[]).slice().sort(function(a,b){function expiryTotal_(r){r=r||{};var open=Number(r.openCalls||0)+Number(r.openPuts||0);return money(r.banked||0)+money(r.potential||0)+(3.02*open);}return expiryTotal_(b)-expiryTotal_(a);});
 if(tickerRows.length){
 var scope=document.createElement('div');scope.className='ticker-scope';
 var configured=(d.strategyConfig&&d.strategyConfig.targetTickers)||tickerRows.map(function(x){return x.ticker;});
 var configuredLookup={};configured.forEach(function(t){configuredLookup[String(t||'').trim().toUpperCase()]=true;});
 var totalTickerMargin=tickerRows.reduce(function(sum,row){var t=String(row.ticker||'').trim().toUpperCase();return sum+(configuredLookup[t]?Math.max(0,money(row.maintenanceRequirement||0)):0);},0);
-var deployedHead=totalTickerMargin>0?'<div class="ticker-scope-deployed"><span>Option margin deployed</span><b>'+fmtS(totalTickerMargin)+'</b></div>':'';
+var deployedHead=totalTickerMargin>0?'<div class="ticker-scope-deployed"><span>Reported position margin · PM excluded</span><b>'+fmtS(totalTickerMargin)+'</b></div>':'';
 scope.innerHTML='<div class="ticker-scope-head"><div><div class="ticker-scope-title">Ticker Detail</div><div class="ticker-scope-sub">Sorted by Total · click a ticker for weekly detail</div></div><div class="ticker-scope-head-right">'+deployedHead+'<span class="pill pb">'+tickerRows.length+'</span></div></div>';
 tickerRows.forEach(function(r){
 var item=document.createElement('div');item.className='ticker-item';
@@ -2537,9 +2559,9 @@ var banked=money(r.banked),openCalls=Number(r.openCalls||0),openPuts=Number(r.op
 var maintReq=Math.max(0,money(r.maintenanceRequirement||0));
 var maintPct=totalTickerMargin>0?(maintReq/totalTickerMargin*100):0;
 var showMargin=maintReq>0||Number(r.maintenanceContracts||0)>0;
-var marginMetric=showMargin?'<div><div class="ticker-metric">Margin used</div><div class="ticker-value">'+fmtS(maintReq)+' <span class="ticker-margin-pct">('+maintPct.toFixed(1)+'%)</span></div></div>':'';
+var marginMetric=showMargin?'<div><div class="ticker-metric">Reported margin</div><div class="ticker-value">'+fmtS(maintReq)+(rikiPmAny_(d)?' + PM N/A':'')+' <span class="ticker-margin-pct">('+maintPct.toFixed(1)+'%)</span></div></div>':'';
 item.innerHTML='<div class="ticker-summary'+(showMargin?'':' no-margin')+'" role="button" tabindex="0" aria-expanded="false">'+
-'<div><div class="ticker-name">'+escHtml(r.ticker)+'</div><div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
+'<div><div class="ticker-name">'+escHtml(r.ticker)+'</div>'+rikiPmTickerBadge_(r.ticker,d)+'<div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
 '<div><div class="ticker-metric">Banked</div><div class="ticker-value '+cc(banked)+'">'+fmtS(banked)+'</div></div>'+
 '<div><div class="ticker-metric">Potential</div><div class="ticker-value '+cc(potential)+'">'+fmtS(potential)+'</div></div>'+
 '<div><div class="ticker-metric">Total</div><div class="ticker-value '+cc(total)+'">'+fmtS(total)+'</div></div>'+marginMetric+
@@ -2552,15 +2574,15 @@ var detail=item.querySelector('.ticker-detail');
 var maintContracts=Number(r.maintenanceContracts||0);
 var maintPer=money(r.maintenancePerContract||0);
 var maintAccounts=Array.isArray(r.maintenanceAccounts)?r.maintenanceAccounts:[];
-var maintPerText=maintContracts>0?fmtS(maintPer)+' / ct':'— / ct';
-var maintHtml=showMargin?'<div class="ticker-maint"><div class="ticker-maint-head"><div><div class="ticker-maint-title">RiKi option maintenance</div><div class="ticker-maint-account-sub">Schwab position maintenance · equity excluded</div></div><div><div class="ticker-maint-total">'+fmtS(maintReq)+'</div><div class="ticker-maint-sub">'+maintContracts+' short ct · '+maintPerText+'</div></div></div><div class="ticker-maint-grid">':'';
+var maintPerText=rikiPmAny_(d)?'PM not allocated':maintContracts>0?fmtS(maintPer)+' / ct':'— / ct';
+var maintHtml=showMargin?'<div class="ticker-maint"><div class="ticker-maint-head"><div><div class="ticker-maint-title">RiKi option maintenance</div><div class="ticker-maint-account-sub">Reported position maintenance · PM ticker values unavailable</div></div><div><div class="ticker-maint-total">'+fmtS(maintReq)+(rikiPmAny_(d)?' + PM unavailable':'')+'</div><div class="ticker-maint-sub">'+maintContracts+' short ct · '+maintPerText+'</div></div></div><div class="ticker-maint-grid">':'';
 if(showMargin)maintAccounts.forEach(function(a){
 var acctContracts=Number(a.shortContracts||0);
 var acctPerText=acctContracts>0?fmtS(a.maintenancePerContract||0)+' / ct':'— / ct';
-maintHtml+='<div class="ticker-maint-account"><div class="ticker-maint-account-name">'+escHtml(a.account||'Account')+'</div><div class="ticker-maint-account-value">'+fmtS(a.maintenanceRequirement||0)+'</div><div class="ticker-maint-account-sub">'+acctContracts+' short ct · '+acctPerText+'</div></div>';
+maintHtml+='<div class="ticker-maint-account"><div class="ticker-maint-account-name">'+escHtml(a.account||'Account')+'</div><div class="ticker-maint-account-value">'+rikiPmMarginLabel_(a.account,a.maintenanceRequirement,d)+'</div><div class="ticker-maint-account-sub">'+acctContracts+' short ct · '+(rikiPmType_(a.account,d)===false?acctPerText:'— / ct')+'</div></div>';
 });
 if(showMargin)maintHtml+='</div></div>';
-detail.innerHTML=maintHtml;
+detail.innerHTML=maintHtml+rikiPmRiskDetail_(r.ticker,d);
 (r.expiries||[]).filter(function(x){return ['This Week','Next Week','Week After'].indexOf(x.weekLabel)>=0;}).forEach(function(x){
 var week=document.createElement('div');week.className='ticker-week';
 var body='<div class="ticker-week-title"><strong>'+escHtml(x.weekLabel||x.expiry)+'</strong><span>'+escHtml(x.expiry)+' · '+Number(x.openCalls||0)+'C/'+Number(x.openPuts||0)+'P</span></div>'+
@@ -2571,12 +2593,12 @@ var accountWeekMargin=Math.max(0,money(a.maintenanceRequirement||0));
 var accountWeekMarginPct=totalTickerMargin>0?(accountWeekMargin/totalTickerMargin*100):0;
 body+='<div class="ticker-account-row"><div class="ticker-account-name">'+escHtml(a.account||'')+'<div class="ticker-account-pc">'+Number(a.openCalls||0)+'C / '+Number(a.openPuts||0)+'P · '+Number(a.contracts||0)+' ct</div></div>'+
 '<b class="'+cc(a.banked)+'">'+fmtS(a.banked||0)+'</b><b class="'+cc(accountPotential)+'">'+fmtS(accountPotential)+'</b>'+
-'<div class="ticker-total-cell"><div class="ticker-total-value '+cc(at)+'">'+fmtS(at)+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(accountWeekMargin)+' ('+accountWeekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
+'<div class="ticker-total-cell"><div class="ticker-total-value '+cc(at)+'">'+fmtS(at)+'</div><div class="ticker-row-margin">Margin <strong>'+rikiPmMarginLabel_(a.account,accountWeekMargin,d)+(rikiPmType_(a.account,d)===false?' ('+accountWeekMarginPct.toFixed(1)+'%)':'')+'</strong></div></div></div>';
 });
 var weekMargin=Math.max(0,money(x.maintenanceRequirement||0));
 var weekMarginPct=totalTickerMargin>0?(weekMargin/totalTickerMargin*100):0;
 var tickerWeekOpen=Number(x.openCalls||0)+Number(x.openPuts||0),tickerWeekPotential=money(x.potential||0)+(3.02*tickerWeekOpen),tickerWeekTotal=money(x.banked||0)+tickerWeekPotential;
-body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(tickerWeekPotential)+'</b><div class="ticker-total-cell"><div class="ticker-total-value">'+fmtS(tickerWeekTotal)+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(weekMargin)+' ('+weekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
+body+='<div class="ticker-account-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:8px"><div class="ticker-account-name">Ticker Total<div class="ticker-account-pc">'+Number(x.openCalls||0)+'C / '+Number(x.openPuts||0)+'P</div></div><b>'+fmtS(x.banked||0)+'</b><b>'+fmtS(tickerWeekPotential)+'</b><div class="ticker-total-cell"><div class="ticker-total-value">'+fmtS(tickerWeekTotal)+'</div><div class="ticker-row-margin">Margin <strong>'+fmtS(weekMargin)+(rikiPmAny_(d)?' + PM unavailable':'')+' ('+weekMarginPct.toFixed(1)+'%)</strong></div></div></div>';
 week.innerHTML=body;detail.appendChild(week);
 });
 // Consolidated by default; click a ticker scorecard to open weekly detail.
@@ -2939,9 +2961,9 @@ var handoff=d.latestEngineHandoff;if(handoff){var hc=document.createElement('div
 if(engine==='legacy'){var auto=(d.legacyAutoRefresh||{paused:false}),ac=document.createElement('div');ac.className='engine-status-card';ac.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Legacy sync</div><div class="engine-status-sub">Runs the aligned 30-minute Legacy accounting cycle during market hours. Manual refresh, the 4:35 close, weekly audit, and Churner remain independent.</div></div><span class="engine-mode-badge '+(auto.paused?'draining':'active')+'">'+(auto.paused?'PAUSED':'RUNNING')+'</span></div><div class="engine-actions"><button class="abtn '+(auto.paused?'':'red')+'" onclick="toggleLegacyAutoRefresh('+(auto.paused?'false':'true')+',this)">'+(auto.paused?'Resume sync':'Pause sync')+'</button></div>';nc.appendChild(ac);}
 var cfg=engineConfig_(engine),targets=Array.isArray(cfg.targetTickers)?cfg.targetTickers:[],exclusions=Array.isArray(cfg.exclusions)?cfg.exclusions:[],cfgCard=document.createElement('div');cfgCard.className='scard';var options=targets.map(function(t){return '<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join(''),chips=targets.length?'<div class="strategy-chipline">'+targets.map(function(t){return '<span class="strategy-chip">'+escHtml(t)+'</span>';}).join('')+'</div>':'<div class="strategy-hint">No '+engine+' tickers configured.</div>';
 cfgCard.innerHTML='<div class="srow" style="align-items:flex-start"><div><div class="slbl">'+engineLabel+' Tickers</div><div class="ssub">Only new '+engineLabel+' STOs are admitted from this independent list. Persisted owned contracts remain eligible for BTC/expiry after removal.</div>'+chips+'</div><span class="pill '+(engine==='churner'?'pb':'pg')+'">'+targets.length+'</span></div><div class="strategy-editor"><input id="'+engine+'-tickers-input" class="strategy-field" value="'+escHtml(targets.join(', '))+'" placeholder="'+(engine==='churner'?'SOXX, META':'MSTR, SOXX, META')+'"><div class="strategy-actions"><button class="abtn" onclick="saveEngineTickers(\''+engine+'\',this)">Save Tickers</button></div></div><div class="srow"><div><div class="slbl">Add '+engineLabel+' Exclusion</div><div class="ssub">Ticker + exact option expiration</div></div></div><div class="strategy-editor"><div class="strategy-grid"><select id="'+engine+'-ex-ticker" class="strategy-field">'+options+'</select><input id="'+engine+'-ex-expiry" class="strategy-field" type="date"><input id="'+engine+'-ex-note" class="strategy-field wide" placeholder="Optional note"></div><div class="strategy-actions"><button class="abtn" onclick="addEngineExclusion(\''+engine+'\',this)">Add Exclusion</button></div></div>';exclusions.forEach(function(x){var row=document.createElement('div');row.className='strategy-ex-row';row.innerHTML='<div class="strategy-ex-main"><div class="strategy-ex-title">'+escHtml(x.ticker)+' · '+escHtml(x.expiry)+'</div><div class="strategy-ex-note">'+escHtml(x.note||'No note')+'</div></div>';var b=document.createElement('button');b.className='strategy-remove';b.textContent='Remove';b.onclick=function(){removeEngineExclusion(engine,String(x.ticker||''),String(x.expiry||''),b);};row.appendChild(b);cfgCard.appendChild(row);});nc.appendChild(cfgCard);
-var nickelMasterOn=String(d.nickelCloserStatus||'OFF').toUpperCase()==='ON',masterCard=document.createElement('div');masterCard.className='engine-status-card';masterCard.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Nickel Closer</div><div class="engine-status-sub">Off by default. Enable only when you want scheduled Legacy syncs to submit eligible 3¢ buy-to-close orders. Expiry controls remain independent.</div></div><span class="engine-mode-badge '+(nickelMasterOn?'active':'paused')+'">'+(nickelMasterOn?'ON':'OFF')+'</span></div><div class="engine-actions"><div class="tog'+(nickelMasterOn?' on':'')+'" onclick="setNickelCloserMaster('+(nickelMasterOn?'false':'true')+',this)"><div class="tog-track"></div><div class="tog-thumb"></div></div></div>';nc.appendChild(masterCard);
-if(engine==='churner'){var h=d.churnerOpenLotsHealth||{},health=document.createElement('div');health.className='engine-status-card';health.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name" style="color:var(--churner2)">ChurnerOpenLots Health</div><div class="engine-status-sub">The Positions tab and engine counts now read this sheet directly—not a saved Churner snapshot.</div></div><span class="engine-mode-badge '+(String(h.status||'CLEAN')==='CLEAN'?'active':'draining')+'">'+escHtml(h.status||'CLEAN')+'</span></div><div class="engine-health-grid"><div class="engine-health-cell"><div class="engine-health-label">Expired unresolved</div><div class="engine-health-value">'+Number(h.expiredUnresolvedRows||0)+'</div></div><div class="engine-health-cell"><div class="engine-health-label">July 17/24 Legacy artifacts</div><div class="engine-health-value">'+Number(h.legacyArtifactCandidateContracts||0)+'</div></div></div><div class="engine-actions"><button class="abtn" onclick="reconcileChurnerOpenLots(this)">Reconcile Open Lots</button>'+(Number(h.legacyArtifactCandidateRows||0)>0?'<button class="abtn red" onclick="cleanupMisclassifiedChurnerLots(this)">Remove Legacy Artifacts</button>':'')+'</div>';nc.appendChild(health);}else{var archRows=d.archRows||[],ncDisabled=d.nickelCloserDisabled||[],weeks=[];['THIS WEEK','NEXT WEEK'].forEach(function(label,i){for(var r=0;r<archRows.length;r++){var raw=String(archRows[r][0]||'');if(raw.toUpperCase().indexOf(label)>=0){var m=raw.match(/(\d{4}-\d{2}-\d{2})/);if(m)weeks.push({expiry:m[1],label:i===0?'This Week':'Next Week'});break;}}});if(weeks.length){var card=document.createElement('div');card.className='scard';weeks.forEach(function(w){var enabled=ncDisabled.indexOf(w.expiry)<0,row=document.createElement('div');row.className='srow';row.innerHTML='<div><div class="slbl">Expiry closer · '+w.label+'</div><div class="ssub">'+w.expiry+(nickelMasterOn?'':' · Master OFF')+'</div></div><div class="tog'+(enabled?' on':'')+'" onclick="toggleNickelCloser(\''+w.expiry+'\')"><div class="tog-track"></div><div class="tog-thumb"></div></div>';card.appendChild(row);});nc.appendChild(card);}}
-var unlock=document.createElement('div');unlock.className='scard';unlock.innerHTML='<div class="srow"><div><div class="slbl" style="color:var(--red)">Recovery control</div><div class="ssub">Restore Nickel Closer after a protective lock. Accounting ownership is never changed.</div></div><button class="abtn red" id="manual-unlock-btn" onclick="doManualUnlockRikiEmergency(this)">Restore</button></div>';nc.appendChild(unlock);renderCancelSection();
+rikiNickelRenderManual_(nc,d);
+if(engine==='churner'){var h=d.churnerOpenLotsHealth||{},health=document.createElement('div');health.className='engine-status-card';health.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name" style="color:var(--churner2)">ChurnerOpenLots Health</div><div class="engine-status-sub">The Positions tab and engine counts now read this sheet directly—not a saved Churner snapshot.</div></div><span class="engine-mode-badge '+(String(h.status||'CLEAN')==='CLEAN'?'active':'draining')+'">'+escHtml(h.status||'CLEAN')+'</span></div><div class="engine-health-grid"><div class="engine-health-cell"><div class="engine-health-label">Expired unresolved</div><div class="engine-health-value">'+Number(h.expiredUnresolvedRows||0)+'</div></div><div class="engine-health-cell"><div class="engine-health-label">July 17/24 Legacy artifacts</div><div class="engine-health-value">'+Number(h.legacyArtifactCandidateContracts||0)+'</div></div></div><div class="engine-actions"><button class="abtn" onclick="reconcileChurnerOpenLots(this)">Reconcile Open Lots</button>'+(Number(h.legacyArtifactCandidateRows||0)>0?'<button class="abtn red" onclick="cleanupMisclassifiedChurnerLots(this)">Remove Legacy Artifacts</button>':'')+'</div>';nc.appendChild(health);}
+renderCancelSection();
 var tallySection=ge('tally-section');tallySection.innerHTML='';var tr=d.tallyResult||d.legacyWeeklyAudit;
 if(tr&&engine==='legacy'&&!isLegacyAuditDismissed_(tr)){
 var tc=document.createElement('div');tc.className='scard';var st=String(tr.status||(tr.pass?'PASS':'FAIL')),accepted=st==='PASS'||st==='PASS_WITH_OVERLAP',sr=document.createElement('div');sr.className='srow';var left=document.createElement('div'),diffSummary=rikiAuditDifferenceSummary_(tr),resolution=tr.gainResolution||null;
@@ -3421,6 +3443,66 @@ try{ localStorage.setItem('riki_schwab_auth_seen_at', String(e.data.at || '')); 
 });
 // Start
 initApp();
+// RIKI_DASHBOARD_PM_MANUAL_CLOSER_V1_0_0_2026_09_22
+var RIKI_PM_SETTINGS_LOCAL=null,RIKI_NICKEL_BUSY=false;
+function rikiExitEstimate_(expiryTotal,openContracts,cents){
+  var totalCents=Math.round(Number(expiryTotal)*100),qty=Number(openContracts);
+  return (totalCents-Math.round(qty*(cents===0?0:cents*100+2)))/100;
+}
+function rikiExitAlternatives_(total,qty,kind){
+  return '<div class="'+kind+'-quote-leg exit-alternatives">'+[1,2].map(function(c){return '<div><span class="'+kind+'-quote-secondary">'+fmtS(rikiExitEstimate_(total,qty,c))+'</span><span class="exit-note"> '+c+'¢ exit</span></div>';}).join('')+'</div>';
+}
+function rikiPmType_(account,d){
+  var label=String(account||'').replace(/^A(\d+)$/,'Account $1'),rows=((d||DATA||{}).accountBuyingPower||{}).accounts||[];
+  var row=rows.filter(function(a){return a.account===label;})[0];return row&&typeof row.isPortfolioMargin==='boolean'?row.isPortfolioMargin:null;
+}
+function rikiPmMoney_(n){return n===null||n===undefined?'Unavailable':fmtS(n);}
+function rikiPmAny_(d){return (((d||DATA||{}).accountBuyingPower||{}).accounts||[]).some(function(a){return a.isPortfolioMargin===true;});}
+function rikiPmMarginLabel_(account,value,d){var pm=rikiPmType_(account,d);return pm===true?'PM · unavailable':pm===null?'Unavailable':fmtS(value||0);}
+function rikiPmRows_(ticker,d){return (((d||DATA||{}).pmRisk||{}).rows||[]).filter(function(r){return r.ticker===ticker&&r.isPortfolioMargin===true;});}
+function rikiPmSide_(row,side,risk){
+  var p=row[side+'Pnr'],e=row[side+'Epr'],age=Date.now()-Number(row.quoteTime||0),snapshotAge=Date.now()-Number(risk.capturedMs||0);
+  if(!row.valid||e===null||e===undefined||!row.quoteTime||age>900000||age< -60000||snapshotAge>900000)return {tone:'unknown',text:'Unknown / stale'};
+  if(p===null)return {tone:'unknown',text:'No crossing in model'};
+  var gap=Math.abs(p)-Math.abs(e);return {tone:gap<=0?'risk':gap<10?'warn':'outside',text:(side==='down'?'−':'+')+p.toFixed(1)+'% · '+(gap>=0?'+':'')+gap.toFixed(1)+' pp'};
+}
+function rikiPmTickerBadge_(ticker,d){var risk=d.pmRisk||{},rows=rikiPmRows_(ticker,d);if(!rows.length)return '';
+  return '<div class="pm-badges">'+rows.map(function(r){var a=rikiPmSide_(r,'down',risk),b=rikiPmSide_(r,'up',risk);return '<span class="pm-dot '+a.tone+'" title="Estimated downside PNR; not broker margin"></span><span class="pm-dot '+b.tone+'" title="Estimated upside PNR; not broker margin"></span><span>est. PNR ↓ / ↑</span>';}).join('')+'</div>';
+}
+function rikiPmRiskDetail_(ticker,d){var risk=d.pmRisk||{},rows=rikiPmRows_(ticker,d);return rows.map(function(r){var a=rikiPmSide_(r,'down',risk),b=rikiPmSide_(r,'up',risk);
+  return '<div class="pm-risk-detail"><b>'+escHtml(r.account)+' · estimated PNR</b><div class="pm-risk-line '+a.tone+'">Down '+a.text+' · EPR '+(r.downEpr===null?'—':r.downEpr+'%')+'</div><div class="pm-risk-line '+b.tone+'">Up '+b.text+' · EPR '+(r.upEpr===null?'—':r.upEpr+'%')+'</div><div class="ssub">Intrinsic loss at EPR ↓ '+rikiPmMoney_(r.downLossAtEpr)+' / ↑ '+rikiPmMoney_(r.upLossAtEpr)+'<br>Options only · 100-share contracts · 10 pp warning buffer. Green means outside this estimated buffer, not safe to sell.<br>EPR entered '+escHtml(r.eprUpdatedAt||'not set')+'</div></div>';
+}).join('');}
+function rikiPmPost_(action,params){var body=new URLSearchParams();body.set('action',action);Object.keys(params||{}).forEach(function(k){body.set(k,String(params[k]));});return fetch(BACKEND,{method:'POST',body:body,cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();});}
+function rikiPmRenderPanel_(host,d){
+  var risk=d.pmRisk||{},settings=RIKI_PM_SETTINGS_LOCAL||risk.settings||{},tickers=((d.strategyConfig||{}).targetTickers||settings.tickers||[]).slice(),box=document.createElement('div');box.className='pm-panel';
+  box.innerHTML='<div class="bp-head"><div><div class="bp-title">Portfolio risk estimates</div><div class="bp-sub">Options-only intrinsic model · PM account only · 10 pp warning buffer</div></div><button class="abtn" id="pm-refresh">Refresh risk</button></div><div class="ssub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+' · excludes shares, time value and pending orders. EPR is manually maintained.</div><details class="pm-settings"><summary>Set EPR by ticker</summary><div class="pm-controls"><label>Ticker<select id="pm-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return '<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label><label>Down EPR %<input id="pm-down" type="number" min="0.01" max="100" step="0.01" placeholder="50"></label><label>Up EPR %<input id="pm-up" type="number" min="0.01" max="1000" step="0.01" placeholder="50"></label><button class="abtn" id="pm-save">Save EPR</button></div><div class="ssub">Enter positive magnitudes. EPR 50% gives a warning below estimated PNR 60%. This cushion is a heuristic, not a guarantee.</div></details>';
+  host.appendChild(box);
+  box.querySelector('#pm-ticker').onchange=function(){var cfg=(settings.epr||{})[this.value]||{};box.querySelector('#pm-down').value=cfg.down||'';box.querySelector('#pm-up').value=cfg.up||'';};
+  box.querySelector('#pm-refresh').onclick=function(){var btn=this;btn.disabled=true;btn.textContent='Reading…';fetch(BACKEND+'?action=pmRiskRefresh&_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){if(!j.success)throw Error(j.error||'Risk refresh failed');DATA.pmRisk=j.pmRisk;DATA.accountBuyingPower=j.accountBuyingPower;RIKI_PM_SETTINGS_LOCAL=j.pmRisk.settings;saveCache(DATA);renderAll(DATA);}).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;btn.textContent='Refresh risk';});};
+  box.querySelector('#pm-save').onclick=function(){var btn=this;btn.disabled=true;rikiPmPost_('pmSaveEpr',{ticker:box.querySelector('#pm-ticker').value,down:box.querySelector('#pm-down').value,up:box.querySelector('#pm-up').value}).then(function(j){if(!j.success)throw Error(j.error||'Save failed');RIKI_PM_SETTINGS_LOCAL=j.settings;var rr=(DATA.pmRisk||{}).rows||[];rr.forEach(function(r){var e=j.settings.epr[r.ticker]||{};r.downEpr=e.down||null;r.upEpr=e.up||null;r.eprUpdatedAt=e.updatedAt||'';r.downLossAtEpr=null;r.upLossAtEpr=null;});if(DATA.pmRisk)DATA.pmRisk.settings=j.settings;saveCache(DATA);renderAll(DATA);toast('EPR saved. Refresh risk to update stress losses.');}).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;});};
+}
+function rikiNickelRenderManual_(host,d){
+  var tickers=((d.strategyConfig||{}).targetTickers||[]),accounts=(d.accountBuyingPower||{}).accounts||[];
+  var card=document.createElement('div');card.className='engine-status-card';card.innerHTML='<div class="engine-status-head"><div><div class="engine-status-name">Nickel Closer</div><div class="engine-status-sub">One ticker per run · this/next weekly expiry · independent of refresh. Off by default.</div></div><span class="engine-mode-badge paused">MANUAL</span></div><div class="pm-controls"><label>Ticker<select id="nc-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return '<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label><label>Limit<select id="nc-cents"><option value="1">1¢</option><option value="2">2¢</option><option value="3">3¢</option></select></label><label>Account<select id="nc-account"><option value="">Select account</option>'+accounts.map(function(a){return '<option value="'+escHtml(a.account)+'">'+escHtml(a.account)+(a.isPortfolioMargin===true?' · PM':a.isPortfolioMargin===false?' · Regular':'')+'</option>';}).join('')+'<option value="BOTH">Both accounts</option></select></label></div><div class="engine-actions"><label class="nc-enable"><input id="nc-enabled" type="checkbox"> Enable this run</label><button class="abtn" id="nc-run" disabled>Run Closer</button><button class="abtn" id="nc-check">Check last run</button></div><div class="ssub">Eligible quotes only. Existing BTC orders are skipped. Up to 20 orders per run; unfilled orders from this run are canceled. Submitted is not filled.</div><pre class="nc-result" id="nc-result" aria-live="polite"></pre>';
+  host.appendChild(card);var run=card.querySelector('#nc-run'),check=card.querySelector('#nc-check'),enabled=card.querySelector('#nc-enabled');
+  function update(){run.disabled=RIKI_NICKEL_BUSY||!enabled.checked||!card.querySelector('#nc-ticker').value||!card.querySelector('#nc-account').value;}
+  ['#nc-enabled','#nc-ticker','#nc-account','#nc-cents'].forEach(function(sel){card.querySelector(sel).onchange=update;});
+  function show(j){var lines=[j.error||j.message||'Finished'];(j.orders||[]).forEach(function(o){lines.push(o.account+' '+o.symbol+' · '+o.status+' · filled '+Number(o.filledQuantity||0)+'/'+o.qty);});(j.skipped||[]).forEach(function(o){lines.push('Skipped: '+(o.symbol||'')+' '+o.reason);});card.querySelector('#nc-result').textContent=lines.join('\n');}
+  function call(action,params){RIKI_NICKEL_BUSY=true;run.disabled=true;check.disabled=true;enabled.checked=false;card.querySelector('#nc-result').textContent='Running…';
+    rikiPmPost_(action,params).then(show).catch(function(e){card.querySelector('#nc-result').textContent='Response unavailable. Check last run / Schwab before retrying. '+errMsg(e);}).finally(function(){RIKI_NICKEL_BUSY=false;check.disabled=false;update();});}
+  run.onclick=function(){if(run.disabled)return;var id=typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);call('nickelRunSelected',{ticker:card.querySelector('#nc-ticker').value,cents:card.querySelector('#nc-cents').value,account:card.querySelector('#nc-account').value,enabled:'1',requestId:id});};
+  check.onclick=function(){call('nickelCheckLast',{});};
+}
+
+// Age risk indicators locally; no broker request and no full-dashboard redraw.
+setInterval(function(){
+  if(typeof DATA==='undefined'||!DATA||!DATA.pmRisk)return;
+  var risk=DATA.pmRisk,rows=risk.rows||[];
+  if(Date.now()-Number(risk.capturedMs||0)>900000||rows.some(function(r){return r.isPortfolioMargin===true&&Date.now()-Number(r.quoteTime||0)>900000;})){
+    document.querySelectorAll('.pm-dot').forEach(function(el){el.className='pm-dot unknown';el.title='Risk snapshot stale. Refresh risk.';});
+    document.querySelectorAll('.pm-risk-line').forEach(function(el){el.className='pm-risk-line unknown';if(el.textContent.indexOf('STALE')<0)el.textContent+=' · STALE — refresh risk';});
+  }
+},60000);
 </script>
 </body>
 </html>

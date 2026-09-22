@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- RIKI_DASHBOARD_PM_PUBLISH_MOBILE_V1_2_0_2026_09_22 -->
+<!-- RIKI_DASHBOARD_ACCOUNT_EXIT_LAYOUT_V1_2_1_2026_09_22 -->
 <!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
 <!-- RIKI_INDEX_FINTECH_LEAN_STATUS_BANNERS_V5_1_7_VERIFIED -->
 <!-- RIKI_INDEX_MATCHED_WARNING_FONT_V5_1_8_VERIFIED -->
@@ -991,6 +991,13 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
  .account-dual-quote .account-quote-secondary{font-size:10px;}
  .grand-dual-quote .grand-quote-secondary{font-size:11px;}
 }
+
+/* Account exit estimates: a separate secondary row at every screen size. */
+.account-dual-quote{flex-direction:column;align-items:flex-start;gap:5px;}
+.account-dual-quote>.account-quote-slash{display:none;}
+.account-dual-quote>.account-quote-leg:first-child{flex-shrink:0;}
+.account-dual-quote>.exit-alternatives{display:flex;flex-direction:row;flex-wrap:wrap;align-items:baseline;justify-content:flex-start;gap:4px 12px;text-align:left;}
+.account-dual-quote>.exit-alternatives>div{display:inline-flex;align-items:baseline;gap:3px;line-height:1.2;}
 </style>
 </head>
 <body>
@@ -3456,7 +3463,7 @@ try{ localStorage.setItem('riki_schwab_auth_seen_at', String(e.data.at || '')); 
 });
 // Start
 initApp();
-// RIKI_DASHBOARD_PM_PUBLISH_MOBILE_V1_2_0_2026_09_22
+// RIKI_DASHBOARD_ACCOUNT_EXIT_LAYOUT_V1_2_1_2026_09_22
 var RIKI_PM_SETTINGS_LOCAL=null,RIKI_NICKEL_BUSY=false;
 function rikiExitEstimate_(expiryTotal,openContracts,cents){
   var totalCents=Math.round(Number(expiryTotal)*100),qty=Number(openContracts);

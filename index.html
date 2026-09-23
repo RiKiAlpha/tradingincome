@@ -3527,6 +3527,360 @@ setInterval(function(){
     document.querySelectorAll('.pm-risk-line').forEach(function(el){el.className='pm-risk-line unknown';if(el.textContent.indexOf('STALE')<0)el.textContent+=' · STALE — refresh risk';});
   }
 },60000);
+   /* ============================================================================
+   RIKI_PM_RISK_LAB_FRONTEND_V2_0_1_FAILSAFE_2026_09_23
+   Drop-in override for Pasted text(20260923-143302).txt
+   Paste immediately BEFORE the final closing script tag, after the existing PM block.
+   It replaces only the PM risk rendering/what-if logic. Nickel Closer is untouched.
+   ============================================================================ */
+
+(function(){
+'use strict';
+
+var RIKI_RISKLAB_VERSION='RIKI_PM_RISK_LAB_FRONTEND_V2_0_1_FAILSAFE_2026_09_23';
+var RIKI_RISKLAB_STATE={account:'',ticker:'',side:'CALL',expiry:'',strike:'',qty:1};
+var RR_PROD_RENDER=window.rikiPmRenderPanel_;
+var RR_PROD_ROWS=window.rikiPmRows_;
+var RR_PROD_BADGE=window.rikiPmTickerBadge_;
+var RR_PROD_DETAIL=window.rikiPmRiskDetail_;
+
+function rrV2Ready(d){
+  var risk=((d||window.DATA||{}).pmRisk)||{};
+  return Array.isArray(risk.accounts) &&
+         risk.accounts.length>0 &&
+         risk.localModel &&
+         risk.localModel.accounts &&
+         typeof risk.localModel.accounts==='object';
+}
+function rrFallback(fn,args,label){
+  try{
+    if(typeof fn==='function') return fn.apply(window,args);
+  }catch(e){
+    try{console.error('RiKi production fallback failed · '+label,e);}catch(x){}
+  }
+  return label==='render' ? undefined : '';
+}
+
+
+function rrNum(v){var n=Number(v);return isFinite(n)?n:null;}
+function rrPct(v){return v===null||v===undefined||!isFinite(Number(v))?'—':(Number(v)*100).toFixed(1)+'%';}
+function rrMoney(v){return v===null||v===undefined||!isFinite(Number(v))?'—':fmtS(Number(v));}
+function rrTone(util){if(util===null||util===undefined||!isFinite(Number(util)))return'unknown';return util>.75?'risk':util>=.65?'warn':'outside';}
+function rrToneText(t){return t==='risk'?'RED':t==='warn'?'YELLOW':t==='outside'?'GREEN':'UNKNOWN';}
+function rrPnrTone(gap){return gap===null||gap===undefined||!isFinite(Number(gap))?'unknown':Number(gap)<=0?'risk':Number(gap)<10?'warn':'outside';}
+function rrClampMove(m){return Math.max(-.95,m);}
+
+function rrStressPnl(components,spxMove,uniform){
+  var pnl=0;
+  (components||[]).forEach(function(c){
+    var move=uniform?spxMove:spxMove*Number(c.beta==null?1:c.beta);
+    move=rrClampMove(move);
+    var dS=Number(c.spot||0)*move;
+    if(c.kind==='EQUITY')pnl+=Number(c.qty||0)*dS;
+    else pnl+=Number(c.netQty||0)*Number(c.multiplier||100)*(Number(c.delta||0)*dS+.5*Number(c.gamma||0)*dS*dS);
+  });
+  return pnl;
+}
+function rrIntrinsicLoss(legs,spot,currentValue){
+  var stressed=(legs||[]).reduce(function(s,l){
+    var x=l.side==='PUT'?Math.max(Number(l.strike)-spot,0):Math.max(spot-Number(l.strike),0);
+    return s+Number(l.netQty||0)*Number(l.multiplier||100)*x;
+  },0);
+  return Number(currentValue||0)-stressed;
+}
+function rrPnrRoot(legs,spot,equity,currentValue,down){
+  if(!(spot>0&&equity>0))return null;
+  var pts=(legs||[]).map(function(l){return Number(l.strike||0);}).filter(function(k){return down?k<spot:k>spot;});
+  pts.push(spot);if(down)pts.push(0);
+  pts=pts.filter(function(x,i,a){return x>=0&&a.indexOf(x)===i;}).sort(function(a,b){return down?b-a:a-b;});
+  var loss=function(s){return rrIntrinsicLoss(legs,s,currentValue);},prev=pts[0],before=loss(prev);
+  if(before>=equity)return 0;
+  for(var i=1;i<pts.length;i++){
+    var next=pts[i],after=loss(next);
+    if(after>=equity){
+      if(after===before)return Math.abs(next/spot-1)*100;
+      var cross=prev+(next-prev)*(equity-before)/(after-before);
+      return Math.abs(cross/spot-1)*100;
+    }
+    prev=next;before=after;
+  }
+  if(!down){
+    var slope=-100*(legs||[]).reduce(function(s,l){return s+(l.side==='CALL'?Number(l.netQty||0):0);},0);
+    if(slope>0)return ((prev+(equity-before)/slope)/spot-1)*100;
+  }
+  return null;
+}
+function rrFindRow(risk,acct,ticker){
+  return ((risk||{}).rows||[]).filter(function(r){return r.account===acct&&r.ticker===ticker;})[0]||null;
+}
+function rrAccount(risk,acct){
+  return ((risk||{}).accounts||[]).filter(function(a){return a.account===acct;})[0]||null;
+}
+function rrModel(risk,acct){return ((((risk||{}).localModel||{}).accounts)||{})[acct]||null;}
+
+function rrMetric(t,label,value,sub){
+  return '<div class="rr-metric '+t+'"><div class="rr-metric-label">'+label+'</div><div class="rr-metric-value">'+value+'</div>'+(sub?'<div class="rr-metric-sub">'+sub+'</div>':'')+'</div>';
+}
+function rrScenarioCell(s){
+  var u=s&&s.utilization;
+  return '<div class="rr-scenario '+rrTone(u)+'"><div class="rr-scenario-head"><span>'+escHtml((s&&s.label)||'')+'</span><b>'+ (u==null?'—':(u*100).toFixed(1)+'%') +'</b></div><div class="rr-scenario-sub">loss '+rrMoney(s&&s.loss)+' · 75% ceiling '+rrMoney(s&&s.ceiling)+'</div></div>';
+}
+
+function rrEvaluateHypo(risk,acct,ticker,side,strike,qty){
+  var model=rrModel(risk,acct),ar=rrAccount(risk,acct),tr=rrFindRow(risk,acct,ticker);
+  if(!model||!ar||!(strike>0)||!(qty>0))return null;
+  var book=(model.tickerBooks||{})[ticker]||{spot:tr&&tr.spot||0,currentValue:0,legs:[]};
+  var spot=Number(book.spot||tr&&tr.spot||0);
+  if(!(spot>0))return null;
+
+  // Hypothetical premium is deliberately ignored. Far-OTM option starts with zero
+  // delta/gamma in the stress approximation; intrinsic loss is added explicitly
+  // when the stress price crosses the selected strike.
+  function hypoIntrinsicAt(stressedSpot){
+    return side==='CALL'?Math.max(stressedSpot-strike,0)*100*qty:Math.max(strike-stressedSpot,0)*100*qty;
+  }
+  var stressOut={},defs=risk.stressDefinition||[];
+  defs.forEach(function(def){
+    var basePnl=rrStressPnl(model.components||[],Number(def.spxMove||0),false);
+    var beta=tr&&tr.beta!=null?Number(tr.beta):1,move=rrClampMove(Number(def.spxMove||0)*beta),stressed=spot*(1+move);
+    var pnl=basePnl-hypoIntrinsicAt(stressed),loss=Math.max(0,-pnl),limit=Number(model.netLiq||0)*Number(def.limitMultiple||0);
+    stressOut[def.key]={label:def.label,loss:loss,brokerLimit:limit,ceiling:limit*.75,utilization:limit>0?loss/limit:null};
+  });
+
+  var uniformBase=rrStressPnl(model.components||[],-.20,true),uniformSpot=spot*.80;
+  var uniformLoss=Math.max(0,-(uniformBase-hypoIntrinsicAt(uniformSpot)));
+
+  var calls=Number((model.baseNetShort||{}).calls||0)+(side==='CALL'?qty:0);
+  var puts=Number((model.baseNetShort||{}).puts||0)+(side==='PUT'?qty:0);
+  var nsLimit=Number(model.netShortLimit||0),callU=nsLimit>0?calls/nsLimit:null,putU=nsLimit>0?puts/nsLimit:null;
+
+  var legs=(book.legs||[]).map(function(x){return Object.assign({},x);});
+  legs.push({side:side,strike:strike,netQty:-qty,multiplier:100,expiry:RIKI_RISKLAB_STATE.expiry||''});
+  var pnr=rrPnrRoot(legs,spot,Number(model.netLiq||0),Number(book.currentValue||0),side==='PUT');
+  var epr=tr?(side==='PUT'?rrNum(tr.downEpr):rrNum(tr.upEpr)):null;
+  var gap=pnr!==null&&epr!==null?pnr-epr:null;
+
+  var checks=[];
+  Object.keys(stressOut).forEach(function(k){checks.push({name:stressOut[k].label,util:stressOut[k].utilization});});
+  checks.push({name:'Net short '+side.toLowerCase(),util:side==='CALL'?callU:putU});
+  var eprMissing=epr===null;
+  if(!eprMissing)checks.push({name:'PNR − EPR',util:gap<10?1:0});
+  var binding=eprMissing?{name:'EPR needed',util:1}:checks.slice().sort(function(a,b){return Number(b.util||0)-Number(a.util||0);})[0]||{name:'—',util:0};
+
+  var safe=!eprMissing&&checks.every(function(c){
+    if(c.name==='PNR − EPR')return c.util===0;
+    return c.util!==null&&c.util<=.75;
+  });
+  return {safe:safe,eprMissing:eprMissing,stress:stressOut,uniformLoss:uniformLoss,calls:calls,puts:puts,callUtil:callU,putUtil:putU,
+    pnr:pnr,epr:epr,gap:gap,binding:binding.name,spot:spot,distancePct:(side==='CALL'?(strike/spot-1):(1-strike/spot))*100};
+}
+
+function rrMaxQty(risk,acct,ticker,side,strike){
+  var lo=0,hi=1;
+  while(hi<10000){
+    var x=rrEvaluateHypo(risk,acct,ticker,side,strike,hi);
+    if(!x||!x.safe)break;
+    lo=hi;hi*=2;
+  }
+  hi=Math.min(hi,10000);
+  while(lo+1<hi){
+    var mid=Math.floor((lo+hi)/2),x2=rrEvaluateHypo(risk,acct,ticker,side,strike,mid);
+    if(x2&&x2.safe)lo=mid;else hi=mid;
+  }
+  return lo;
+}
+function rrRoundStrike(x){
+  if(x<100)return Math.round(x);
+  if(x<500)return Math.round(x/5)*5;
+  return Math.round(x/10)*10;
+}
+function rrSuggest(risk,acct,ticker,side){
+  var tr=rrFindRow(risk,acct,ticker);if(!tr||!(tr.spot>0))return null;
+  var needed=side==='CALL'?rrNum(tr.upEpr):rrNum(tr.downEpr);
+  if(needed===null)return {status:'EPR_NEEDED'};
+  var spot=Number(tr.spot),candidates=[];
+  for(var d=10;d<=100;d+=2.5){
+    var strike=rrRoundStrike(side==='CALL'?spot*(1+d/100):spot*(1-d/100));
+    if(!(strike>0))continue;
+    var q=rrMaxQty(risk,acct,ticker,side,strike);
+    var ev=q>0?rrEvaluateHypo(risk,acct,ticker,side,strike,q):null;
+    candidates.push({distance:d,strike:strike,qty:q,binding:ev?ev.binding:'No headroom'});
+  }
+  var usable=candidates.filter(function(c){return c.qty>0;});
+  if(!usable.length)return {status:'NO_HEADROOM',candidates:candidates};
+  var maxQ=Math.max.apply(null,usable.map(function(c){return c.qty;}));
+  // Nearest band that retains at least 90% of maximum modeled capacity.
+  var band=usable.filter(function(c){return c.qty>=Math.max(1,Math.floor(maxQ*.90));});
+  var first=band[0],last=band[Math.min(band.length-1,2)];
+  return {status:'OK',from:first.strike,to:last.strike,fromPct:first.distance,toPct:last.distance,qty:first.qty,binding:first.binding,
+    candidates:usable.slice(0,8)};
+}
+
+function rrInstallStyles(){
+  if(document.getElementById('riki-risklab-v2-style'))return;
+  var s=document.createElement('style');s.id='riki-risklab-v2-style';s.textContent=
+  '.rr-wrap{margin-top:14px}.rr-account{margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.016)}'+
+  '.rr-account-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.rr-account-title{font-size:13px;font-weight:850}.rr-account-sub{font-size:9px;color:var(--text3);margin-top:2px}'+
+  '.rr-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.rr-metric{padding:10px;border-radius:11px;border:1px solid var(--border2);background:var(--bg3)}'+
+  '.rr-metric.risk,.rr-scenario.risk{border-color:rgba(255,102,120,.35)}.rr-metric.warn,.rr-scenario.warn{border-color:rgba(232,191,91,.34)}.rr-metric.outside,.rr-scenario.outside{border-color:rgba(40,215,173,.22)}'+
+  '.rr-metric-label{font-size:7.5px;color:var(--text3);font-weight:800;letter-spacing:.055em;text-transform:uppercase}.rr-metric-value{font:800 15px/1.2 "JetBrains Mono",monospace;margin-top:4px}.rr-metric-sub{font-size:8px;color:var(--text2);margin-top:4px;line-height:1.3}'+
+  '.rr-scenarios{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}.rr-scenario{padding:8px;border:1px solid var(--border2);border-radius:10px;background:rgba(255,255,255,.012)}.rr-scenario-head{display:flex;justify-content:space-between;gap:4px;font-size:8px}.rr-scenario-head b{font-family:"JetBrains Mono",monospace}.rr-scenario-sub{font-size:7.5px;color:var(--text3);margin-top:4px;line-height:1.25}'+
+  '.rr-lab{margin-top:14px;padding:14px;border-radius:14px;border:1px solid rgba(75,158,255,.18);background:linear-gradient(145deg,rgba(75,158,255,.045),rgba(255,255,255,.012))}.rr-lab-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:10px}.rr-lab label{font-size:8px;color:var(--text3);display:flex;flex-direction:column;gap:5px}.rr-lab select,.rr-lab input{min-width:0;height:34px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);color:var(--text);padding:0 8px;font:10px Inter,sans-serif}.rr-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.rr-result{margin-top:10px;padding:11px;border-radius:11px;background:var(--bg3);border:1px solid var(--border2);font-size:9px;line-height:1.55;color:var(--text2)}.rr-result strong{color:var(--text)}.rr-suggest-main{font:850 15px "JetBrains Mono",monospace;color:var(--text);margin:4px 0}.rr-table{width:100%;margin-top:9px}.rr-table td,.rr-table th{font-size:8px;padding:5px 4px}'+
+  '@media(max-width:700px){.rr-metrics,.rr-scenarios{grid-template-columns:repeat(2,minmax(0,1fr))}.rr-lab-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}';
+  document.head.appendChild(s);
+}
+
+function rrAccountHtml(risk,a){
+  var stress=a.stress||{},maxU=0,maxName='—';
+  Object.keys(stress).forEach(function(k){var u=Number(stress[k].utilization||0);if(u>maxU){maxU=u;maxName=stress[k].label;}});
+  var ns=Math.max(Number((a.netShort||{}).callUtilization||0),Number((a.netShort||{}).putUtilization||0));
+  var nsTone=rrTone(ns),mainTone=rrTone(maxU);
+  return '<div class="rr-account">'+
+    '<div class="rr-account-head"><div><div class="rr-account-title">'+escHtml(a.account)+' · '+(a.isPortfolioMargin===true?'Portfolio margin':'Regular margin')+'</div><div class="rr-account-sub">NLV '+rrMoney(a.netLiq)+' · beta/Greeks snapshot · '+rrToneText(mainTone)+'</div></div></div>'+
+    '<div class="rr-metrics">'+
+      rrMetric(mainTone,'SPX beta stress',(maxU*100).toFixed(1)+'%',maxName+' · ceiling 75%')+
+      rrMetric('unknown','EPR / PNR','Ticker level','Requires selected ticker · buffer ≥10 pp')+
+      rrMetric('unknown','Uniform −20%',rrMoney((a.uniformDown20||{}).loss),'Price only · IV shock unavailable')+
+      rrMetric(nsTone,'Net short units',Number((a.netShort||{}).calls||0)+'C / '+Number((a.netShort||{}).puts||0)+'P','75% ceiling '+Number((a.netShort||{}).ceiling||0).toFixed(0)+' units')+
+    '</div><div class="rr-scenarios">'+['up20','up10','dn12','dn20'].map(function(k){return rrScenarioCell(stress[k]||{});}).join('')+'</div></div>';
+}
+
+function rrPopulateTicker(sel,risk,acct){
+  var tickers=((risk.rows||[]).filter(function(r){return !acct||r.account===acct;}).map(function(r){return r.ticker;}));
+  tickers=tickers.filter(function(t,i,a){return a.indexOf(t)===i;}).sort();
+  sel.innerHTML='<option value="">Ticker</option>'+tickers.map(function(t){return '<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('');
+  if(tickers.indexOf(RIKI_RISKLAB_STATE.ticker)>=0)sel.value=RIKI_RISKLAB_STATE.ticker;
+}
+function rrRenderEprEditor(box,risk,d){
+  var settings=RIKI_PM_SETTINGS_LOCAL||risk.settings||{},tickers=((d.strategyConfig||{}).targetTickers||settings.tickers||[]).slice();
+  if(!tickers.length)return;
+  var wrap=document.createElement('details');wrap.className='pm-settings';wrap.style.marginTop='12px';
+  wrap.innerHTML='<summary>Set EPR by ticker</summary><div class="pm-controls"><label>Ticker<select id="rr-epr-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return'<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label><label>Down EPR %<input id="rr-epr-down" type="number" min="0.01" max="100" step="0.01"></label><label>Up EPR %<input id="rr-epr-up" type="number" min="0.01" max="1000" step="0.01"></label><button class="abtn" id="rr-epr-save">Save EPR</button></div><div class="ssub">Stored server-side. Saving does not fetch Schwab; press Refresh risk afterward to recompute PNR gaps.</div>';
+  box.appendChild(wrap);
+  var sel=wrap.querySelector('#rr-epr-ticker'),dn=wrap.querySelector('#rr-epr-down'),up=wrap.querySelector('#rr-epr-up'),save=wrap.querySelector('#rr-epr-save');
+  sel.onchange=function(){var e=(settings.epr||{})[sel.value]||{};dn.value=e.down||'';up.value=e.up||'';};
+  save.onclick=function(){
+    save.disabled=true;
+    rikiPmPost_('pmSaveEpr',{ticker:sel.value,down:dn.value,up:up.value}).then(function(j){
+      if(!j.success)throw Error(j.error||'Save failed');
+      RIKI_PM_SETTINGS_LOCAL=j.settings;
+      if(DATA.pmRisk)DATA.pmRisk.settings=j.settings;
+      save.disabled=false;toast('EPR saved. Refresh risk to recompute PNR gaps.');
+    }).catch(function(e){save.disabled=false;toast(errMsg(e),6500);});
+  };
+}
+
+function rrRenderLab(box,risk){
+  var accounts=(risk.accounts||[]).map(function(a){return a.account;});
+  var lab=document.createElement('div');lab.className='rr-lab';
+  lab.innerHTML='<div class="bp-head"><div><div class="bp-title">Risk Lab</div><div class="bp-sub">Local what-if · no Schwab call · hypothetical premium ignored</div></div><span class="engine-mode-badge active">LOCAL</span></div>'+
+    '<div class="rr-lab-grid">'+
+    '<label>Account<select id="rr-acct">'+accounts.map(function(a){return'<option>'+escHtml(a)+'</option>';}).join('')+'</select></label>'+
+    '<label>Ticker<select id="rr-ticker"></select></label>'+
+    '<label>Side<select id="rr-side"><option>CALL</option><option>PUT</option></select></label>'+
+    '<label>Expiry<input id="rr-expiry" type="date"></label>'+
+    '<label>Strike<input id="rr-strike" type="number" step="0.5" min="0"></label>'+
+    '<label>Qty<input id="rr-qty" type="number" step="1" min="1" value="1"></label></div>'+
+    '<div class="rr-actions"><button class="abtn" id="rr-calc">What if</button><button class="abtn" id="rr-suggest">Suggest strikes</button></div><div id="rr-result"></div>';
+  box.appendChild(lab);
+  var acct=lab.querySelector('#rr-acct'),ticker=lab.querySelector('#rr-ticker'),side=lab.querySelector('#rr-side'),exp=lab.querySelector('#rr-expiry'),strike=lab.querySelector('#rr-strike'),qty=lab.querySelector('#rr-qty'),res=lab.querySelector('#rr-result');
+  acct.value=accounts.indexOf(RIKI_RISKLAB_STATE.account)>=0?RIKI_RISKLAB_STATE.account:(accounts[0]||'');
+  side.value=RIKI_RISKLAB_STATE.side||'CALL';exp.value=RIKI_RISKLAB_STATE.expiry||'';strike.value=RIKI_RISKLAB_STATE.strike||'';qty.value=RIKI_RISKLAB_STATE.qty||1;
+  rrPopulateTicker(ticker,risk,acct.value);
+
+  function remember(){RIKI_RISKLAB_STATE={account:acct.value,ticker:ticker.value,side:side.value,expiry:exp.value,strike:strike.value,qty:Number(qty.value||1)};}
+  acct.onchange=function(){remember();rrPopulateTicker(ticker,risk,acct.value);remember();};
+  [ticker,side,exp,strike,qty].forEach(function(el){el.onchange=remember;});
+
+  lab.querySelector('#rr-calc').onclick=function(){
+    remember();var ev=rrEvaluateHypo(risk,acct.value,ticker.value,side.value,Number(strike.value),Number(qty.value));
+    if(!ev){res.innerHTML='<div class="rr-result">Choose account, ticker, strike and quantity.</div>';return;}
+    var tr=rrFindRow(risk,acct.value,ticker.value),gap=ev.gap;
+    res.innerHTML='<div class="rr-result"><strong>'+(ev.safe?'Within modeled 75% ceilings':'Modeled limit exceeded')+'</strong> · binding '+escHtml(ev.binding)+
+      '<br>Strike '+Number(strike.value).toFixed(2)+' · '+ev.distancePct.toFixed(1)+'% OTM · '+Number(qty.value)+' contracts'+
+      '<br>PNR '+(ev.pnr==null?'—':ev.pnr.toFixed(1)+'%')+' · EPR '+(ev.epr==null?'needed':ev.epr.toFixed(1)+'%')+' · gap '+(gap==null?'—':gap.toFixed(1)+' pp')+
+      '<br>Net short after: '+ev.calls+'C / '+ev.puts+'P · uniform −20 loss '+rrMoney(ev.uniformLoss)+
+      '<br>'+Object.keys(ev.stress).map(function(k){var s=ev.stress[k];return s.label+' '+(s.utilization*100).toFixed(1)+'%';}).join(' · ')+'</div>';
+  };
+  lab.querySelector('#rr-suggest').onclick=function(){
+    remember();var sg=rrSuggest(risk,acct.value,ticker.value,side.value);
+    if(!sg){res.innerHTML='<div class="rr-result">Choose account and ticker.</div>';return;}
+    if(sg.status==='EPR_NEEDED'){res.innerHTML='<div class="rr-result"><strong>EPR needed</strong> for this ticker/side before RiKi can label a suggested range within all four controls.</div>';return;}
+    if(sg.status!=='OK'){res.innerHTML='<div class="rr-result"><strong>No modeled headroom</strong> inside the current 75% ceilings.</div>';return;}
+    res.innerHTML='<div class="rr-result"><div class="rr-suggest-main">'+Number(sg.from).toFixed(0)+'–'+Number(sg.to).toFixed(0)+' · '+sg.fromPct.toFixed(1)+'–'+sg.toPct.toFixed(1)+'% OTM</div>'+
+      '<strong>Modeled capacity '+sg.qty+' contracts</strong> · binding '+escHtml(sg.binding)+
+      '<br>Range is generated from current account risk only. It does not check bid/ask, premium, liquidity, earnings, or fill probability.'+
+      '<table class="rr-table"><thead><tr><th>Strike</th><th>% OTM</th><th>Max qty</th><th>Binding</th></tr></thead><tbody>'+
+      sg.candidates.map(function(c){return'<tr><td>'+c.strike+'</td><td>'+c.distance.toFixed(1)+'%</td><td>'+c.qty+'</td><td>'+escHtml(c.binding)+'</td></tr>';}).join('')+'</tbody></table></div>';
+  };
+}
+
+window.rikiPmRenderPanel_=function(host,d){
+  if(!rrV2Ready(d)) return rrFallback(RR_PROD_RENDER,[host,d],'render');
+  try{
+  rrInstallStyles();
+  var risk=d.pmRisk||{},box=document.createElement('div');box.className='pm-panel';
+  var fresh=risk.capturedMs&&Date.now()-Number(risk.capturedMs)<2700000;
+  box.innerHTML='<div class="bp-head"><div><div class="bp-title">Portfolio risk</div><div class="bp-sub">SPX beta stress · EPR/PNR · uniform shock · net short capacity</div></div><button class="abtn" id="pm-refresh">Refresh risk</button></div>'+
+    '<div class="ssub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+' · '+(fresh?'fresh':'stale / refresh recommended')+' · modeled estimate, not Schwab house margin.</div>';
+  if(risk.error){box.innerHTML+='<div class="rr-result" style="color:var(--red)">Risk refresh failed: '+escHtml(risk.error)+'</div>';}
+  (risk.accounts||[]).forEach(function(a){box.insertAdjacentHTML('beforeend',rrAccountHtml(risk,a));});
+  rrRenderEprEditor(box,risk,d);
+  rrRenderLab(box,risk);
+  host.appendChild(box);
+  var btn=box.querySelector('#pm-refresh');
+  btn.onclick=function(){btn.disabled=true;btn.textContent='Reading…';fetch(BACKEND+'?action=pmRiskRefresh&_='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+    if(!j.success)throw Error(j.error||'Risk refresh failed');
+    DATA.pmRisk=j.pmRisk;DATA.accountBuyingPower=j.accountBuyingPower;RIKI_PM_SETTINGS_LOCAL=(j.pmRisk||{}).settings||RIKI_PM_SETTINGS_LOCAL;saveCache(DATA);renderAll(DATA);
+  }).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;btn.textContent='Refresh risk';});};
+  }catch(e){
+    try{console.error('RiKi Risk Lab V2 render failed; reverting to production PM renderer',e);}catch(x){}
+    return rrFallback(RR_PROD_RENDER,[host,d],'render');
+  }
+};
+
+// Replace old ticker badge/detail with V2 definitions while preserving locations.
+window.rikiPmRows_=function(ticker,d){
+  if(!rrV2Ready(d)) return rrFallback(RR_PROD_ROWS,[ticker,d],'rows')||[];
+  try{return ((((d||DATA||{}).pmRisk||{}).rows)||[]).filter(function(r){return r.ticker===ticker;});}
+  catch(e){return rrFallback(RR_PROD_ROWS,[ticker,d],'rows')||[];}
+};
+window.rikiPmTickerBadge_=function(ticker,d){
+  if(!rrV2Ready(d)) return rrFallback(RR_PROD_BADGE,[ticker,d],'badge')||'';
+  try{
+    var risk=(d||DATA||{}).pmRisk||{},rows=window.rikiPmRows_(ticker,d);if(!rows.length)return'';
+    var worst='outside';
+    rows.forEach(function(r){
+      ['down','up'].forEach(function(side){
+        var p=rrNum(r[side+'Pnr']),e=rrNum(r[side+'Epr']),gap=p!==null&&e!==null?p-e:null,t=rrPnrTone(gap);
+        if(t==='risk'||(t==='warn'&&worst==='outside')||t==='unknown')worst=t;
+      });
+    });
+    return '<div class="pm-badges"><span class="pm-dot '+worst+'"></span><span>risk · beta / PNR</span></div>';
+  }catch(e){
+    try{console.error('RiKi Risk Lab V2 badge failed; using production badge',e);}catch(x){}
+    return rrFallback(RR_PROD_BADGE,[ticker,d],'badge')||'';
+  }
+};
+window.rikiPmRiskDetail_=function(ticker,d){
+  if(!rrV2Ready(d)) return rrFallback(RR_PROD_DETAIL,[ticker,d],'detail')||'';
+  try{
+    var rows=window.rikiPmRows_(ticker,d);return rows.map(function(r){
+      function side(name){
+        var p=rrNum(r[name+'Pnr']),e=rrNum(r[name+'Epr']),gap=p!==null&&e!==null?p-e:null,t=rrPnrTone(gap);
+        return '<div class="pm-risk-line '+t+'">'+(name==='down'?'Down':'Up')+' PNR '+(p==null?'—':p.toFixed(1)+'%')+' · EPR '+(e==null?'needed':e.toFixed(1)+'%')+' · gap '+(gap==null?'—':gap.toFixed(1)+' pp')+'</div>';
+      }
+      return '<div class="pm-risk-detail"><b>'+escHtml(r.account)+' · '+escHtml(ticker)+'</b>'+side('down')+side('up')+
+        '<div class="ssub">β '+(r.beta==null?'—':Number(r.beta).toFixed(2))+' · IV '+(r.weightedIv==null?'—':Number(r.weightedIv).toFixed(1))+' · delta $ '+rrMoney(r.deltaDollars)+'</div></div>';
+    }).join('');
+  }catch(e){
+    try{console.error('RiKi Risk Lab V2 detail failed; using production detail',e);}catch(x){}
+    return rrFallback(RR_PROD_DETAIL,[ticker,d],'detail')||'';
+  }
+};
+
+})();
+
 </script>
 </body>
 </html>

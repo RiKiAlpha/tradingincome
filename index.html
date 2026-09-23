@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- RIKI_PM_RISK_V4_TOS_BETA_PRODUCTION_2026_09_23 -->
 <!-- RIKI_PM_RISK_LAB_V3_AUDITED_2026_09_23 -->
 <!-- RIKI_DASHBOARD_ALIGNED_TOTALS_V1_2_3_2026_09_22 -->
 <!-- RIKI_INDEX_LEGACY_MONTHLY_MSTR_HISTORY_V5_1_5_VERIFIED -->
@@ -3473,175 +3474,256 @@ try{ localStorage.setItem('riki_schwab_auth_seen_at', String(e.data.at || '')); 
 }
 });
 /* ============================================================================
-   RIKI_PM_RISK_FRONTEND_V3_0_0_2026_09_23
-   Dedicated Risk tab, Schwab-house-rule labels, Sticky-Strike local what-if,
-   and persistent TWO-DOT ticker signal: first PUT, second CALL.
+   RIKI_PM_RISK_FRONTEND_V4_0_0_2026_09_23
+   TOS-calibrated beta, editable RiKi SPX threshold, global/per-ticker PNR/EPR
+   cushions, dedicated Risk tab, local what-if, and persistent two-dot signals.
    ============================================================================ */
 (function(){
 'use strict';
-var R3_VERSION='RIKI_PM_RISK_FRONTEND_V3_0_0_2026_09_23';
-var R3_STATE=window.RIKI_RISKLAB_V3_STATE||{account:'',ticker:'',side:'CALL',expiry:'',strike:'',qty:1};
-window.RIKI_RISKLAB_V3_STATE=R3_STATE;
 
-function r3Num(v){var n=Number(v);return v===null||v===undefined||v===''||!isFinite(n)?null:n;}
-function r3Money(v){return r3Num(v)===null?'—':fmtS(Number(v));}
-function r3Pct(v){return r3Num(v)===null?'—':(Number(v)*100).toFixed(1)+'%';}
-function r3Minus(){return String.fromCharCode(8722);}
-function r3ScenarioLabel(key){
-  return key==='up20'?'SPX +20%':key==='up10'?'SPX +10%':key==='dn12'?'SPX '+r3Minus()+'12%':key==='dn20'?'SPX '+r3Minus()+'20%':'SPX';
+var R4_VERSION='RIKI_PM_RISK_FRONTEND_V4_0_0_2026_09_23';
+var R4_STATE=window.RIKI_RISKLAB_V4_STATE||window.RIKI_RISKLAB_V3_STATE||{account:'',ticker:'',side:'CALL',expiry:'',strike:'',qty:1};
+window.RIKI_RISKLAB_V4_STATE=R4_STATE;
+
+function r4Num(v){var n=Number(v);return v===null||v===undefined||v===''||!isFinite(n)?null:n;}
+function r4Money(v){return r4Num(v)===null?'—':fmtS(Number(v));}
+function r4Pct(v){return r4Num(v)===null?'—':(Number(v)*100).toFixed(1)+'%';}
+function r4Minus(){return String.fromCharCode(8722);}
+function r4ScenarioLabel(key){return key==='up20'?'SPX +20%':key==='up10'?'SPX +10%':key==='dn12'?'SPX '+r4Minus()+'12%':key==='dn20'?'SPX '+r4Minus()+'20%':'SPX';}
+function r4UniformLabel(){return 'Uniform '+r4Minus()+'20%';}
+function r4Settings(risk){return (typeof RIKI_PM_SETTINGS_LOCAL!=='undefined'&&RIKI_PM_SETTINGS_LOCAL)||((risk||{}).settings)||{};}
+function r4Guard(risk){var s=r4Settings(risk),n=r4Num(s.guardrailPct);if(n===null)n=r4Num((risk||{}).rikiGuardrailPct);return (n===null?75:n)/100;}
+function r4GuardPct(risk){return r4Guard(risk)*100;}
+function r4Warn(risk){return Math.max(0,r4Guard(risk)-.10);}
+function r4Tone(u,risk){if(r4Num(u)===null)return'unknown';return Number(u)>r4Guard(risk)?'risk':Number(u)>=r4Warn(risk)?'warn':'outside';}
+function r4ToneText(t){return t==='risk'?'RED':t==='warn'?'AMBER':t==='outside'?'GREEN':'UNKNOWN';}
+function r4GuardUsed(u,risk){return r4Num(u)===null?null:Number(u)/r4Guard(risk);}
+function r4TickerKey(t){t=String(t||'').trim().toUpperCase();return t==='$SPX'?'SPX':t;}
+function r4Buffer(risk,ticker,row){
+  var s=r4Settings(risk),map=s.pnrBufferByTicker||{},t=r4TickerKey(ticker),v=r4Num(map[t]);
+  if(v!==null)return v;
+  v=r4Num(s.pnrBufferPoints);
+  if(v!==null)return v;
+  v=r4Num(row&&row.pnrBufferPoints);
+  return v===null?10:v;
 }
-function r3UniformLabel(){return 'Uniform '+r3Minus()+'20%';}
-function r3Tone(u){if(r3Num(u)===null)return'unknown';return Number(u)>.75?'risk':Number(u)>=.65?'warn':'outside';}
-function r3GuardUsed(u){return r3Num(u)===null?null:Number(u)/.75;}
-function r3PnrTone(p,e){
-  p=r3Num(p);e=r3Num(e);
+function r4PnrTone(p,e,buffer){
+  p=r4Num(p);e=r4Num(e);buffer=r4Num(buffer);
   if(p===null||e===null)return'none';
-  var gap=Math.abs(p)-Math.abs(e);
-  return gap<=0?'risk':gap<10?'warn':'outside';
+  var gap=Math.abs(p)-Math.abs(e),b=buffer===null?10:buffer;
+  return gap<=0?'risk':gap<b?'warn':'outside';
 }
-function r3PnrTitle(kind,p,e){
-  p=r3Num(p);e=r3Num(e);
+function r4PnrTitle(kind,p,e,buffer){
+  p=r4Num(p);e=r4Num(e);buffer=r4Num(buffer);var b=buffer===null?10:buffer;
   if(p===null)return kind+' · no modeled PNR crossing';
   if(e===null)return kind+' · PNR '+Math.abs(p).toFixed(1)+'% · EPR needed';
-  var gap=Math.abs(p)-Math.abs(e),tone=r3PnrTone(p,e);
-  return kind+' · PNR '+Math.abs(p).toFixed(1)+'% · EPR '+Math.abs(e).toFixed(1)+'% · buffer '+(gap>=0?'+':'')+gap.toFixed(1)+' pp · '+(tone==='risk'?'RED':tone==='warn'?'AMBER':'GREEN');
+  var gap=Math.abs(p)-Math.abs(e),tone=r4PnrTone(p,e,b);
+  return kind+' · PNR '+Math.abs(p).toFixed(1)+'% · EPR '+Math.abs(e).toFixed(1)+'% · gap '+(gap>=0?'+':'')+gap.toFixed(1)+' pp · required '+b.toFixed(0)+' pp · '+r4ToneText(tone);
 }
-function r3PmRow(ticker,d){
-  var rows=((((d||window.DATA||{}).pmRisk||{}).rows)||[]),t=String(ticker||'').toUpperCase();
-  return rows.filter(function(r){return r&&r.isPortfolioMargin===true&&String(r.ticker||'').toUpperCase()===t;})[0]||null;
+function r4PmRow(ticker,d){
+  var rows=((((d||window.DATA||{}).pmRisk||{}).rows)||[]),t=r4TickerKey(ticker);
+  return rows.filter(function(r){return r&&r.isPortfolioMargin===true&&r4TickerKey(r.ticker)===t;})[0]||null;
 }
 
 // Overview ticker signal: exactly two unlabeled dots. LEFT=PUT, RIGHT=CALL.
 window.rikiPmTickerBadge_=function(ticker,d){
-  var r=r3PmRow(ticker,d),putTone='none',callTone='none',putTitle='PUT · no modeled PNR crossing',callTitle='CALL · no modeled PNR crossing';
+  var risk=((d||window.DATA||{}).pmRisk)||{},r=r4PmRow(ticker,d),putTone='none',callTone='none',
+      putTitle='PUT · no modeled PNR crossing',callTitle='CALL · no modeled PNR crossing';
   if(r){
-    putTone=r3PnrTone(r.downPnr,r.downEpr);callTone=r3PnrTone(r.upPnr,r.upEpr);
-    putTitle=r3PnrTitle('PUT',r.downPnr,r.downEpr);callTitle=r3PnrTitle('CALL',r.upPnr,r.upEpr);
+    var buffer=r4Buffer(risk,ticker,r);
+    putTone=r4PnrTone(r.downPnr,r.downEpr,buffer);callTone=r4PnrTone(r.upPnr,r.upEpr,buffer);
+    putTitle=r4PnrTitle('PUT',r.downPnr,r.downEpr,buffer);callTitle=r4PnrTitle('CALL',r.upPnr,r.upEpr,buffer);
   }
-  return '<div class="pm-badges r3-two-dots" aria-label="PNR risk: first dot put, second dot call">'+
+  return '<div class="pm-badges r4-two-dots" aria-label="PNR risk: first dot put, second dot call">'+
     '<span class="pm-dot '+putTone+'" title="'+escHtml(putTitle)+'"></span>'+
     '<span class="pm-dot '+callTone+'" title="'+escHtml(callTitle)+'"></span></div>';
 };
-window.rikiPmRows_=function(ticker,d){var r=r3PmRow(ticker,d);return r?[r]:[];};
+window.rikiPmRows_=function(ticker,d){var r=r4PmRow(ticker,d);return r?[r]:[];};
 window.rikiPmRiskDetail_=function(ticker,d){
-  var r=r3PmRow(ticker,d);
+  var risk=((d||window.DATA||{}).pmRisk)||{},r=r4PmRow(ticker,d);
   if(!r)return '<div class="pm-risk-detail"><div class="pm-risk-line unknown">No Portfolio Margin PNR crossing for this ticker.</div></div>';
-  function side(name,p,e){
-    var tone=r3PnrTone(p,e),title=r3PnrTitle(name,p,e);
-    return '<div class="pm-risk-line '+(tone==='none'?'unknown':tone)+'">'+escHtml(title)+'</div>';
-  }
+  var buffer=r4Buffer(risk,ticker,r);
+  function side(name,p,e){var tone=r4PnrTone(p,e,buffer),title=r4PnrTitle(name,p,e,buffer);return '<div class="pm-risk-line '+(tone==='none'?'unknown':tone)+'">'+escHtml(title)+'</div>';}
   return '<div class="pm-risk-detail"><b>'+escHtml(ticker)+' · Account 1 PM concentration</b>'+side('PUT',r.downPnr,r.downEpr)+side('CALL',r.upPnr,r.upEpr)+
-    '<div class="ssub">Dot order on Overview is always PUT first, CALL second. Gray=no modeled PNR / cannot classify · Green=buffer '+String.fromCharCode(8805)+'10 pp · Amber=0–10 pp · Red=PNR '+String.fromCharCode(8804)+' EPR.</div></div>';
+    '<div class="ssub">Dot order is PUT first, CALL second. Required PNR−EPR cushion for '+escHtml(ticker)+' is '+buffer.toFixed(0)+' pp. Gray=no modeled PNR / cannot classify · Green=gap meets cushion · Amber=positive gap below cushion · Red=PNR at/inside EPR.<br>Beta '+(r.beta==null?'—':Number(r.beta).toFixed(3))+' · '+escHtml(r.betaSource||'')+(r.betaConfidence?' · '+escHtml(r.betaConfidence):'')+'</div></div>';
 };
 
-function r3Ready(d){var risk=((d||window.DATA||{}).pmRisk)||{};return /^RIKI_PM_RISK_LAB_V3_/.test(String(risk.version||''))&&Array.isArray(risk.accounts)&&risk.localModel&&risk.localModel.accounts;}
-function r3FindRow(risk,acct,ticker){return ((risk||{}).rows||[]).filter(function(r){return r.account===acct&&r.ticker===ticker;})[0]||null;}
-function r3Account(risk,acct){return ((risk||{}).accounts||[]).filter(function(a){return a.account===acct;})[0]||null;}
-function r3Model(risk,acct){return ((((risk||{}).localModel||{}).accounts)||{})[acct]||null;}
+function r4Ready(d){var risk=((d||window.DATA||{}).pmRisk)||{};return /^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||''))&&Array.isArray(risk.accounts)&&risk.localModel&&risk.localModel.accounts;}
+function r4FindRow(risk,acct,ticker){return ((risk||{}).rows||[]).filter(function(r){return r.account===acct&&r4TickerKey(r.ticker)===r4TickerKey(ticker);})[0]||null;}
+function r4Account(risk,acct){return ((risk||{}).accounts||[]).filter(function(a){return a.account===acct;})[0]||null;}
+function r4Model(risk,acct){return ((((risk||{}).localModel||{}).accounts)||{})[acct]||null;}
 
-// Sticky-Strike local repricing mirrors the V3 backend approximation.
-function r3Cdf(x){
+function r4Cdf(x){
   var a1=.319381530,a2=-.356563782,a3=1.781477937,a4=-1.821255978,a5=1.330274429,L=Math.abs(x),k=1/(1+.2316419*L);
   var w=1-(1/Math.sqrt(2*Math.PI))*Math.exp(-L*L/2)*(a1*k+a2*k*k+a3*Math.pow(k,3)+a4*Math.pow(k,4)+a5*Math.pow(k,5));return x<0?1-w:w;
 }
-function r3Years(expiry){
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(expiry||'')))return null;
-  var t=(new Date(expiry+'T16:00:00').getTime()-Date.now())/(365*86400000);return Math.max(1/(365*24),t);
-}
-function r3Bs(side,S,K,T,iv,r,q){
+function r4Years(expiry){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(expiry||'')))return null;var t=(new Date(expiry+'T16:00:00').getTime()-Date.now())/(365*86400000);return Math.max(1/(365*24),t);}
+function r4Bs(side,S,K,T,iv,r,q){
   S=Number(S);K=Number(K);T=Number(T);iv=Number(iv);r=Number(r||0);q=Number(q||0);
   if(!(S>0&&K>0&&T>0&&iv>0))return side==='PUT'?Math.max(K-S,0):Math.max(S-K,0);
   var vs=iv*Math.sqrt(T),d1=(Math.log(S/K)+(r-q+.5*iv*iv)*T)/vs,d2=d1-vs;
-  return side==='PUT'?K*Math.exp(-r*T)*r3Cdf(-d2)-S*Math.exp(-q*T)*r3Cdf(-d1):S*Math.exp(-q*T)*r3Cdf(d1)-K*Math.exp(-r*T)*r3Cdf(d2);
+  return side==='PUT'?K*Math.exp(-r*T)*r4Cdf(-d2)-S*Math.exp(-q*T)*r4Cdf(-d1):S*Math.exp(-q*T)*r4Cdf(d1)-K*Math.exp(-r*T)*r4Cdf(d2);
 }
-function r3OptionPnl(c,stressed,risk){
-  var qty=Number(c.netQty||0),mult=Number(c.multiplier||100),T=r3Years(c.expiry),iv=Number(c.iv||0),rate=Number(c.riskFreeRate||risk.riskFreeRate||.04),dy=Number(c.dividendYield||0);
+function r4OptionPnl(c,stressed,risk){
+  var qty=Number(c.netQty||0),mult=Number(c.multiplier||100),T=r4Years(c.expiry),iv=Number(c.iv||0),rate=Number(c.riskFreeRate||risk.riskFreeRate||.04),dy=Number(c.dividendYield||0);
   if(!qty)return 0;
-  if(T!==null&&iv>0)return qty*mult*(r3Bs(c.side,stressed,c.strike,T,iv,rate,dy)-r3Bs(c.side,c.spot,c.strike,T,iv,rate,dy));
+  if(T!==null&&iv>0)return qty*mult*(r4Bs(c.side,stressed,c.strike,T,iv,rate,dy)-r4Bs(c.side,c.spot,c.strike,T,iv,rate,dy));
   var b=c.side==='PUT'?Math.max(Number(c.strike)-Number(c.spot),0):Math.max(Number(c.spot)-Number(c.strike),0),s=c.side==='PUT'?Math.max(Number(c.strike)-stressed,0):Math.max(stressed-Number(c.strike),0);return qty*mult*(s-b);
 }
-function r3StressPnl(components,move,uniform,risk){
+function r4StressPnl(components,move,uniform,risk){
   var pnl=0;(components||[]).forEach(function(c){var m=uniform?Number(move):Number(move)*Number(c.beta==null?1:c.beta);m=Math.max(-.999,m);var ss=Math.max(.01,Number(c.spot||0)*(1+m));
-    pnl+=c.kind==='EQUITY'?Number(c.qty||0)*(ss-Number(c.spot||0)):r3OptionPnl(c,ss,risk);});return pnl;
+    pnl+=c.kind==='EQUITY'?Number(c.qty||0)*(ss-Number(c.spot||0)):r4OptionPnl(c,ss,risk);});return pnl;
 }
-function r3GroupPnl(book,spot,risk){var pnl=Number(book.equityQty||0)*(spot-Number(book.spot||0));(book.legs||[]).forEach(function(l){pnl+=r3OptionPnl(l,spot,risk);});return pnl;}
-function r3Pnr(book,equity,down,risk){
+function r4GroupPnl(book,spot,risk){var pnl=Number(book.equityQty||0)*(spot-Number(book.spot||0));(book.legs||[]).forEach(function(l){pnl+=r4OptionPnl(l,spot,risk);});return pnl;}
+function r4Pnr(book,equity,down,risk){
   var spot=Number(book.spot||0);if(!(spot>0&&equity>0))return null;var max=down?.999:10,steps=down?160:320,prev=0;
-  for(var i=1;i<=steps;i++){var mv=max*i/steps,ss=down?spot*(1-mv):spot*(1+mv),loss=Math.max(0,-r3GroupPnl(book,Math.max(.01,ss),risk));if(loss>=equity){var lo=prev,hi=mv;for(var j=0;j<32;j++){var mid=(lo+hi)/2,ms=down?spot*(1-mid):spot*(1+mid),ml=Math.max(0,-r3GroupPnl(book,Math.max(.01,ms),risk));if(ml>=equity)hi=mid;else lo=mid;}return hi*100;}prev=mv;}return null;
+  for(var i=1;i<=steps;i++){var mv=max*i/steps,ss=down?spot*(1-mv):spot*(1+mv),loss=Math.max(0,-r4GroupPnl(book,Math.max(.01,ss),risk));if(loss>=equity){var lo=prev,hi=mv;for(var j=0;j<32;j++){var mid=(lo+hi)/2,ms=down?spot*(1-mid):spot*(1+mid),ml=Math.max(0,-r4GroupPnl(book,Math.max(.01,ms),risk));if(ml>=equity)hi=mid;else lo=mid;}return hi*100;}prev=mv;}return null;
 }
 
-function r3InstallStyles(){
-  if(document.getElementById('riki-risk-v3-style'))return;var s=document.createElement('style');s.id='riki-risk-v3-style';s.textContent=
-  '.r3-two-dots{gap:5px!important;min-height:8px}.r3-two-dots .pm-dot{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}.r3-two-dots .pm-dot.none,.r3-two-dots .pm-dot.unknown{background:var(--text3)}'+
-  '.r3-wrap{margin-top:14px}.r3-account{margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.016)}.r3-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.r3-title{font-size:13px;font-weight:850}.r3-sub{font-size:9px;color:var(--text3);margin-top:3px;line-height:1.35}'+
-  '.r3-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.r3-metric{padding:11px;border-radius:11px;border:1px solid var(--border2);background:var(--bg3)}.r3-metric.risk,.r3-scenario.risk{border-color:rgba(255,102,120,.40)}.r3-metric.warn,.r3-scenario.warn{border-color:rgba(232,191,91,.38)}.r3-metric.outside,.r3-scenario.outside{border-color:rgba(40,215,173,.25)}'+
-  '.r3-label{font-size:7.5px;color:var(--text3);font-weight:800;letter-spacing:.055em;text-transform:uppercase}.r3-value{font:800 15px/1.2 "JetBrains Mono",monospace;margin-top:5px}.r3-detail{font-size:8px;color:var(--text2);margin-top:5px;line-height:1.4}'+
-  '.r3-scenarios{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}.r3-scenario{padding:9px;border:1px solid var(--border2);border-radius:10px;background:rgba(255,255,255,.012)}.r3-scenario-head{display:flex;justify-content:space-between;gap:6px;font-size:8px}.r3-scenario-head b{font-family:"JetBrains Mono",monospace}.r3-scenario-lines{font-size:7.5px;color:var(--text2);margin-top:5px;line-height:1.45}'+
-  '.r3-uniform{margin-top:9px;padding:10px;border:1px solid var(--border2);border-radius:10px;background:rgba(255,255,255,.012);font-size:8px;color:var(--text2);line-height:1.5}.r3-uniform strong{color:var(--text)}'+
-  '.r3-lab{margin-top:14px;padding:14px;border-radius:14px;border:1px solid rgba(75,158,255,.20);background:linear-gradient(145deg,rgba(75,158,255,.045),rgba(255,255,255,.012))}.r3-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:10px}.r3-grid label{font-size:8px;color:var(--text3);display:flex;flex-direction:column;gap:5px}.r3-grid select,.r3-grid input{min-width:0;height:34px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);color:var(--text);padding:0 8px;font:10px Inter,sans-serif}.r3-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.r3-result{margin-top:10px;padding:11px;border-radius:11px;background:var(--bg3);border:1px solid var(--border2);font-size:9px;line-height:1.55;color:var(--text2)}.r3-result strong{color:var(--text)}.r3-big{font:850 15px "JetBrains Mono",monospace;color:var(--text);margin:4px 0}.r3-table{width:100%;margin-top:9px}.r3-table td,.r3-table th{font-size:8px;padding:5px 4px}'+
-  '@media(max-width:700px){.r3-metrics,.r3-scenarios{grid-template-columns:repeat(2,minmax(0,1fr))}.r3-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}';document.head.appendChild(s);
+function r4InstallStyles(){
+  if(document.getElementById('riki-risk-v4-style'))return;var s=document.createElement('style');s.id='riki-risk-v4-style';s.textContent=
+  '.r4-two-dots{gap:5px!important;min-height:8px}.r4-two-dots .pm-dot{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}.r4-two-dots .pm-dot.none,.r4-two-dots .pm-dot.unknown{background:var(--text3)}'+
+  '.r4-account{margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.016)}.r4-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.r4-title{font-size:13px;font-weight:850}.r4-sub{font-size:9px;color:var(--text3);margin-top:3px;line-height:1.35}'+
+  '.r4-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.r4-metric{padding:11px;border-radius:11px;border:1px solid var(--border2);background:var(--bg3)}.r4-metric.risk,.r4-scenario.risk{border-color:rgba(255,102,120,.40)}.r4-metric.warn,.r4-scenario.warn{border-color:rgba(232,191,91,.38)}.r4-metric.outside,.r4-scenario.outside{border-color:rgba(40,215,173,.25)}'+
+  '.r4-label{font-size:7.5px;color:var(--text3);font-weight:800;letter-spacing:.055em;text-transform:uppercase}.r4-value{font:800 15px/1.2 "JetBrains Mono",monospace;margin-top:5px}.r4-value.risk{color:var(--red)}.r4-value.warn{color:var(--gold)}.r4-value.outside{color:var(--green)}.r4-detail{font-size:8px;color:var(--text2);margin-top:5px;line-height:1.4}'+
+  '.r4-scenarios{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}.r4-scenario{padding:9px;border:1px solid var(--border2);border-radius:10px;background:rgba(255,255,255,.012)}.r4-scenario-head{display:flex;justify-content:space-between;gap:6px;font-size:8px}.r4-scenario-head b{font-family:"JetBrains Mono",monospace}.r4-scenario-lines{font-size:7.5px;color:var(--text2);margin-top:5px;line-height:1.45}'+
+  '.r4-uniform{margin-top:9px;padding:10px;border:1px solid var(--border2);border-radius:10px;background:rgba(255,255,255,.012);font-size:8px;color:var(--text2);line-height:1.5}.r4-uniform strong{color:var(--text)}'+
+  '.r4-lab{margin-top:14px;padding:14px;border-radius:14px;border:1px solid rgba(75,158,255,.20);background:linear-gradient(145deg,rgba(75,158,255,.045),rgba(255,255,255,.012))}.r4-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:10px}.r4-grid label,.r4-control-grid label{font-size:8px;color:var(--text3);display:flex;flex-direction:column;gap:5px}.r4-grid select,.r4-grid input,.r4-control-grid select,.r4-file{min-width:0;height:34px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);color:var(--text);padding:0 8px;font:10px Inter,sans-serif}'+
+  '.r4-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.r4-result{margin-top:10px;padding:11px;border-radius:11px;background:var(--bg3);border:1px solid var(--border2);font-size:9px;line-height:1.55;color:var(--text2)}.r4-result strong{color:var(--text)}.r4-big{font:850 15px "JetBrains Mono",monospace;color:var(--text);margin:4px 0}.r4-table{width:100%;margin-top:9px}.r4-table td,.r4-table th{font-size:8px;padding:5px 4px}'+
+  '.r4-control-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.r4-upload{margin-top:12px;padding-top:12px;border-top:1px solid var(--border2)}.r4-upload-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.r4-file{height:auto;padding:7px;max-width:330px}.r4-cal-status{font-size:8.5px;color:var(--text2);line-height:1.5;margin-top:8px}.r4-cal-warn{color:var(--gold)}'+
+  '@media(max-width:700px){.r4-metrics,.r4-scenarios{grid-template-columns:repeat(2,minmax(0,1fr))}.r4-grid,.r4-control-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.r4-upload-row{align-items:stretch}.r4-file{max-width:100%;width:100%}}';
+  document.head.appendChild(s);
 }
-function r3Metric(t,label,value,sub){return '<div class="r3-metric '+t+'"><div class="r3-label">'+label+'</div><div class="r3-value">'+value+'</div><div class="r3-detail">'+sub+'</div></div>';}
-function r3ScenarioCell(k,s,pm){
-  s=s||{};var su=r3Num(s.schwabUtilization)!=null?s.schwabUtilization:s.utilization,lossPct=r3Num(s.lossPctNlv)!=null?s.lossPctNlv:null;
-  if(!pm)return '<div class="r3-scenario"><div class="r3-scenario-head"><span>'+r3ScenarioLabel(k)+'</span><b>'+r3Money(s.loss)+'</b></div><div class="r3-scenario-lines">Loss / NLV '+r3Pct(lossPct)+'<br>Informational stress only · PM house threshold not applied.</div></div>';
-  return '<div class="r3-scenario '+r3Tone(su)+'"><div class="r3-scenario-head"><span>'+r3ScenarioLabel(k)+'</span><b>'+r3Pct(su)+' used</b></div><div class="r3-scenario-lines">Modeled loss '+r3Money(s.loss)+' · Loss / NLV '+r3Pct(lossPct)+'<br>Schwab threshold '+r3Money(s.schwabLimit||s.brokerLimit)+' · used '+r3Pct(su)+'<br>RiKi 75% guardrail '+r3Money(s.rikiGuardrail||s.ceiling)+' · guardrail used '+r3Pct(r3GuardUsed(su))+'</div></div>';
+function r4Metric(t,label,value,sub){return '<div class="r4-metric '+t+'"><div class="r4-label">'+label+'</div><div class="r4-value '+t+'">'+value+'</div><div class="r4-detail">'+sub+'</div></div>';}
+function r4ScenarioCell(k,s,pm,risk){
+  s=s||{};var su=r4Num(s.schwabUtilization)!=null?s.schwabUtilization:s.utilization,lossPct=r4Num(s.lossPctNlv)!=null?s.lossPctNlv:null,gp=r4GuardPct(risk);
+  if(!pm)return '<div class="r4-scenario"><div class="r4-scenario-head"><span>'+r4ScenarioLabel(k)+'</span><b>'+r4Money(s.loss)+'</b></div><div class="r4-scenario-lines">Loss / NLV '+r4Pct(lossPct)+'<br>Informational stress only · PM house threshold not applied.</div></div>';
+  return '<div class="r4-scenario '+r4Tone(su,risk)+'"><div class="r4-scenario-head"><span>'+r4ScenarioLabel(k)+'</span><b>'+r4Pct(su)+' used</b></div><div class="r4-scenario-lines">Modeled loss '+r4Money(s.loss)+' · Loss / NLV '+r4Pct(lossPct)+'<br>Schwab threshold '+r4Money(s.schwabLimit||s.brokerLimit)+' · used '+r4Pct(su)+'<br>RiKi '+gp.toFixed(0)+'% guardrail '+r4Money(s.rikiGuardrail||s.ceiling)+' · guardrail used '+r4Pct(r4GuardUsed(su,risk))+'</div></div>';
 }
-function r3AccountHtml(risk,a){
-  var pm=a.isPortfolioMargin===true,stress=a.stress||{},worstU=-1,worstKey='dn20';
-  ['up20','up10','dn12','dn20'].forEach(function(k){var s=stress[k]||{},u=r3Num(s.schwabUtilization)!=null?s.schwabUtilization:s.utilization;if(u!=null&&u>worstU){worstU=u;worstKey=k;}});
-  var uniform=a.uniformDown20||{},ns=a.netShort||{},nsU=Math.max(Number(ns.callUtilization||0),Number(ns.putUtilization||0));
-  var first=pm?r3Metric(r3Tone(worstU),'SPX beta stress',worstU<0?'—':r3Pct(worstU),r3ScenarioLabel(worstKey)+' · of Schwab threshold<br>RiKi guardrail used '+(worstU<0?'—':r3Pct(r3GuardUsed(worstU)))):r3Metric('unknown','SPX beta stress',r3Pct((stress[worstKey]||{}).lossPctNlv),'Worst modeled loss / NLV<br>PM house thresholds do not apply');
-  var epr=pm?r3Metric('unknown','EPR / PNR','2 dots','Overview: first PUT · second CALL<br>Green '+String.fromCharCode(8805)+'10 pp · Amber 0–10 · Red PNR '+String.fromCharCode(8804)+' EPR'):r3Metric('unknown','EPR / PNR','PM only','Concentration PNR signaling shown only for Portfolio Margin');
-  var uni=pm?r3Metric(r3Tone(uniform.schwabUtilization),r3UniformLabel(),r3Money(uniform.loss),'Loss / NLV '+r3Pct(uniform.lossPctNlv)+'<br>Schwab trigger used '+r3Pct(uniform.schwabUtilization)+' · RiKi guardrail used '+r3Pct(r3GuardUsed(uniform.schwabUtilization))):r3Metric('unknown',r3UniformLabel(),r3Money(uniform.loss),'Loss / NLV '+r3Pct(uniform.lossPctNlv)+'<br>PM uniform-house trigger not applied');
-  var nsMetric=pm?r3Metric(r3Tone(nsU),'Net short units',Number(ns.calls||0)+'C / '+Number(ns.puts||0)+'P','Calls and puts measured separately<br>Schwab NLV used: C '+r3Pct(ns.callUtilization)+' · P '+r3Pct(ns.putUtilization)):r3Metric('unknown','Net short units',Number(ns.calls||0)+'C / '+Number(ns.puts||0)+'P','PM net-short house rule not applied');
-  var uniformDetail=pm?'<div class="r3-uniform"><strong>'+r3UniformLabel()+'</strong> · Modeled loss '+r3Money(uniform.loss)+' · Loss / NLV '+r3Pct(uniform.lossPctNlv)+' · Schwab trigger '+r3Money(uniform.schwabLimit)+' (= NLV + $5MM) · Schwab trigger used '+r3Pct(uniform.schwabUtilization)+' · RiKi 75% guardrail used '+r3Pct(r3GuardUsed(uniform.schwabUtilization))+'<br>Schwab states this test includes a volatility shock. The shock magnitude is not published, so RiKi uses constant-IV Sticky-Strike repricing and may understate this particular house test.</div>':'<div class="r3-uniform"><strong>'+r3UniformLabel()+'</strong> · '+r3Money(uniform.loss)+' modeled loss · '+r3Pct(uniform.lossPctNlv)+' of NLV · informational only for this regular-margin account.</div>';
-  return '<div class="r3-account"><div class="r3-head"><div><div class="r3-title">'+escHtml(a.account)+' · '+(pm?'Portfolio margin':'Regular margin')+'</div><div class="r3-sub">NLV '+r3Money(a.netLiq)+' · '+(pm?'Schwab PM thresholds + RiKi 75% guardrail':'stress analytics only; PM house thresholds intentionally not applied')+'</div></div></div><div class="r3-metrics">'+first+epr+uni+nsMetric+'</div><div class="r3-scenarios">'+['up20','up10','dn12','dn20'].map(function(k){return r3ScenarioCell(k,stress[k],pm);}).join('')+'</div>'+uniformDetail+'</div>';
-}
-
-function r3EprEditor(box,risk,d){
-  var settings=(typeof RIKI_PM_SETTINGS_LOCAL!=='undefined'&&RIKI_PM_SETTINGS_LOCAL)||risk.settings||{},tickers=((d.strategyConfig||{}).targetTickers||settings.tickers||[]).slice();if(!tickers.length)return;
-  var wrap=document.createElement('details');wrap.className='pm-settings';wrap.style.marginTop='12px';wrap.innerHTML='<summary>Set EPR by ticker</summary><div class="pm-controls"><label>Ticker<select id="r3-epr-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return'<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label><label>Down EPR %<input id="r3-epr-down" type="number" min="0.01" max="100" step="0.01"></label><label>Up EPR %<input id="r3-epr-up" type="number" min="0.01" max="1000" step="0.01"></label><button class="abtn" id="r3-epr-save">Save EPR</button></div><div class="ssub">Positive magnitudes. Saving is local configuration; Refresh risk recalculates PNR and the two ticker dots.</div>';box.appendChild(wrap);
-  var sel=wrap.querySelector('#r3-epr-ticker'),dn=wrap.querySelector('#r3-epr-down'),up=wrap.querySelector('#r3-epr-up'),save=wrap.querySelector('#r3-epr-save');sel.onchange=function(){var e=(settings.epr||{})[sel.value]||{};dn.value=e.down||'';up.value=e.up||'';};save.onclick=function(){save.disabled=true;rikiPmPost_('pmSaveEpr',{ticker:sel.value,down:dn.value,up:up.value}).then(function(j){if(!j.success)throw Error(j.error||'Save failed');RIKI_PM_SETTINGS_LOCAL=j.settings;if(DATA.pmRisk)DATA.pmRisk.settings=j.settings;save.disabled=false;toast('EPR saved · Refresh risk to recalculate dots');}).catch(function(e){save.disabled=false;toast(errMsg(e),6500);});};
+function r4AccountHtml(risk,a){
+  var pm=a.isPortfolioMargin===true,stress=a.stress||{},dn20=stress.dn20||{},u20=r4Num(dn20.schwabUtilization)!=null?dn20.schwabUtilization:dn20.utilization;
+  var uniform=a.uniformDown20||{},ns=a.netShort||{},nsU=Math.max(Number(ns.callUtilization||0),Number(ns.putUtilization||0)),gp=r4GuardPct(risk);
+  var mainTone=pm?r4Tone(u20,risk):'unknown';
+  var first=pm?r4Metric(mainTone,'SPX '+r4Minus()+'20%',u20==null?'—':r4Pct(u20),'<b>'+r4ToneText(mainTone)+'</b> · Schwab threshold used<br>RiKi threshold '+gp.toFixed(0)+'%'):r4Metric('unknown','SPX '+r4Minus()+'20%',r4Pct(dn20.lossPctNlv),'Modeled loss / NLV<br>PM house threshold does not apply');
+  var epr=pm?r4Metric('unknown','EPR / PNR','2 dots','Overview: first PUT · second CALL<br>Global cushion '+Number(r4Settings(risk).pnrBufferPoints||10).toFixed(0)+' pp · ticker override allowed'):r4Metric('unknown','EPR / PNR','PM only','Concentration PNR signaling shown only for Portfolio Margin');
+  var uni=pm?r4Metric(r4Tone(uniform.schwabUtilization,risk),r4UniformLabel(),r4Money(uniform.loss),'Loss / NLV '+r4Pct(uniform.lossPctNlv)+'<br>Schwab trigger used '+r4Pct(uniform.schwabUtilization)):r4Metric('unknown',r4UniformLabel(),r4Money(uniform.loss),'Loss / NLV '+r4Pct(uniform.lossPctNlv)+'<br>PM uniform-house trigger not applied');
+  var nsMetric=pm?r4Metric(r4Tone(nsU,risk),'Net short units',Number(ns.calls||0)+'C / '+Number(ns.puts||0)+'P','Calls and puts measured separately<br>Schwab NLV used: C '+r4Pct(ns.callUtilization)+' · P '+r4Pct(ns.putUtilization)):r4Metric('unknown','Net short units',Number(ns.calls||0)+'C / '+Number(ns.puts||0)+'P','PM net-short house rule not applied');
+  var uniformDetail=pm?'<div class="r4-uniform"><strong>'+r4UniformLabel()+'</strong> · Modeled loss '+r4Money(uniform.loss)+' · Loss / NLV '+r4Pct(uniform.lossPctNlv)+' · Schwab trigger '+r4Money(uniform.schwabLimit)+' (= NLV + $5MM) · trigger used '+r4Pct(uniform.schwabUtilization)+'<br>Schwab states this test includes a volatility shock. The shock magnitude is unpublished, so RiKi uses constant-IV Sticky-Strike repricing.</div>':'<div class="r4-uniform"><strong>'+r4UniformLabel()+'</strong> · '+r4Money(uniform.loss)+' modeled loss · '+r4Pct(uniform.lossPctNlv)+' of NLV · informational only for this regular-margin account.</div>';
+  return '<div class="r4-account"><div class="r4-head"><div><div class="r4-title">'+escHtml(a.account)+' · '+(pm?'Portfolio margin':'Regular margin')+'</div><div class="r4-sub">NLV '+r4Money(a.netLiq)+' · '+(pm?'TOS-calibrated beta preferred · RiKi '+gp.toFixed(0)+'% guardrail':'stress analytics only; PM house thresholds intentionally not applied')+'</div></div></div><div class="r4-metrics">'+first+epr+uni+nsMetric+'</div><div class="r4-scenarios">'+['up20','up10','dn12','dn20'].map(function(k){return r4ScenarioCell(k,stress[k],pm,risk);}).join('')+'</div>'+uniformDetail+'</div>';
 }
 
-function r3Evaluate(risk,acct,ticker,side,strike,qty,expiry){
-  var model=r3Model(risk,acct),ar=r3Account(risk,acct),tr=r3FindRow(risk,acct,ticker);if(!model||!ar||ar.isPortfolioMargin!==true||!tr||!(strike>0&&qty>0))return{status:'INPUT'};
+function r4EprEditor(box,risk,d){
+  var settings=r4Settings(risk),tickers=((d.strategyConfig||{}).targetTickers||settings.tickers||[]).slice();if(!tickers.length)return;
+  var wrap=document.createElement('details');wrap.className='pm-settings';wrap.style.marginTop='12px';
+  wrap.innerHTML='<summary>Set EPR by ticker</summary><div class="pm-controls"><label>Ticker<select id="r4-epr-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return'<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label><label>Down EPR %<input id="r4-epr-down" type="number" min="0.01" max="100" step="0.01"></label><label>Up EPR %<input id="r4-epr-up" type="number" min="0.01" max="1000" step="0.01"></label><button class="abtn" id="r4-epr-save">Save EPR</button></div><div class="ssub">Positive magnitudes. Saving does not call Schwab; Refresh risk recalculates PNR.</div>';
+  box.appendChild(wrap);
+  var sel=wrap.querySelector('#r4-epr-ticker'),dn=wrap.querySelector('#r4-epr-down'),up=wrap.querySelector('#r4-epr-up'),save=wrap.querySelector('#r4-epr-save');
+  sel.onchange=function(){var e=(r4Settings(risk).epr||{})[sel.value]||{};dn.value=e.down||'';up.value=e.up||'';};
+  save.onclick=function(){save.disabled=true;rikiPmPost_('pmSaveEpr',{ticker:sel.value,down:dn.value,up:up.value}).then(function(j){if(!j.success)throw Error(j.error||'Save failed');RIKI_PM_SETTINGS_LOCAL=j.settings;if(DATA.pmRisk)DATA.pmRisk.settings=j.settings;save.disabled=false;saveCache(DATA);renderAll(DATA);toast('EPR saved · Refresh risk to recalculate PNR');}).catch(function(e){save.disabled=false;toast(errMsg(e),6500);});};
+}
+
+function r4OptionList(values,current){return values.map(function(v){return '<option value="'+v+'"'+(String(v)===String(current)?' selected':'')+'>'+v+(v==='GLOBAL'?'':'%')+'</option>';}).join('');}
+function r4BufferList(current){var vals=['GLOBAL',5,10,15,20,25];return vals.map(function(v){var label=v==='GLOBAL'?'Use global':v+' pp';return '<option value="'+v+'"'+(String(v)===String(current)?' selected':'')+'>'+label+'</option>';}).join('');}
+function r4Controls(box,risk,d){
+  var settings=r4Settings(risk),rows=(risk.rows||[]).filter(function(r){return r.isPortfolioMargin===true;}),tickers=rows.map(function(r){return r.ticker;});
+  tickers=tickers.filter(function(t,i,a){return a.indexOf(t)===i;}).sort();
+  var gp=Number(settings.guardrailPct||75),gb=Number(settings.pnrBufferPoints||10),cal=risk.betaCalibration||settings.tosBetaCalibration||{};
+  var wrap=document.createElement('details');wrap.className='pm-settings';wrap.style.marginTop='12px';wrap.open=true;
+  wrap.innerHTML='<summary>Risk controls & TOS beta</summary>'+
+    '<div class="r4-control-grid">'+
+      '<label>RiKi SPX red limit<select id="r4-guard">'+r4OptionList([60,65,70,75,80,85,90],gp)+'</select></label>'+
+      '<label>Global PNR−EPR cushion<select id="r4-global-buffer">'+[5,10,15,20,25].map(function(v){return'<option value="'+v+'"'+(v===gb?' selected':'')+'>'+v+' pp</option>';}).join('')+'</select></label>'+
+      '<label>Ticker override<select id="r4-buffer-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return'<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label>'+
+      '<label>Ticker cushion<select id="r4-ticker-buffer">'+r4BufferList('GLOBAL')+'</select></label>'+
+    '</div><div class="r4-actions"><button class="abtn" id="r4-config-save">Save thresholds</button></div>'+
+    '<div class="r4-upload"><div class="r4-upload-row"><input class="r4-file" id="r4-tos-file" type="file" accept=".csv,text/csv"><button class="abtn" id="r4-tos-import">Import TOS CSV</button></div>'+
+    '<div class="r4-cal-status" id="r4-cal-status"></div></div>';
+  box.appendChild(wrap);
+
+  var guard=wrap.querySelector('#r4-guard'),globalBuffer=wrap.querySelector('#r4-global-buffer'),ticker=wrap.querySelector('#r4-buffer-ticker'),tickerBuffer=wrap.querySelector('#r4-ticker-buffer'),save=wrap.querySelector('#r4-config-save'),file=wrap.querySelector('#r4-tos-file'),importBtn=wrap.querySelector('#r4-tos-import'),status=wrap.querySelector('#r4-cal-status');
+
+  function paintStatus(){
+    var c=(DATA&&DATA.pmRisk&&DATA.pmRisk.betaCalibration)||cal||{},s=(DATA&&DATA.pmRisk&&DATA.pmRisk.settings)||settings||{},tc=s.tosBetaCalibration||{};
+    var count=Number(c.calibratedTickerCount||tc.calibratedTickerCount||0),exportAt=String(c.csvExportAt||tc.csvExportAt||''),stored=String(c.storedAtEt||tc.storedAtEt||''),low=(c.lowConfidence||tc.lowConfidence||[]);
+    status.innerHTML=(count?'<strong>'+count+' TOS betas stored</strong>':'<strong>No TOS beta CSV stored</strong>')+
+      (exportAt?' · export '+escHtml(exportAt):'')+(stored?' · stored '+escHtml(stored)+' ET':'')+
+      (low&&low.length?' · <span class="r4-cal-warn">low confidence: '+escHtml(low.join(', '))+'</span>':'')+
+      '<br>Upload a fresh TOS Position Statement CSV periodically. Current Schwab positions/options are recalculated on every risk refresh.';
+  }
+  paintStatus();
+
+  ticker.onchange=function(){
+    var map=(r4Settings((DATA&&DATA.pmRisk)||risk).pnrBufferByTicker)||{},v=r4Num(map[r4TickerKey(ticker.value)]);
+    tickerBuffer.innerHTML=r4BufferList(v===null?'GLOBAL':String(v));
+  };
+
+  save.onclick=function(){
+    save.disabled=true;save.textContent='Saving…';
+    rikiPmPost_('pmSaveEpr',{op:'riskConfig',guardrailPct:guard.value,globalBuffer:globalBuffer.value,bufferTicker:ticker.value,tickerBuffer:tickerBuffer.value}).then(function(j){
+      if(!j||j.success===false)throw Error((j&&j.error)||'Threshold save failed');
+      RIKI_PM_SETTINGS_LOCAL=j.settings;if(DATA&&DATA.pmRisk)DATA.pmRisk.settings=j.settings;saveCache(DATA);renderAll(DATA);toast('Risk thresholds saved',2600);
+    }).catch(function(e){save.disabled=false;save.textContent='Save thresholds';toast(errMsg(e),6500);});
+  };
+
+  importBtn.onclick=function(){
+    if(!file.files||!file.files[0]){toast('Choose a TOS Position Statement CSV',3500);return;}
+    var chosen=file.files[0];
+    if(chosen.size>300000){toast('CSV is unexpectedly large',4000);return;}
+    importBtn.disabled=true;importBtn.textContent='Importing…';
+    var reader=new FileReader();
+    reader.onload=function(){
+      rikiPmPost_('pmSaveEpr',{op:'tosImport',csvText:String(reader.result||'')}).then(function(j){
+        if(!j||j.success===false||!j.pmRisk)throw Error((j&&j.error)||'TOS beta import failed');
+        DATA.pmRisk=j.pmRisk;DATA.accountBuyingPower=j.accountBuyingPower||DATA.accountBuyingPower;RIKI_PM_SETTINGS_LOCAL=j.settings||(j.pmRisk||{}).settings||RIKI_PM_SETTINGS_LOCAL;
+        saveCache(DATA);renderAll(DATA);
+        var cc=(j.calibration||{}).calibratedTickerCount||((j.pmRisk||{}).betaCalibration||{}).calibratedTickerCount||0;
+        toast('TOS beta calibration stored · '+cc+' tickers · risk refreshed',4200);
+      }).catch(function(e){importBtn.disabled=false;importBtn.textContent='Import TOS CSV';toast(errMsg(e),7000);});
+    };
+    reader.onerror=function(){importBtn.disabled=false;importBtn.textContent='Import TOS CSV';toast('Could not read CSV',5000);};
+    reader.readAsText(chosen);
+  };
+}
+
+function r4Evaluate(risk,acct,ticker,side,strike,qty,expiry){
+  var model=r4Model(risk,acct),ar=r4Account(risk,acct),tr=r4FindRow(risk,acct,ticker);if(!model||!ar||ar.isPortfolioMargin!==true||!tr||!(strike>0&&qty>0))return{status:'INPUT'};
   if(!/^\d{4}-\d{2}-\d{2}$/.test(String(expiry||'')))return{status:'EXPIRY_NEEDED'};
   var book=((model.tickerBooks||{})[ticker]);if(!book||!(book.spot>0))return{status:'INPUT'};var iv=Number(book.weightedIv||tr.weightedIv||0);if(!(iv>0))return{status:'IV_NEEDED'};
   var hypo={kind:'OPTION',ticker:ticker,spot:Number(book.spot),beta:tr.beta==null?1:Number(tr.beta),side:side,strike:Number(strike),expiry:expiry,netQty:-Number(qty),multiplier:100,iv:iv,dividendYield:Number(book.dividendYield||0),riskFreeRate:Number(risk.riskFreeRate||.04)};
-  var comps=(model.components||[]).slice();comps.push(hypo);var out={},pressures=[];
-  (risk.stressDefinition||[]).forEach(function(def){var pnl=r3StressPnl(comps,Number(def.spxMove||0),false,risk),loss=Math.max(0,-pnl),limit=Number(model.netLiq||0)*Number(def.limitMultiple||0),u=limit>0?loss/limit:null;out[def.key]={loss:loss,schwabUtilization:u};pressures.push({name:r3ScenarioLabel(def.key),p:u==null?999:u/.75,safe:u!=null&&u<=.75});});
-  var upnl=r3StressPnl(comps,-.20,true,risk),uloss=Math.max(0,-upnl),ulimit=Number(model.netLiq||0)+5000000,uu=ulimit>0?uloss/ulimit:null;pressures.push({name:r3UniformLabel(),p:uu==null?999:uu/.75,safe:uu!=null&&uu<=.75});
-  var per=Number(book.shortReqPerContract||200),baseReq=side==='CALL'?Number((model.baseNetShort||{}).callRequirementDollars||0):Number((model.baseNetShort||{}).putRequirementDollars||0),shortReq=baseReq+Number(qty)*per,shortU=Number(model.netLiq||0)>0?shortReq/Number(model.netLiq):null;pressures.push({name:'Net short '+side.toLowerCase(),p:shortU==null?999:shortU/.75,safe:shortU!=null&&shortU<=.75});
-  var pbook={spot:Number(book.spot),equityQty:Number(book.equityQty||0),legs:(book.legs||[]).slice()};pbook.legs.push(hypo);var pnr=r3Pnr(pbook,Number(model.netLiq||0),side==='PUT',risk),epr=side==='PUT'?r3Num(tr.downEpr):r3Num(tr.upEpr),gap=pnr!==null&&epr!==null?pnr-epr:null;
-  if(epr===null)return{status:'EPR_NEEDED'};var pnrSafe=pnr===null||gap>=10;pressures.push({name:'PNR / EPR buffer',p:pnr===null?0:(gap>0?10/gap:999),safe:pnrSafe});var binding=pressures.slice().sort(function(a,b){return b.p-a.p;})[0]||{name:'—'},safe=pressures.every(function(x){return x.safe;});
-  return{status:'OK',safe:safe,stress:out,uniformLoss:uloss,uniformUtilization:uu,shortUtilization:shortU,pnr:pnr,epr:epr,gap:gap,binding:binding.name,spot:Number(book.spot),distancePct:side==='CALL'?(strike/book.spot-1)*100:(1-strike/book.spot)*100};
+  var comps=(model.components||[]).slice();comps.push(hypo);var out={},pressures=[],guard=r4Guard(risk);
+  (risk.stressDefinition||[]).forEach(function(def){var pnl=r4StressPnl(comps,Number(def.spxMove||0),false,risk),loss=Math.max(0,-pnl),limit=Number(model.netLiq||0)*Number(def.limitMultiple||0),u=limit>0?loss/limit:null;out[def.key]={loss:loss,schwabUtilization:u};pressures.push({name:r4ScenarioLabel(def.key),p:u==null?999:u/guard,safe:u!=null&&u<=guard});});
+  var upnl=r4StressPnl(comps,-.20,true,risk),uloss=Math.max(0,-upnl),ulimit=Number(model.netLiq||0)+5000000,uu=ulimit>0?uloss/ulimit:null;pressures.push({name:r4UniformLabel(),p:uu==null?999:uu/guard,safe:uu!=null&&uu<=guard});
+  var per=Number(book.shortReqPerContract||200),baseReq=side==='CALL'?Number((model.baseNetShort||{}).callRequirementDollars||0):Number((model.baseNetShort||{}).putRequirementDollars||0),shortReq=baseReq+Number(qty)*per,shortU=Number(model.netLiq||0)>0?shortReq/Number(model.netLiq):null;pressures.push({name:'Net short '+side.toLowerCase(),p:shortU==null?999:shortU/guard,safe:shortU!=null&&shortU<=guard});
+  var pbook={spot:Number(book.spot),equityQty:Number(book.equityQty||0),legs:(book.legs||[]).slice()};pbook.legs.push(hypo);var pnr=r4Pnr(pbook,Number(model.netLiq||0),side==='PUT',risk),epr=side==='PUT'?r4Num(tr.downEpr):r4Num(tr.upEpr),gap=pnr!==null&&epr!==null?pnr-epr:null,buffer=r4Buffer(risk,ticker,tr);
+  if(epr===null)return{status:'EPR_NEEDED'};var pnrSafe=pnr===null||gap>=buffer;pressures.push({name:'PNR / EPR buffer',p:pnr===null?0:(gap>0?buffer/gap:999),safe:pnrSafe});var binding=pressures.slice().sort(function(a,b){return b.p-a.p;})[0]||{name:'—'},safe=pressures.every(function(x){return x.safe;});
+  return{status:'OK',safe:safe,stress:out,uniformLoss:uloss,uniformUtilization:uu,shortUtilization:shortU,pnr:pnr,epr:epr,gap:gap,buffer:buffer,binding:binding.name,spot:Number(book.spot),distancePct:side==='CALL'?(strike/book.spot-1)*100:(1-strike/book.spot)*100};
 }
-function r3MaxQty(risk,acct,ticker,side,strike,expiry){var lo=0,hi=1;while(hi<10000){var x=r3Evaluate(risk,acct,ticker,side,strike,hi,expiry);if(x.status!=='OK'||!x.safe)break;lo=hi;hi*=2;}hi=Math.min(hi,10000);while(lo+1<hi){var m=Math.floor((lo+hi)/2),y=r3Evaluate(risk,acct,ticker,side,strike,m,expiry);if(y.status==='OK'&&y.safe)lo=m;else hi=m;}return lo;}
-function r3RoundStrike(x){return x<100?Math.round(x):x<500?Math.round(x/5)*5:Math.round(x/10)*10;}
-function r3Suggest(risk,acct,ticker,side,expiry){var tr=r3FindRow(risk,acct,ticker);if(!tr)return{status:'INPUT'};if(!/^\d{4}-\d{2}-\d{2}$/.test(String(expiry||'')))return{status:'EXPIRY_NEEDED'};var epr=side==='PUT'?r3Num(tr.downEpr):r3Num(tr.upEpr);if(epr===null)return{status:'EPR_NEEDED'};var book=((r3Model(risk,acct)||{}).tickerBooks||{})[ticker];if(!book||!(Number(book.weightedIv||tr.weightedIv||0)>0))return{status:'IV_NEEDED'};var spot=Number(tr.spot||0),cs=[];for(var d=10;d<=100;d+=2.5){var st=r3RoundStrike(side==='CALL'?spot*(1+d/100):spot*(1-d/100));if(!(st>0))continue;var q=r3MaxQty(risk,acct,ticker,side,st,expiry),ev=q>0?r3Evaluate(risk,acct,ticker,side,st,q,expiry):null;cs.push({distance:d,strike:st,qty:q,binding:ev&&ev.status==='OK'?ev.binding:'No headroom'});}var usable=cs.filter(function(c){return c.qty>0;});if(!usable.length)return{status:'NO_HEADROOM',candidates:cs};var maxQ=Math.max.apply(null,usable.map(function(c){return c.qty;})),band=usable.filter(function(c){return c.qty>=Math.max(1,Math.floor(maxQ*.9));}),first=band[0],last=band[Math.min(2,band.length-1)];return{status:'OK',from:first.strike,to:last.strike,fromPct:first.distance,toPct:last.distance,qty:first.qty,binding:first.binding,candidates:usable.slice(0,8)};}
+function r4MaxQty(risk,acct,ticker,side,strike,expiry){var lo=0,hi=1;while(hi<10000){var x=r4Evaluate(risk,acct,ticker,side,strike,hi,expiry);if(x.status!=='OK'||!x.safe)break;lo=hi;hi*=2;}hi=Math.min(hi,10000);while(lo+1<hi){var m=Math.floor((lo+hi)/2),y=r4Evaluate(risk,acct,ticker,side,strike,m,expiry);if(y.status==='OK'&&y.safe)lo=m;else hi=m;}return lo;}
+function r4RoundStrike(x){return x<100?Math.round(x):x<500?Math.round(x/5)*5:Math.round(x/10)*10;}
+function r4Suggest(risk,acct,ticker,side,expiry){var tr=r4FindRow(risk,acct,ticker);if(!tr)return{status:'INPUT'};if(!/^\d{4}-\d{2}-\d{2}$/.test(String(expiry||'')))return{status:'EXPIRY_NEEDED'};var epr=side==='PUT'?r4Num(tr.downEpr):r4Num(tr.upEpr);if(epr===null)return{status:'EPR_NEEDED'};var book=((r4Model(risk,acct)||{}).tickerBooks||{})[ticker];if(!book||!(Number(book.weightedIv||tr.weightedIv||0)>0))return{status:'IV_NEEDED'};var spot=Number(tr.spot||0),cs=[];for(var d=10;d<=100;d+=2.5){var st=r4RoundStrike(side==='CALL'?spot*(1+d/100):spot*(1-d/100));if(!(st>0))continue;var q=r4MaxQty(risk,acct,ticker,side,st,expiry),ev=q>0?r4Evaluate(risk,acct,ticker,side,st,q,expiry):null;cs.push({distance:d,strike:st,qty:q,binding:ev&&ev.status==='OK'?ev.binding:'No headroom'});}var usable=cs.filter(function(c){return c.qty>0;});if(!usable.length)return{status:'NO_HEADROOM',candidates:cs};var maxQ=Math.max.apply(null,usable.map(function(c){return c.qty;})),band=usable.filter(function(c){return c.qty>=Math.max(1,Math.floor(maxQ*.9));}),first=band[0],last=band[Math.min(2,band.length-1)];return{status:'OK',from:first.strike,to:last.strike,fromPct:first.distance,toPct:last.distance,qty:first.qty,binding:first.binding,candidates:usable.slice(0,8)};}
 
-function r3RenderLab(box,risk){
-  var accounts=(risk.accounts||[]).filter(function(a){return a.isPortfolioMargin===true;}).map(function(a){return a.account;});if(!accounts.length)return;var lab=document.createElement('div');lab.className='r3-lab';lab.innerHTML='<div class="bp-head"><div><div class="bp-title">Risk Lab</div><div class="bp-sub">Local what-if · Sticky-Strike IV approximation · no Schwab call</div></div><span class="engine-mode-badge active">LOCAL</span></div><div class="r3-grid"><label>Account<select id="r3-acct">'+accounts.map(function(a){return'<option>'+escHtml(a)+'</option>';}).join('')+'</select></label><label>Ticker<select id="r3-ticker"></select></label><label>Side<select id="r3-side"><option>CALL</option><option>PUT</option></select></label><label>Expiry<input id="r3-expiry" type="date"></label><label>Strike<input id="r3-strike" type="number" step="0.5" min="0"></label><label>Qty<input id="r3-qty" type="number" min="1" step="1" value="1"></label></div><div class="r3-actions"><button class="abtn" id="r3-calc">What if</button><button class="abtn" id="r3-suggest">Suggest strikes</button></div><div id="r3-result"></div>';box.appendChild(lab);
-  var acct=lab.querySelector('#r3-acct'),ticker=lab.querySelector('#r3-ticker'),side=lab.querySelector('#r3-side'),exp=lab.querySelector('#r3-expiry'),strike=lab.querySelector('#r3-strike'),qty=lab.querySelector('#r3-qty'),res=lab.querySelector('#r3-result');acct.value=accounts.indexOf(R3_STATE.account)>=0?R3_STATE.account:accounts[0];side.value=R3_STATE.side||'CALL';exp.value=R3_STATE.expiry||'';strike.value=R3_STATE.strike||'';qty.value=R3_STATE.qty||1;
-  function fill(){var ts=(risk.rows||[]).filter(function(r){return r.account===acct.value&&r.isPortfolioMargin===true;}).map(function(r){return r.ticker;});ts=ts.filter(function(t,i,a){return a.indexOf(t)===i;}).sort();ticker.innerHTML='<option value="">Ticker</option>'+ts.map(function(t){return'<option>'+escHtml(t)+'</option>';}).join('');if(ts.indexOf(R3_STATE.ticker)>=0)ticker.value=R3_STATE.ticker;}
-  function save(){R3_STATE.account=acct.value;R3_STATE.ticker=ticker.value;R3_STATE.side=side.value;R3_STATE.expiry=exp.value;R3_STATE.strike=strike.value;R3_STATE.qty=Number(qty.value||1);}fill();acct.onchange=function(){save();fill();save();};[ticker,side,exp,strike,qty].forEach(function(el){el.onchange=save;});
-  lab.querySelector('#r3-calc').onclick=function(){save();var ev=r3Evaluate(risk,acct.value,ticker.value,side.value,Number(strike.value),Number(qty.value),exp.value);if(ev.status!=='OK'){res.innerHTML='<div class="r3-result"><strong>'+escHtml(ev.status==='EXPIRY_NEEDED'?'Choose an expiry':ev.status==='EPR_NEEDED'?'EPR needed for this ticker/side':ev.status==='IV_NEEDED'?'Current IV unavailable':'Choose account, ticker, strike and quantity')+'</strong></div>';return;}res.innerHTML='<div class="r3-result"><strong>'+(ev.safe?'Within RiKi 75% guardrails':'Modeled guardrail exceeded')+'</strong> · binding '+escHtml(ev.binding)+'<br>Strike '+Number(strike.value).toFixed(2)+' · '+ev.distancePct.toFixed(1)+'% OTM · '+Number(qty.value)+' contracts<br>PNR '+(ev.pnr==null?'no crossing':ev.pnr.toFixed(1)+'%')+' · EPR '+ev.epr.toFixed(1)+'% · buffer '+(ev.gap==null?'—':ev.gap.toFixed(1)+' pp')+'<br>'+r3UniformLabel()+' loss '+r3Money(ev.uniformLoss)+' · Schwab trigger used '+r3Pct(ev.uniformUtilization)+' · Net-short NLV used '+r3Pct(ev.shortUtilization)+'<br>'+Object.keys(ev.stress).map(function(k){return r3ScenarioLabel(k)+' '+r3Pct(ev.stress[k].schwabUtilization);}).join(' · ')+'</div>';};
-  lab.querySelector('#r3-suggest').onclick=function(){save();var sg=r3Suggest(risk,acct.value,ticker.value,side.value,exp.value);if(sg.status!=='OK'){res.innerHTML='<div class="r3-result"><strong>'+escHtml(sg.status==='EXPIRY_NEEDED'?'Choose an expiry first':sg.status==='EPR_NEEDED'?'EPR needed before suggesting strikes':sg.status==='IV_NEEDED'?'Current IV unavailable':sg.status==='NO_HEADROOM'?'No modeled headroom':'Choose account and ticker')+'</strong></div>';return;}res.innerHTML='<div class="r3-result"><div class="r3-big">'+Number(sg.from).toFixed(0)+'–'+Number(sg.to).toFixed(0)+' · '+sg.fromPct.toFixed(1)+'–'+sg.toPct.toFixed(1)+'% OTM</div><strong>Modeled capacity '+sg.qty+' contracts</strong> · binding '+escHtml(sg.binding)+'<br>Uses current weighted IV and selected expiry. No bid/ask, premium, earnings, liquidity or fill-probability check.<table class="r3-table"><thead><tr><th>Strike</th><th>% OTM</th><th>Max qty</th><th>Binding</th></tr></thead><tbody>'+sg.candidates.map(function(c){return'<tr><td>'+c.strike+'</td><td>'+c.distance.toFixed(1)+'%</td><td>'+c.qty+'</td><td>'+escHtml(c.binding)+'</td></tr>';}).join('')+'</tbody></table></div>';};
+function r4RenderLab(box,risk){
+  var accounts=(risk.accounts||[]).filter(function(a){return a.isPortfolioMargin===true;}).map(function(a){return a.account;});if(!accounts.length)return;
+  var lab=document.createElement('div');lab.className='r4-lab';lab.innerHTML='<div class="bp-head"><div><div class="bp-title">Risk Lab</div><div class="bp-sub">Local what-if · TOS-calibrated beta · Sticky-Strike IV · no Schwab call</div></div><span class="engine-mode-badge active">LOCAL</span></div><div class="r4-grid"><label>Account<select id="r4-acct">'+accounts.map(function(a){return'<option>'+escHtml(a)+'</option>';}).join('')+'</select></label><label>Ticker<select id="r4-ticker"></select></label><label>Side<select id="r4-side"><option>CALL</option><option>PUT</option></select></label><label>Expiry<input id="r4-expiry" type="date"></label><label>Strike<input id="r4-strike" type="number" step="0.5" min="0"></label><label>Qty<input id="r4-qty" type="number" min="1" step="1" value="1"></label></div><div class="r4-actions"><button class="abtn" id="r4-calc">What if</button><button class="abtn" id="r4-suggest">Suggest strikes</button></div><div id="r4-result"></div>';box.appendChild(lab);
+  var acct=lab.querySelector('#r4-acct'),ticker=lab.querySelector('#r4-ticker'),side=lab.querySelector('#r4-side'),exp=lab.querySelector('#r4-expiry'),strike=lab.querySelector('#r4-strike'),qty=lab.querySelector('#r4-qty'),res=lab.querySelector('#r4-result');
+  acct.value=accounts.indexOf(R4_STATE.account)>=0?R4_STATE.account:accounts[0];side.value=R4_STATE.side||'CALL';exp.value=R4_STATE.expiry||'';strike.value=R4_STATE.strike||'';qty.value=R4_STATE.qty||1;
+  function fill(){var ts=(risk.rows||[]).filter(function(r){return r.account===acct.value&&r.isPortfolioMargin===true;}).map(function(r){return r.ticker;});ts=ts.filter(function(t,i,a){return a.indexOf(t)===i;}).sort();ticker.innerHTML='<option value="">Ticker</option>'+ts.map(function(t){return'<option>'+escHtml(t)+'</option>';}).join('');if(ts.indexOf(R4_STATE.ticker)>=0)ticker.value=R4_STATE.ticker;}
+  function save(){R4_STATE.account=acct.value;R4_STATE.ticker=ticker.value;R4_STATE.side=side.value;R4_STATE.expiry=exp.value;R4_STATE.strike=strike.value;R4_STATE.qty=Number(qty.value||1);}fill();acct.onchange=function(){save();fill();save();};[ticker,side,exp,strike,qty].forEach(function(el){el.onchange=save;});
+  lab.querySelector('#r4-calc').onclick=function(){save();var ev=r4Evaluate(risk,acct.value,ticker.value,side.value,Number(strike.value),Number(qty.value),exp.value);if(ev.status!=='OK'){res.innerHTML='<div class="r4-result"><strong>'+escHtml(ev.status==='EXPIRY_NEEDED'?'Choose an expiry':ev.status==='EPR_NEEDED'?'EPR needed for this ticker/side':ev.status==='IV_NEEDED'?'Current IV unavailable':'Choose account, ticker, strike and quantity')+'</strong></div>';return;}res.innerHTML='<div class="r4-result"><strong>'+(ev.safe?'Within RiKi '+r4GuardPct(risk).toFixed(0)+'% guardrails':'Modeled guardrail exceeded')+'</strong> · binding '+escHtml(ev.binding)+'<br>Strike '+Number(strike.value).toFixed(2)+' · '+ev.distancePct.toFixed(1)+'% OTM · '+Number(qty.value)+' contracts<br>PNR '+(ev.pnr==null?'no crossing':ev.pnr.toFixed(1)+'%')+' · EPR '+ev.epr.toFixed(1)+'% · gap '+(ev.gap==null?'—':ev.gap.toFixed(1)+' pp')+' · required '+ev.buffer.toFixed(0)+' pp<br>'+r4UniformLabel()+' loss '+r4Money(ev.uniformLoss)+' · Schwab trigger used '+r4Pct(ev.uniformUtilization)+' · Net-short NLV used '+r4Pct(ev.shortUtilization)+'<br>'+Object.keys(ev.stress).map(function(k){return r4ScenarioLabel(k)+' '+r4Pct(ev.stress[k].schwabUtilization);}).join(' · ')+'</div>';};
+  lab.querySelector('#r4-suggest').onclick=function(){save();var sg=r4Suggest(risk,acct.value,ticker.value,side.value,exp.value);if(sg.status!=='OK'){res.innerHTML='<div class="r4-result"><strong>'+escHtml(sg.status==='EXPIRY_NEEDED'?'Choose an expiry first':sg.status==='EPR_NEEDED'?'EPR needed before suggesting strikes':sg.status==='IV_NEEDED'?'Current IV unavailable':sg.status==='NO_HEADROOM'?'No modeled headroom':'Choose account and ticker')+'</strong></div>';return;}res.innerHTML='<div class="r4-result"><div class="r4-big">'+Number(sg.from).toFixed(0)+'–'+Number(sg.to).toFixed(0)+' · '+sg.fromPct.toFixed(1)+'–'+sg.toPct.toFixed(1)+'% OTM</div><strong>Modeled capacity '+sg.qty+' contracts</strong> · binding '+escHtml(sg.binding)+'<br>Uses current weighted IV, TOS-calibrated beta when available, selected expiry, and your saved RiKi thresholds. No bid/ask, premium, earnings, liquidity or fill-probability check.<table class="r4-table"><thead><tr><th>Strike</th><th>% OTM</th><th>Max qty</th><th>Binding</th></tr></thead><tbody>'+sg.candidates.map(function(c){return'<tr><td>'+c.strike+'</td><td>'+c.distance.toFixed(1)+'%</td><td>'+c.qty+'</td><td>'+escHtml(c.binding)+'</td></tr>';}).join('')+'</tbody></table></div>';};
 }
 
 window.rikiPmRenderPanel_=function(host,d){
-  r3InstallStyles();var risk=(d||{}).pmRisk||{},box=document.createElement('div');box.className='pm-panel';
-  box.innerHTML='<div class="bp-head"><div><div class="bp-title">Portfolio Risk Lab</div><div class="bp-sub">Schwab PM house thresholds · beta-weight stress · EPR/PNR · uniform stress · net short risk</div></div><button class="abtn" id="r3-refresh">Refresh risk</button></div><div class="ssub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+' · ticker dots persist until a completed manual, automatic, or Risk refresh replaces the snapshot.</div>';
-  if(!r3Ready(d)){box.innerHTML+='<div class="r3-result"><strong>Backend V3 required.</strong><br>Current risk snapshot: '+escHtml(risk.version||'none')+'. Replace the previous V2 risk backend module with V3, deploy the web app, then press Refresh risk. The rest of RiKi remains available.</div>';host.appendChild(box);var b0=box.querySelector('#r3-refresh');b0.onclick=function(){toast('Deploy Risk backend V3 first',4500);};return;}
-  (risk.accounts||[]).forEach(function(a){box.insertAdjacentHTML('beforeend',r3AccountHtml(risk,a));});r3EprEditor(box,risk,d);r3RenderLab(box,risk);host.appendChild(box);
-  var btn=box.querySelector('#r3-refresh');btn.onclick=function(){btn.disabled=true;btn.textContent='Reading…';fetch(BACKEND+'?action=pmRiskRefresh&_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(function(j){if(!j||j.success===false||!j.pmRisk)throw Error((j&&j.error)||'Risk refresh failed');DATA.pmRisk=j.pmRisk;DATA.accountBuyingPower=j.accountBuyingPower||DATA.accountBuyingPower;if(typeof RIKI_PM_SETTINGS_LOCAL!=='undefined')RIKI_PM_SETTINGS_LOCAL=(j.pmRisk||{}).settings||RIKI_PM_SETTINGS_LOCAL;saveCache(DATA);renderAll(DATA);toast('Risk refreshed · ticker dots updated',2600);}).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;btn.textContent='Refresh risk';});};
+  r4InstallStyles();var risk=(d||{}).pmRisk||{},box=document.createElement('div');box.className='pm-panel';
+  box.innerHTML='<div class="bp-head"><div><div class="bp-title">Portfolio Risk Lab</div><div class="bp-sub">TOS-calibrated beta · Schwab PM house thresholds · configurable RiKi guardrails</div></div><button class="abtn" id="r4-refresh">Refresh risk</button></div><div class="ssub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+' · ticker dots persist until a completed manual, automatic, CSV import, or Risk refresh replaces the snapshot.</div>';
+  if(!r4Ready(d)){box.innerHTML+='<div class="r4-result"><strong>Backend V4 required.</strong><br>Current risk snapshot: '+escHtml(risk.version||'none')+'. Replace the V3 risk backend module with V4, deploy the existing web app, then press Refresh risk.</div>';host.appendChild(box);var b0=box.querySelector('#r4-refresh');b0.onclick=function(){toast('Deploy Risk backend V4 first',4500);};return;}
+  (risk.accounts||[]).forEach(function(a){box.insertAdjacentHTML('beforeend',r4AccountHtml(risk,a));});
+  r4Controls(box,risk,d);r4EprEditor(box,risk,d);r4RenderLab(box,risk);host.appendChild(box);
+  var btn=box.querySelector('#r4-refresh');btn.onclick=function(){btn.disabled=true;btn.textContent='Reading…';fetch(BACKEND+'?action=pmRiskRefresh&_='+Date.now(),{cache:'no-store'}).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();}).then(function(j){if(!j||j.success===false||!j.pmRisk)throw Error((j&&j.error)||'Risk refresh failed');DATA.pmRisk=j.pmRisk;DATA.accountBuyingPower=j.accountBuyingPower||DATA.accountBuyingPower;if(typeof RIKI_PM_SETTINGS_LOCAL!=='undefined')RIKI_PM_SETTINGS_LOCAL=(j.pmRisk||{}).settings||RIKI_PM_SETTINGS_LOCAL;saveCache(DATA);renderAll(DATA);toast('Risk refreshed · TOS beta + thresholds applied',2800);}).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;btn.textContent='Refresh risk';});};
 };
-window.renderRiskLab=function(d){var host=ge('risk-content');if(!host)return;host.innerHTML='';try{window.rikiPmRenderPanel_(host,d||DATA||{});}catch(e){host.innerHTML='<div class="pm-panel"><div class="bp-title">Portfolio Risk Lab</div><div class="r3-result" style="color:var(--red)">Risk Lab render error: '+escHtml(errMsg(e))+'</div></div>';}};
+window.renderRiskLab=function(d){var host=ge('risk-content');if(!host)return;host.innerHTML='';try{window.rikiPmRenderPanel_(host,d||DATA||{});}catch(e){host.innerHTML='<div class="pm-panel"><div class="bp-title">Portfolio Risk Lab</div><div class="r4-result" style="color:var(--red)">Risk Lab render error: '+escHtml(errMsg(e))+'</div></div>';}};
 
 })();
-
 
 // Start
 initApp();

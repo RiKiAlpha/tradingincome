@@ -3186,11 +3186,8 @@ d.churnerLoadingLabel = DATA.churnerLoadingLabel || '';
 // Preserve the latest completed local Portfolio Margin snapshot across ordinary
 // dashboard/GitHub hydrations. PM risk is intentionally browser-local until the
 // user refreshes Risk again; normal DATA replacement must not erase it.
-if(DATA && DATA.pmRisk && typeof rikiScreenPmSnapshotValid_==='function' && rikiScreenPmSnapshotValid_(DATA.pmRisk)){
-d.pmRisk = DATA.pmRisk;
-if(DATA.accountBuyingPower) d.accountBuyingPower = DATA.accountBuyingPower;
-if(typeof rikiScreenStorePmSnapshot_==='function') rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);
-}else if(typeof rikiScreenLoadStoredPmSnapshot_==='function'){
+if(typeof rikiScreenStorePmSnapshot_==='function' && DATA && DATA.pmRisk)rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);
+if(typeof rikiScreenLoadStoredPmSnapshot_==='function'){
 var _pmSaved=rikiScreenLoadStoredPmSnapshot_();
 if(_pmSaved){d.pmRisk=_pmSaved.pmRisk;if(_pmSaved.accountBuyingPower)d.accountBuyingPower=_pmSaved.accountBuyingPower;}
 }
@@ -3850,7 +3847,7 @@ function rikiNickelRenderManual_(host,d){
 /* RIKI_INCOME_SCREENER_V1_5_0_2026_09_24
  * Manual only. No refresh hooks. Read-only market data + local scoring.
  */
-var RIKI_SCREEN_VERSION='RIKI_INCOME_SCREENER_V1_7_2_PM_ONE_CONTRACT_2026_09_25';
+var RIKI_SCREEN_VERSION='RIKI_INCOME_SCREENER_V1_7_3_PM_CANONICAL_2026_09_25';
 var RIKI_SCREEN_KEY='riki_income_screener_v16_settings';
 var RIKI_SCREEN_RESULTS_KEY='riki_income_screener_v16_results';
 var RIKI_SCREEN_BUSY=false;
@@ -3859,21 +3856,80 @@ var RIKI_SCREEN_LAST_META=null;
 var RIKI_SCREEN_LAST_PROBE=null;
 var RIKI_SCREEN_LAST_POST=null;
 var RIKI_SCREEN_VIEW='TICKER';
-var RIKI_SCREEN_PM_SNAPSHOT_KEY='riki_pm_v4_completed_snapshot_v172';
+var RIKI_SCREEN_PM_SNAPSHOT_KEY='riki_pm_v4_completed_snapshot_v173';
+var RIKI_SCREEN_PM_RUNTIME=null;
 
-function rikiScreenPmSnapshotValid_(risk){
-  return !!(risk && /^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||'')) && Array.isArray(risk.accounts) && risk.accounts.length && risk.localModel && risk.localModel.accounts && Object.keys(risk.localModel.accounts).length);
+function rikiScreenPmAccountRow_(risk){
+  var a=(risk&&Array.isArray(risk.accounts)?risk.accounts:[]).filter(function(x){return x&&x.isPortfolioMargin===true;});
+  if(a.length)return a[0];
+  return null;
 }
-function rikiScreenStorePmSnapshot_(risk, buyingPower){
-  if(!rikiScreenPmSnapshotValid_(risk))return false;
-  try{localStorage.setItem(RIKI_SCREEN_PM_SNAPSHOT_KEY,JSON.stringify({savedAt:Date.now(),pmRisk:risk,accountBuyingPower:buyingPower||null}));return true;}catch(e){return false;}
+function rikiScreenPmModelEntries_(risk){
+  var a=((((risk||{}).localModel||{}).accounts)||{});
+  return Object.keys(a).map(function(k){return{key:String(k),model:a[k]||{}};});
+}
+function rikiScreenNormLabel_(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
+function rikiScreenBuildBooksFromComponents_(components){
+  var books={};
+  (components||[]).forEach(function(c){
+    if(!c||!c.ticker)return;
+    var t=String(c.ticker||'').toUpperCase(),b=books[t]||(books[t]={spot:Number(c.spot||0),equityQty:0,legs:[],weightedIv:null,dividendYield:Number(c.dividendYield||0)});
+    if(Number(c.spot||0)>0)b.spot=Number(c.spot);
+    if(String(c.kind||'').toUpperCase()==='EQUITY')b.equityQty+=Number(c.qty||0);
+    else if(String(c.kind||'').toUpperCase()==='OPTION')b.legs.push(c);
+  });
+  return books;
+}
+function rikiScreenResolvePmModel_(risk,ar){
+  var entries=rikiScreenPmModelEntries_(risk);if(!entries.length)return null;
+  var acct=String(ar&&ar.account||''),norm=rikiScreenNormLabel_(acct),hit=null,method='';
+  hit=entries.filter(function(x){return x.key===acct;})[0]||null;if(hit)method='exact';
+  if(!hit){hit=entries.filter(function(x){return rikiScreenNormLabel_(x.key)===norm;})[0]||null;if(hit)method='normalized-label';}
+  if(!hit){var pm=entries.filter(function(x){return x.model&&x.model.isPortfolioMargin===true;});if(pm.length===1){hit=pm[0];method='pm-flag';}}
+  if(!hit&&ar&&isFinite(Number(ar.netLiq))){
+    var nlv=Number(ar.netLiq),rank=entries.map(function(x){var mn=Number(x.model&&x.model.netLiq);return{x:x,d:isFinite(mn)?Math.abs(mn-nlv):Infinity};}).sort(function(a,b){return a.d-b.d;});
+    if(rank.length&&isFinite(rank[0].d)&&rank[0].d<=Math.max(1,Math.abs(nlv)*.01)){hit=rank[0].x;method='net-liq';}
+  }
+  if(!hit&&entries.length===1){hit=entries[0];method='single-model';}
+  if(!hit)return null;
+  var m=hit.model||{},books=m.tickerBooks&&typeof m.tickerBooks==='object'?m.tickerBooks:null;
+  if((!books||!Object.keys(books).length)&&Array.isArray(m.components))books=rikiScreenBuildBooksFromComponents_(m.components);
+  return{key:hit.key,model:m,books:books||{},method:method};
+}
+function rikiScreenCompactPmRisk_(risk){
+  if(!risk||!/^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||'')))return null;
+  var ar=rikiScreenPmAccountRow_(risk);if(!ar)return null;
+  var resolved=rikiScreenResolvePmModel_(risk,ar);if(!resolved)return null;
+  var m=resolved.model||{},books=resolved.books||{},acct=String(ar.account||resolved.key||'Account 1'),pmRows=(risk.rows||[]).filter(function(r){return r&&r.isPortfolioMargin===true;});
+  var compact={
+    version:risk.version,model:risk.model||'',benchmark:risk.benchmark||null,capturedAtEt:risk.capturedAtEt||'',capturedMs:Number(risk.capturedMs||0),
+    rikiGuardrailPct:risk.rikiGuardrailPct,warnPct:risk.warnPct,pnrBufferPoints:risk.pnrBufferPoints,riskFreeRate:risk.riskFreeRate,uniformAddonDollars:risk.uniformAddonDollars,
+    stressDefinition:Array.isArray(risk.stressDefinition)?risk.stressDefinition:[],settings:risk.settings||{},betaCalibration:risk.betaCalibration||{},
+    accounts:[ar],rows:pmRows,localModel:{riskFreeRate:((risk.localModel||{}).riskFreeRate||risk.riskFreeRate),accounts:{}},
+    screenerPmCanonical:{sourceKey:resolved.key,accountKey:acct,matchMethod:resolved.method,capturedMs:Date.now()}
+  };
+  compact.localModel.accounts[acct]={netLiq:Number(m.netLiq!=null?m.netLiq:ar.netLiq||0),isPortfolioMargin:true,tickerBooks:books,baseNetShort:m.baseNetShort||{},shortDetail:m.shortDetail||[]};
+  return compact;
+}
+function rikiScreenPmSnapshotValid_(risk){
+  if(!(risk&&/^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||''))))return false;
+  var ar=rikiScreenPmAccountRow_(risk);if(!ar)return false;
+  var resolved=rikiScreenResolvePmModel_(risk,ar);return !!(resolved&&resolved.model);
+}
+function rikiScreenStorePmSnapshot_(risk,buyingPower){
+  var compact=rikiScreenCompactPmRisk_(risk);if(!compact)return false;
+  RIKI_SCREEN_PM_RUNTIME={savedAt:Date.now(),pmRisk:compact,accountBuyingPower:buyingPower||null};
+  try{localStorage.setItem(RIKI_SCREEN_PM_SNAPSHOT_KEY,JSON.stringify(RIKI_SCREEN_PM_RUNTIME));}catch(e){}
+  return true;
 }
 function rikiScreenLoadStoredPmSnapshot_(){
-  try{var x=JSON.parse(localStorage.getItem(RIKI_SCREEN_PM_SNAPSHOT_KEY)||'{}');return x&&rikiScreenPmSnapshotValid_(x.pmRisk)?x:null;}catch(e){return null;}
+  try{var x=JSON.parse(localStorage.getItem(RIKI_SCREEN_PM_SNAPSHOT_KEY)||'{}');if(x&&rikiScreenPmSnapshotValid_(x.pmRisk)){if(!RIKI_SCREEN_PM_RUNTIME)RIKI_SCREEN_PM_RUNTIME=x;return x;}}catch(e){}
+  return null;
 }
 function rikiScreenBestPmRisk_(){
+  if(RIKI_SCREEN_PM_RUNTIME&&rikiScreenPmSnapshotValid_(RIKI_SCREEN_PM_RUNTIME.pmRisk))return RIKI_SCREEN_PM_RUNTIME.pmRisk;
   var live=((window.DATA||{}).pmRisk)||null;
-  if(rikiScreenPmSnapshotValid_(live))return live;
+  if(rikiScreenStorePmSnapshot_(live,(window.DATA||{}).accountBuyingPower))return RIKI_SCREEN_PM_RUNTIME.pmRisk;
   var saved=rikiScreenLoadStoredPmSnapshot_();
   return saved?saved.pmRisk:(live||{});
 }
@@ -3908,27 +3964,24 @@ function rikiScreenCurrentPmRisk_(){return rikiScreenBestPmRisk_();}
 function rikiScreenRiskRows_(){return (((rikiScreenCurrentPmRisk_()||{}).rows)||[]).filter(function(r){return r&&r.isPortfolioMargin===true&&r.ticker;});}
 function rikiScreenRiskMap_(){var map={};rikiScreenRiskRows_().forEach(function(r){var t=String(r.ticker||'').toUpperCase();if(!map[t])map[t]=r;});return map;}
 function rikiScreenPmContext_(){
-  var risk=rikiScreenCurrentPmRisk_(),d=window.DATA||{};
+  var risk=rikiScreenCurrentPmRisk_();
   if(!risk||!risk.version)return{ready:false,reason:'No completed PM snapshot in browser memory or local storage'};
-  if(!rikiScreenPmSnapshotValid_(risk)){
-    var parts=[];
-    if(!Array.isArray(risk.accounts)||!risk.accounts.length)parts.push('accounts');
-    if(!(risk.localModel&&risk.localModel.accounts&&Object.keys(risk.localModel.accounts).length))parts.push('local model');
-    return{ready:false,reason:'PM V4 snapshot is incomplete'+(parts.length?' · missing '+parts.join(' + '):'')+' ('+String(risk.version||'unknown')+')'};
-  }
-  var ar=(risk.accounts||[]).filter(function(a){return a&&a.isPortfolioMargin===true;})[0]||null;
-  if(!ar)return{ready:false,reason:'No Portfolio Margin account in the current risk snapshot'};
-  var model=typeof r4Model==='function'?r4Model(risk,ar.account):null;
-  if(!model||!Array.isArray(model.components))return{ready:false,reason:'Portfolio Margin local model unavailable'};
+  var ar=rikiScreenPmAccountRow_(risk);if(!ar)return{ready:false,reason:'No Portfolio Margin account in the current risk snapshot'};
+  var resolved=rikiScreenResolvePmModel_(risk,ar);if(!resolved)return{ready:false,reason:'Portfolio Margin local model could not be linked to '+String(ar.account||'PM account')};
+  var model=resolved.model||{},books=resolved.books||{};
+  if(!model.tickerBooks||model.tickerBooks!==books)model=Object.assign({},model,{tickerBooks:books});
   var defs=(risk.stressDefinition||[]).slice();
   if(!defs.length)defs=[{key:'up20',spxMove:.20,limitMultiple:3},{key:'up10',spxMove:.10,limitMultiple:1},{key:'dn12',spxMove:-.12,limitMultiple:1},{key:'dn20',spxMove:-.20,limitMultiple:2}];
-  var base={};
+  var base={},accountStress=ar.stress||{},nlv=Number(model.netLiq!=null?model.netLiq:ar.netLiq||0);
   defs.forEach(function(def){
-    var pnl=r4StressPnl(model.components,Number(def.spxMove||0),false,risk),loss=Math.max(0,-pnl),limit=Number(model.netLiq||0)*Number(def.limitMultiple||0);
-    base[def.key]={pnl:pnl,loss:loss,limit:limit,utilization:limit>0?loss/limit:null,def:def};
+    var bs=accountStress[def.key]||{},limit=rikiScreenN_(bs.schwabLimit,rikiScreenN_(bs.brokerLimit,nlv*Number(def.limitMultiple||0))),pnl=rikiScreenN_(bs.pnl),loss=rikiScreenN_(bs.loss),util=rikiScreenN_(bs.schwabUtilization,rikiScreenN_(bs.utilization));
+    if(pnl===null&&Array.isArray(model.components))pnl=r4StressPnl(model.components,Number(def.spxMove||0),false,risk);
+    if(loss===null&&pnl!==null)loss=Math.max(0,-pnl);
+    if(util===null&&loss!==null&&limit>0)util=loss/limit;
+    base[def.key]={pnl:pnl===null?0:pnl,loss:loss===null?Math.max(0,-Number(pnl||0)):loss,limit:Number(limit||0),utilization:util,def:def};
   });
   var ms=Number(risk.capturedMs||0),age=ms>0?Math.max(0,Date.now()-ms):null;
-  return{ready:true,risk:risk,account:ar,accountName:String(ar.account||''),model:model,defs:defs,baseline:base,guard:r4Guard(risk),capturedMs:ms,capturedAtEt:String(risk.capturedAtEt||''),ageMs:age,stale:age!==null&&age>45*60000};
+  return{ready:true,risk:risk,account:ar,accountName:String(ar.account||''),model:model,modelMatch:resolved.method,defs:defs,baseline:base,guard:r4Guard(risk),capturedMs:ms,capturedAtEt:String(risk.capturedAtEt||''),ageMs:age,stale:age!==null&&age>45*60000};
 }
 function rikiScreenPnrSingleFast_(book,equity,down,risk){
   var spot=Number(book&&book.spot||0);if(!(spot>0&&equity>0))return null;
@@ -3977,7 +4030,7 @@ function rikiScreenReapplyPortfolioOverlay_(){
 }
 function rikiScreenUpdatePmSnapshot_(){
   var el=rikiScreenEl_('scr-pm-snapshot');if(!el)return;var c=rikiScreenPmContext_();if(!c.ready){el.className='scr-pm-snapshot bad';el.innerHTML='<span class="scr-pm-pill bad">PM OFFLINE</span><span>'+rikiScreenEscape_(c.reason||'Portfolio snapshot unavailable')+'. Scan still works with standalone ranking.</span>';return;}
-  var age=c.ageMs==null?'age unknown':Math.round(c.ageMs/60000)+' min old',tone=c.stale?'warn':'good';el.className='scr-pm-snapshot '+tone;el.innerHTML='<span class="scr-pm-pill '+(c.stale?'tight':'good')+'">PM 1-CONTRACT</span><span><b>'+rikiScreenEscape_(c.accountName)+'</b> · '+rikiScreenEscape_(c.capturedAtEt?'snapshot '+c.capturedAtEt+' ET':'completed local risk snapshot')+' · '+age+(c.stale?' · STALE':'')+' · PUTs use SPX −20%; CALLs use SPX +20%; PNR/EPR is recalculated after adding exactly 1 short contract. No Schwab call.</span>';
+  var age=c.ageMs==null?'age unknown':Math.round(c.ageMs/60000)+' min old',tone=c.stale?'warn':'good';el.className='scr-pm-snapshot '+tone;el.innerHTML='<span class="scr-pm-pill '+(c.stale?'tight':'good')+'">PM 1-CONTRACT</span><span><b>'+rikiScreenEscape_(c.accountName)+'</b> · '+rikiScreenEscape_(c.capturedAtEt?'snapshot '+c.capturedAtEt+' ET':'completed local risk snapshot')+' · '+age+(c.stale?' · STALE':'')+' · model linked '+rikiScreenEscape_(c.modelMatch||'canonical')+' · PUTs use SPX −20%; CALLs use SPX +20%; PNR/EPR is recalculated after adding exactly 1 short contract. No Schwab call.</span>';
 }
 function rikiScreenAnchors_(){return Object.keys(rikiScreenRiskMap_()).sort();}
 function rikiScreenCustom_(){return rikiScreenParseTickerText_((rikiScreenEl_('scr-custom')||{}).value||'');}
@@ -4042,9 +4095,9 @@ function rikiScreenResolveExpiry_(settings){return settings.expiryMode==='DATE'?
 function rikiScreenRefreshEarnings_(){if(RIKI_SCREEN_BUSY)return;var settings=rikiScreenReadControls_(),probe=RIKI_SCREEN_LAST_PROBE||{},contracts=probe.contracts||[],tickers=[];contracts.forEach(function(c){var t=String(c.ticker||'').toUpperCase();if(t&&tickers.indexOf(t)<0)tickers.push(t);});if(!tickers.length){rikiScreenStatus_('Run a scan first. Earnings refresh is intentionally separate and only checks premium-bearing tickers.','err');return;}var expiry=rikiScreenResolveExpiry_(settings);if(!expiry){rikiScreenStatus_('Choose an expiry first.','err');return;}rikiScreenSetBusy_(true);rikiScreenStatus_('Refreshing earnings calendar for '+tickers.length+' premium-bearing ticker(s)… This is separate from Scan so a slow calendar source can never block premium discovery.');rikiScreenMetaFetch_(rikiScreenBackendUrl_(),{action:'screenerEarningsRefresh',tickers:tickers.join(','),expiry:expiry,_:Date.now()}).then(function(x){if(!x||x.success!==true)throw Error((x&&x.error)||'Earnings refresh failed');rikiScreenStatus_('Earnings cache updated · '+Number(x.matched||0)+' of '+Number(x.requested||0)+' ticker(s) have an earnings date through '+expiry+'. Re-run Scan to apply automatic earnings exclusions.','good');}).catch(function(e){rikiScreenStatus_('Earnings refresh failed or stalled. Your Scan remains unaffected; use Manual ticker exclusions for known event names. '+String(e&&e.message||e),'err');}).finally(function(){rikiScreenSetBusy_(false);});}
 function rikiScreenStartScope_(scope){if(RIKI_SCREEN_BUSY)return;var settings=rikiScreenReadControls_(),rikiTickers=rikiScreenConfiguredTickers_();if(settings.maxOtm<=settings.minOtm){rikiScreenStatus_('Max OTM must be greater than Min OTM.','err');return;}if(settings.expiryMode==='DATE'&&!/^\d{4}-\d{2}-\d{2}$/.test(settings.specificExpiry)){rikiScreenStatus_('Choose a specific expiry date.','err');return;}if(scope==='RIKI'&&!rikiTickers.length){rikiScreenStatus_('No RiKi ticker list found in Controls.','err');return;}rikiScreenSaveSettings_(settings);rikiScreenSetBusy_(true);rikiScreenProgress_(3);var label=scope==='RIKI'?'RiKi tickers only ('+rikiTickers.length+')':'market';rikiScreenStatus_('Checking V1.6 read-only backend · '+label+'…');var probe=null,meta=null,post=null;rikiScreenBackendPreflight_(settings).then(function(){rikiScreenProgress_(10);rikiScreenStatus_(scope==='RIKI'?'Reading live Schwab chains for your RiKi Controls tickers…':'Chain-first market scan · reading actual Schwab option chains before beta/EPR ranking…');return rikiScreenProbeFetch_(scope,settings,scope==='RIKI'?rikiTickers:[]);}).then(function(x){probe=x;RIKI_SCREEN_LAST_PROBE=x;rikiScreenProgress_(68);var dg=x.diagnostics||{};rikiScreenStatus_('Schwab probe complete · '+Number(dg.processed||0)+' chains · '+Number(dg.hitTickerCount||0)+' premium-bearing tickers · '+Number(dg.qualifyingContracts||0)+' contracts. Loading beta/EPR + cached earnings status for the hits…');if(!(x.contracts||[]).length)return{success:true,rows:[],diagnostics:{requested:0,returned:0}};return rikiScreenMetadataForProbe_(x,settings);}).then(function(m){meta=m;RIKI_SCREEN_LAST_META=m;rikiScreenProgress_(87);post=rikiScreenBuildRowsFromProbe_(probe,meta,settings);RIKI_SCREEN_LAST_POST=post;RIKI_SCREEN_RESULTS=rikiScreenApplyPortfolioOverlay_((post.rows||[]).slice(0,400));try{localStorage.setItem(RIKI_SCREEN_RESULTS_KEY,JSON.stringify({savedAt:Date.now(),rows:RIKI_SCREEN_RESULTS}));}catch(e){}rikiScreenRender_(RIKI_SCREEN_RESULTS);rikiScreenRenderExcludedPanel_(post,meta);rikiScreenRenderProbeDiag_(probe,post);var dg=probe.diagnostics||{},status='Scan complete · '+rikiScreenUniqueBest_(RIKI_SCREEN_RESULTS).length+' tickers · '+RIKI_SCREEN_RESULTS.length+' ranked contracts · '+Number(dg.processed||0)+' chains probed';if(post.excluded&&post.excluded.length)status+=' · '+post.excluded.length+' premium-bearing ticker(s) excluded';var ed=meta&&meta.diagnostics&&meta.diagnostics.earningsCalendar;if(settings.excludeEarnings&&ed&&ed.refreshRequired)status+=' · earnings cache not refreshed (manual exclusions active)';rikiScreenStatus_(status+'. No orders submitted · no RiKi refresh triggered.',RIKI_SCREEN_RESULTS.length?'good':'');rikiScreenProgress_(100);}).catch(function(e){rikiScreenStatus_(String(e&&e.message||e),'err');rikiScreenProgress_(0);}).finally(function(){rikiScreenSetBusy_(false);});}
 function rikiScreenClear_(){if(RIKI_SCREEN_BUSY)return;RIKI_SCREEN_RESULTS=[];RIKI_SCREEN_LAST_POST=null;try{localStorage.removeItem(RIKI_SCREEN_RESULTS_KEY);}catch(e){}rikiScreenRender_([]);rikiScreenRenderExcludedPanel_({excluded:[]},null);rikiScreenStatus_('Results cleared.');rikiScreenProgress_(0);}
-function rikiScreenRestore_(){try{var x=JSON.parse(localStorage.getItem(RIKI_SCREEN_RESULTS_KEY)||'{}');if(x&&Array.isArray(x.rows)){RIKI_SCREEN_RESULTS=rikiScreenApplyPortfolioOverlay_(x.rows);rikiScreenRender_(RIKI_SCREEN_RESULTS);if(x.savedAt)rikiScreenStatus_('Showing saved local scan from '+new Date(x.savedAt).toLocaleString()+'. Portfolio 1-contract overlay was recalculated from the current local PM snapshot; press Scan for fresh quotes.');}}catch(e){}}
+function rikiScreenRestore_(){try{var x=JSON.parse(localStorage.getItem(RIKI_SCREEN_RESULTS_KEY)||'{}');if(x&&Array.isArray(x.rows)){RIKI_SCREEN_RESULTS=rikiScreenApplyPortfolioOverlay_(x.rows);rikiScreenRender_(RIKI_SCREEN_RESULTS);if(x.savedAt){var c=rikiScreenPmContext_();rikiScreenStatus_('Showing saved local scan from '+new Date(x.savedAt).toLocaleString()+'. '+(c.ready?'Portfolio 1-contract overlay recalculated from the current PM snapshot.':'Standalone ranking only; PM snapshot is not linked yet.')+' Press Scan for fresh quotes.');}}}catch(e){}}
 
-function rikiScreenInit_(){var root=rikiScreenEl_('screen-content');if(!root||root.getAttribute('data-ready')==='1')return;if(window.DATA&&typeof rikiScreenStorePmSnapshot_==='function')rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);root.innerHTML='<div class="scr-wrap"><div class="scr-hero"><div class="scr-title">RiKi Income Screener</div><div class="scr-sub">Chain-first premium discovery with a local Account 1 Portfolio Margin overlay. RiKi now tests each ranked contract as exactly one additional short option against the last completed PM snapshot.</div><span class="scr-badge">MANUAL SCAN · READ ONLY · NO REFRESH HOOKS</span></div><div class="scr-card"><div class="bp-head"><div><div class="bp-title">Scan controls</div><div class="bp-sub">Premium first. Risk ranking second. Nothing runs until you press a scan button.</div></div><span class="engine-mode-badge active">CHAIN-FIRST V1.7.2 · PM 1CT</span></div><div class="scr-grid"><label>Side<select id="scr-side"><option>PUT</option><option>CALL</option></select></label><label>Expiry<select id="scr-exp"><option value="FRIDAY">Nearest Friday (Thu if holiday)</option><option value="DATE">Specific date</option></select></label><label id="scr-expdate-wrap" style="display:none">Expiry date<input id="scr-expdate" type="date"></label><label>Min bid $<input id="scr-minbid" type="number" min="0" step="0.01"></label><label>Min OTM %<input id="scr-minotm" type="number" min="0" step="1"></label><label>Max OTM %<input id="scr-maxotm" type="number" min="1" step="1"></label><label>Post-scan max beta<input id="scr-maxbeta" type="number" min="0.1" step="0.1"></label><label>Post-scan max EPR %<input id="scr-maxepr" type="number" min="1" step="1"></label><label>Min price $<input id="scr-minprice" type="number" min="1" step="1"></label><label>Max price $<input id="scr-maxprice" type="number" min="1" step="10"></label></div><div class="scr-checks"><label><input id="scr-exearn" type="checkbox"> Exclude confirmed earnings through expiry</label><label><input id="scr-exlev" type="checkbox"> Exclude special ETFs</label><label><input id="scr-stresssafe" type="checkbox"> Stress-OTM strikes only</label></div><div class="scr-exclude-box"><label>Manual ticker exclusions<input id="scr-exclude" placeholder="MU, VKTX, ..."></label><div class="scr-chip-row" id="scr-exclusion-chips"></div></div><div class="scr-actions"><button class="abtn" id="scr-scan">Scan Market</button><button class="abtn" id="scr-riki">RiKi Tickers Only</button><button class="abtn" id="scr-earnings">Refresh Earnings</button><button class="abtn" id="scr-clear">Clear</button></div><div class="scr-status" id="scr-status"></div><div class="scr-pm-snapshot" id="scr-pm-snapshot"></div><div class="scr-progress"><div id="scr-progress-bar"></div></div><details class="scr-adv"><summary>Advanced / market-wide setup</summary><div class="scr-adv-grid"><label>Screener backend (same RiKi webapp)<input class="scr-url" id="scr-metaurl" readonly></label><label>Min avg stock volume<input id="scr-minvol" type="number" step="100000"></label><label>Min option OI<input id="scr-minoi" type="number" min="0" step="10"></label><label>Market chain budget<input id="scr-budget" type="number" min="20" max="500" step="10"></label><label>Target premium-bearing tickers<input id="scr-targethits" type="number" min="3" max="80" step="1"></label><label>Min DTE (Friday mode)<input id="scr-mindte" type="number" min="0" step="1"></label><label>Custom/pinned tickers<input id="scr-custom" placeholder="META, TSLA, ..."></label></div><div class="scr-note">V1.7.2 keeps the V1.6 chain-first engine and adds a durable local one-contract PM overlay from the last completed risk snapshot. Earnings remain non-blocking. Scan never waits on Nasdaq. Manual exclusions are applied before option-chain probing. After a scan, Refresh Earnings checks only the premium-bearing tickers and caches the result; re-run Scan to apply automatic earnings exclusions. If that calendar call is slow or unavailable, the premium scan still works and the UI marks earnings coverage as unknown.</div></details></div><div class="scr-board" id="scr-cards"></div><div class="scr-results-head"><div><div class="scr-results-title">Opportunity board</div><div class="scr-results-sub" id="scr-results-sub"></div></div><div class="scr-seg"><button id="scr-view-ticker">Best per ticker</button><button id="scr-view-all">All contracts</button></div></div><div class="scr-table-wrap" id="scr-results"></div><div class="scr-excluded-panel" id="scr-excluded-panel"><div class="scr-excluded-title">Exclusions this scan</div><div class="scr-chip-row" id="scr-auto-excluded"></div></div><div class="scr-detail" id="scr-detail" style="display:block"></div><div class="scr-note">Standalone effective stress remains the worst modeled short-option loss across SPX +20%, SPX −20%, EPR up and EPR down. V1.7 then simulates exactly one additional short contract against the last completed Account 1 PM snapshot. PUT rows display Account 1 SPX −20 utilization after one contract; CALL rows display SPX +20. PNR is recalculated; EPR is unchanged. OI/volume remain informational only.</div><div class="scroll-spacer"></div></div>';
+function rikiScreenInit_(){var root=rikiScreenEl_('screen-content');if(!root||root.getAttribute('data-ready')==='1')return;if(window.DATA&&typeof rikiScreenStorePmSnapshot_==='function')rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);root.innerHTML='<div class="scr-wrap"><div class="scr-hero"><div class="scr-title">RiKi Income Screener</div><div class="scr-sub">Chain-first premium discovery with a local Account 1 Portfolio Margin overlay. RiKi now tests each ranked contract as exactly one additional short option against the last completed PM snapshot.</div><span class="scr-badge">MANUAL SCAN · READ ONLY · NO REFRESH HOOKS</span></div><div class="scr-card"><div class="bp-head"><div><div class="bp-title">Scan controls</div><div class="bp-sub">Premium first. Risk ranking second. Nothing runs until you press a scan button.</div></div><span class="engine-mode-badge active">CHAIN-FIRST V1.7.3 · PM 1CT</span></div><div class="scr-grid"><label>Side<select id="scr-side"><option>PUT</option><option>CALL</option></select></label><label>Expiry<select id="scr-exp"><option value="FRIDAY">Nearest Friday (Thu if holiday)</option><option value="DATE">Specific date</option></select></label><label id="scr-expdate-wrap" style="display:none">Expiry date<input id="scr-expdate" type="date"></label><label>Min bid $<input id="scr-minbid" type="number" min="0" step="0.01"></label><label>Min OTM %<input id="scr-minotm" type="number" min="0" step="1"></label><label>Max OTM %<input id="scr-maxotm" type="number" min="1" step="1"></label><label>Post-scan max beta<input id="scr-maxbeta" type="number" min="0.1" step="0.1"></label><label>Post-scan max EPR %<input id="scr-maxepr" type="number" min="1" step="1"></label><label>Min price $<input id="scr-minprice" type="number" min="1" step="1"></label><label>Max price $<input id="scr-maxprice" type="number" min="1" step="10"></label></div><div class="scr-checks"><label><input id="scr-exearn" type="checkbox"> Exclude confirmed earnings through expiry</label><label><input id="scr-exlev" type="checkbox"> Exclude special ETFs</label><label><input id="scr-stresssafe" type="checkbox"> Stress-OTM strikes only</label></div><div class="scr-exclude-box"><label>Manual ticker exclusions<input id="scr-exclude" placeholder="MU, VKTX, ..."></label><div class="scr-chip-row" id="scr-exclusion-chips"></div></div><div class="scr-actions"><button class="abtn" id="scr-scan">Scan Market</button><button class="abtn" id="scr-riki">RiKi Tickers Only</button><button class="abtn" id="scr-earnings">Refresh Earnings</button><button class="abtn" id="scr-clear">Clear</button></div><div class="scr-status" id="scr-status"></div><div class="scr-pm-snapshot" id="scr-pm-snapshot"></div><div class="scr-progress"><div id="scr-progress-bar"></div></div><details class="scr-adv"><summary>Advanced / market-wide setup</summary><div class="scr-adv-grid"><label>Screener backend (same RiKi webapp)<input class="scr-url" id="scr-metaurl" readonly></label><label>Min avg stock volume<input id="scr-minvol" type="number" step="100000"></label><label>Min option OI<input id="scr-minoi" type="number" min="0" step="10"></label><label>Market chain budget<input id="scr-budget" type="number" min="20" max="500" step="10"></label><label>Target premium-bearing tickers<input id="scr-targethits" type="number" min="3" max="80" step="1"></label><label>Min DTE (Friday mode)<input id="scr-mindte" type="number" min="0" step="1"></label><label>Custom/pinned tickers<input id="scr-custom" placeholder="META, TSLA, ..."></label></div><div class="scr-note">V1.7.3 canonicalizes the completed Account 1 PM model into a dedicated compact browser snapshot, so normal dashboard hydration cannot break the one-contract overlay. Earnings remain non-blocking. Scan never waits on Nasdaq. Manual exclusions are applied before option-chain probing. After a scan, Refresh Earnings checks only the premium-bearing tickers and caches the result; re-run Scan to apply automatic earnings exclusions. If that calendar call is slow or unavailable, the premium scan still works and the UI marks earnings coverage as unknown.</div></details></div><div class="scr-board" id="scr-cards"></div><div class="scr-results-head"><div><div class="scr-results-title">Opportunity board</div><div class="scr-results-sub" id="scr-results-sub"></div></div><div class="scr-seg"><button id="scr-view-ticker">Best per ticker</button><button id="scr-view-all">All contracts</button></div></div><div class="scr-table-wrap" id="scr-results"></div><div class="scr-excluded-panel" id="scr-excluded-panel"><div class="scr-excluded-title">Exclusions this scan</div><div class="scr-chip-row" id="scr-auto-excluded"></div></div><div class="scr-detail" id="scr-detail" style="display:block"></div><div class="scr-note">Standalone effective stress remains the worst modeled short-option loss across SPX +20%, SPX −20%, EPR up and EPR down. V1.7 then simulates exactly one additional short contract against the last completed Account 1 PM snapshot. PUT rows display Account 1 SPX −20 utilization after one contract; CALL rows display SPX +20. PNR is recalculated; EPR is unchanged. OI/volume remain informational only.</div><div class="scroll-spacer"></div></div>';
   var s=rikiScreenLoadSettings_();rikiScreenApplySettings_(s);
   rikiScreenEl_('scr-scan').onclick=function(){rikiScreenStartScope_('MARKET');};
   rikiScreenEl_('scr-riki').onclick=function(){rikiScreenStartScope_('RIKI');};

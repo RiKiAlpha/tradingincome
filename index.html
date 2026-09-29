@@ -2697,7 +2697,7 @@ var maintPct=totalTickerMargin>0?(maintReq/totalTickerMargin*100):0;
 var showMargin=maintReq>0||Number(r.maintenanceContracts||0)>0;
 var marginMetric=showMargin?'<div><div class="ticker-metric">Reported margin</div><div class="ticker-value">'+fmtS(maintReq)+(rikiPmAny_(d)?' + PM N/A':'')+' <span class="ticker-margin-pct">('+maintPct.toFixed(1)+'%)</span></div></div>':'';
 item.innerHTML='<div class="ticker-summary'+(showMargin?'':' no-margin')+'" role="button" tabindex="0" aria-expanded="false">'+
-'<div><div class="ticker-name">'+escHtml(r.ticker)+'</div>'+rikiPmTickerBadge_(r.ticker,d)+'<div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
+'<div>'+rikiPmTickerBadge_(r.ticker,d,'Account 1')+'<div class="ticker-name">'+escHtml(r.ticker)+'</div>'+rikiPmTickerBadge_(r.ticker,d,'Account 2')+'<div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
 '<div><div class="ticker-metric">Banked</div><div class="ticker-value '+cc(banked)+'">'+fmtS(banked)+'</div></div>'+
 '<div><div class="ticker-metric">Potential</div><div class="ticker-value '+cc(potential)+'">'+fmtS(potential)+'</div></div>'+
 '<div><div class="ticker-metric">Total</div><div class="ticker-value '+cc(total)+'">'+fmtS(total)+'</div></div>'+marginMetric+
@@ -3631,32 +3631,37 @@ function r4PnrTitle(kind,p,e,buffer){
   var gap=Math.abs(p)-Math.abs(e),tone=r4PnrTone(p,e,b);
   return kind+' · PNR '+Math.abs(p).toFixed(1)+'% · EPR '+Math.abs(e).toFixed(1)+'% · gap '+(gap>=0?'+':'')+gap.toFixed(1)+' pp · required '+b.toFixed(0)+' pp · '+r4ToneText(tone);
 }
-function r4PmRow(ticker,d){
+function r4PmRow(ticker,d,account){
   var rows=((((d||window.DATA||{}).pmRisk||{}).rows)||[]),t=r4TickerKey(ticker);
-  var rr=(d||window.DATA||{}).pmRisk||{},chosen=RIKI_SCREEN_SELECTED_ACCOUNT_V19||((rr.accounts||[])[0]||{}).account;return rows.filter(function(r){return r&&r.account===chosen&&r.isPortfolioMargin===true&&r4TickerKey(r.ticker)===t;})[0]||null;
+  return rows.filter(function(r){return r&&r.account===account&&r.isPortfolioMargin===true&&r4TickerKey(r.ticker)===t;})[0]||null;
 }
 
-// Overview ticker signal: exactly two unlabeled dots. LEFT=PUT, RIGHT=CALL.
-window.rikiPmTickerBadge_=function(ticker,d){
-  var risk=((d||window.DATA||{}).pmRisk)||{},r=r4PmRow(ticker,d),putTone='none',callTone='none',
-      putTitle='PUT · no modeled PNR crossing',callTitle='CALL · no modeled PNR crossing';
+// Each account has its own PUT and CALL signals, independent of Screener selection.
+window.rikiPmTickerBadge_=function(ticker,d,account){
+  var risk=((d||window.DATA||{}).pmRisk)||{},a=(risk.accounts||[]).filter(function(x){return x.account===account;})[0],
+      r=r4PmRow(ticker,d,account),putTone='none',callTone='none',
+      reason=!a?'risk snapshot unavailable':a.isPortfolioMargin!==true?'PM not active':'no modeled PNR crossing',
+      putTitle=account+' PUT · '+reason,callTitle=account+' CALL · '+reason;
   if(r){
     var buffer=r4Buffer(risk,ticker,r);
     putTone=r4PnrTone(r.downPnr,r.downEpr,buffer);callTone=r4PnrTone(r.upPnr,r.upEpr,buffer);
-    putTitle=r4PnrTitle('PUT',r.downPnr,r.downEpr,buffer);callTitle=r4PnrTitle('CALL',r.upPnr,r.upEpr,buffer);
+    putTitle=account+' · '+r4PnrTitle('PUT',r.downPnr,r.downEpr,buffer);callTitle=account+' · '+r4PnrTitle('CALL',r.upPnr,r.upEpr,buffer);
   }
-  return '<div class="pm-badges r4-two-dots" aria-label="PNR risk: first dot put, second dot call">'+
-    '<span class="pm-dot '+putTone+'" title="'+escHtml(putTitle)+'"></span>'+
-    '<span class="pm-dot '+callTone+'" title="'+escHtml(callTitle)+'"></span></div>';
+  return '<div class="pm-badges r4-two-dots r4-account-dots" aria-label="'+escHtml(account)+' PNR: first dot PUT, second dot CALL">'+
+    '<span class="r4-dot-account">'+escHtml(account==='Account 1'?'A1':'A2')+'</span>'+
+    '<span class="pm-dot '+putTone+'" role="img" aria-label="'+escHtml(putTitle)+'" title="'+escHtml(putTitle)+'"></span>'+
+    '<span class="pm-dot '+callTone+'" role="img" aria-label="'+escHtml(callTitle)+'" title="'+escHtml(callTitle)+'"></span></div>';
 };
-window.rikiPmRows_=function(ticker,d){var r=r4PmRow(ticker,d);return r?[r]:[];};
+window.rikiPmRows_=function(ticker,d){return ['Account 1','Account 2'].map(function(account){return r4PmRow(ticker,d,account);}).filter(Boolean);};
 window.rikiPmRiskDetail_=function(ticker,d){
-  var risk=((d||window.DATA||{}).pmRisk)||{},r=r4PmRow(ticker,d);
-  if(!r)return '<div class="pm-risk-detail"><div class="pm-risk-line unknown">No Portfolio Margin PNR crossing for this ticker.</div></div>';
-  var buffer=r4Buffer(risk,ticker,r);
-  function side(name,p,e){var tone=r4PnrTone(p,e,buffer),title=r4PnrTitle(name,p,e,buffer);return '<div class="pm-risk-line '+(tone==='none'?'unknown':tone)+'">'+escHtml(title)+'</div>';}
-  return '<div class="pm-risk-detail"><b>'+escHtml(ticker)+' · '+escHtml(RIKI_SCREEN_SELECTED_ACCOUNT_V19||'PM account')+' concentration</b>'+side('PUT',r.downPnr,r.downEpr)+side('CALL',r.upPnr,r.upEpr)+
-    '<div class="ssub">Dot order is PUT first, CALL second. Required PNR−EPR cushion for '+escHtml(ticker)+' is '+buffer.toFixed(0)+' pp. Gray=no modeled PNR / cannot classify · Green=gap meets cushion · Amber=positive gap below cushion · Red=PNR at/inside EPR.<br>Beta '+(r.beta==null?'—':Number(r.beta).toFixed(3))+' · '+escHtml(r.betaSource||'')+(r.betaConfidence?' · '+escHtml(r.betaConfidence):'')+'</div></div>';
+  var risk=((d||window.DATA||{}).pmRisk)||{};
+  return ['Account 1','Account 2'].map(function(account){
+    var r=r4PmRow(ticker,d,account),buffer=r4Buffer(risk,ticker,r);
+    if(!r)return '<div class="pm-risk-detail"><b>'+escHtml(ticker)+' · '+escHtml(account)+'</b><div class="pm-risk-line unknown">No PM position or modeled PNR for this account and ticker.</div></div>';
+    function side(name,p,e){var tone=r4PnrTone(p,e,buffer),title=r4PnrTitle(name,p,e,buffer);return '<div class="pm-risk-line '+(tone==='none'?'unknown':tone)+'">'+escHtml(title)+'</div>';}
+    return '<div class="pm-risk-detail"><b>'+escHtml(ticker)+' · '+escHtml(account)+' concentration</b>'+side('PUT',r.downPnr,r.downEpr)+side('CALL',r.upPnr,r.upEpr)+
+      '<div class="ssub">Required PNR−EPR cushion '+buffer.toFixed(0)+' pp · Beta '+(r.beta==null?'—':Number(r.beta).toFixed(3))+' · '+escHtml(r.betaSource||'')+(r.betaConfidence?' · '+escHtml(r.betaConfidence):'')+'</div></div>';
+  }).join('')+'<div class="ssub">Above ticker: Account 1 · below ticker: Account 2. Each row is PUT then CALL. Gray=unavailable/no crossing · Green=gap meets cushion · Amber=positive gap below cushion · Red=PNR at/inside EPR. Snapshot '+escHtml(risk.capturedAtEt||'unavailable')+' ET.</div>';
 };
 
 function r4Ready(d){var risk=((d||window.DATA||{}).pmRisk)||{};return /^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||''))&&Array.isArray(risk.accounts)&&risk.localModel&&risk.localModel.accounts;}
@@ -3693,7 +3698,7 @@ function r4Pnr(book,equity,down,risk){
 
 function r4InstallStyles(){
   if(document.getElementById('riki-risk-v4-style'))return;var s=document.createElement('style');s.id='riki-risk-v4-style';s.textContent=
-  '.r4-two-dots{gap:5px!important;min-height:8px}.r4-two-dots .pm-dot{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}.r4-two-dots .pm-dot.none,.r4-two-dots .pm-dot.unknown{background:var(--text3)}'+
+  '.r4-two-dots{gap:5px!important;min-height:8px}.r4-two-dots .pm-dot{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}.r4-two-dots .pm-dot.none,.r4-two-dots .pm-dot.unknown{background:var(--text3)}.r4-account-dots{margin:3px 0;gap:6px!important}.r4-dot-account{min-width:14px;color:var(--text3);font:800 7px "JetBrains Mono",monospace}.r4-account-dots .pm-dot{width:8px;height:8px}'+
   '.r4-account{margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.016)}.r4-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.r4-title{font-size:13px;font-weight:850}.r4-sub{font-size:9px;color:var(--text3);margin-top:3px;line-height:1.35}'+
   '.r4-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.r4-metric{padding:11px;border-radius:11px;border:1px solid var(--border2);background:var(--bg3)}.r4-metric.risk,.r4-scenario.risk{border-color:rgba(255,102,120,.40)}.r4-metric.warn,.r4-scenario.warn{border-color:rgba(232,191,91,.38)}.r4-metric.outside,.r4-scenario.outside{border-color:rgba(40,215,173,.25)}'+
   '.r4-label{font-size:7.5px;color:var(--text3);font-weight:800;letter-spacing:.055em;text-transform:uppercase}.r4-value{font:800 15px/1.2 "JetBrains Mono",monospace;margin-top:5px}.r4-value.risk{color:var(--red)}.r4-value.warn{color:var(--gold)}.r4-value.outside{color:var(--green)}.r4-detail{font-size:8px;color:var(--text2);margin-top:5px;line-height:1.4}'+

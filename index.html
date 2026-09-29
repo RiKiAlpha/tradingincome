@@ -2697,7 +2697,7 @@ var maintPct=totalTickerMargin>0?(maintReq/totalTickerMargin*100):0;
 var showMargin=maintReq>0||Number(r.maintenanceContracts||0)>0;
 var marginMetric=showMargin?'<div><div class="ticker-metric">Reported margin</div><div class="ticker-value">'+fmtS(maintReq)+(rikiPmAny_(d)?' + PM N/A':'')+' <span class="ticker-margin-pct">('+maintPct.toFixed(1)+'%)</span></div></div>':'';
 item.innerHTML='<div class="ticker-summary'+(showMargin?'':' no-margin')+'" role="button" tabindex="0" aria-expanded="false">'+
-'<div>'+rikiPmTickerBadge_(r.ticker,d,'Account 1')+'<div class="ticker-name">'+escHtml(r.ticker)+'</div>'+rikiPmTickerBadge_(r.ticker,d,'Account 2')+'<div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
+'<div><div class="r4-ticker-stack">'+rikiPmTickerBadge_(r.ticker,d,'Account 1')+'<div class="ticker-name">'+escHtml(r.ticker)+'</div>'+rikiPmTickerBadge_(r.ticker,d,'Account 2')+'</div><div class="ticker-metric">'+contracts+' ct · '+Number(r.openCalls||0)+'C/'+Number(r.openPuts||0)+'P</div></div>'+
 '<div><div class="ticker-metric">Banked</div><div class="ticker-value '+cc(banked)+'">'+fmtS(banked)+'</div></div>'+
 '<div><div class="ticker-metric">Potential</div><div class="ticker-value '+cc(potential)+'">'+fmtS(potential)+'</div></div>'+
 '<div><div class="ticker-metric">Total</div><div class="ticker-value '+cc(total)+'">'+fmtS(total)+'</div></div>'+marginMetric+
@@ -3648,7 +3648,6 @@ window.rikiPmTickerBadge_=function(ticker,d,account){
     putTitle=account+' · '+r4PnrTitle('PUT',r.downPnr,r.downEpr,buffer);callTitle=account+' · '+r4PnrTitle('CALL',r.upPnr,r.upEpr,buffer);
   }
   return '<div class="pm-badges r4-two-dots r4-account-dots" aria-label="'+escHtml(account)+' PNR: first dot PUT, second dot CALL">'+
-    '<span class="r4-dot-account">'+escHtml(account==='Account 1'?'A1':'A2')+'</span>'+
     '<span class="pm-dot '+putTone+'" role="img" aria-label="'+escHtml(putTitle)+'" title="'+escHtml(putTitle)+'"></span>'+
     '<span class="pm-dot '+callTone+'" role="img" aria-label="'+escHtml(callTitle)+'" title="'+escHtml(callTitle)+'"></span></div>';
 };
@@ -3698,7 +3697,7 @@ function r4Pnr(book,equity,down,risk){
 
 function r4InstallStyles(){
   if(document.getElementById('riki-risk-v4-style'))return;var s=document.createElement('style');s.id='riki-risk-v4-style';s.textContent=
-  '.r4-two-dots{gap:5px!important;min-height:8px}.r4-two-dots .pm-dot{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}.r4-two-dots .pm-dot.none,.r4-two-dots .pm-dot.unknown{background:var(--text3)}.r4-account-dots{margin:3px 0;gap:6px!important}.r4-dot-account{min-width:14px;color:var(--text3);font:800 7px "JetBrains Mono",monospace}.r4-account-dots .pm-dot{width:8px;height:8px}'+
+  '.r4-two-dots{gap:5px!important;min-height:8px}.r4-two-dots .pm-dot{width:7px;height:7px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}.r4-two-dots .pm-dot.none,.r4-two-dots .pm-dot.unknown{background:var(--text3)}.r4-ticker-stack{display:inline-flex;flex-direction:column;align-items:center;max-width:100%}.r4-ticker-stack .ticker-name{white-space:nowrap}.r4-account-dots{width:100%;justify-content:center;margin:3px 0;gap:6px!important}.r4-account-dots .pm-dot{width:8px;height:8px}'+
   '.r4-account{margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.016)}.r4-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.r4-title{font-size:13px;font-weight:850}.r4-sub{font-size:9px;color:var(--text3);margin-top:3px;line-height:1.35}'+
   '.r4-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.r4-metric{padding:11px;border-radius:11px;border:1px solid var(--border2);background:var(--bg3)}.r4-metric.risk,.r4-scenario.risk{border-color:rgba(255,102,120,.40)}.r4-metric.warn,.r4-scenario.warn{border-color:rgba(232,191,91,.38)}.r4-metric.outside,.r4-scenario.outside{border-color:rgba(40,215,173,.25)}'+
   '.r4-label{font-size:7.5px;color:var(--text3);font-weight:800;letter-spacing:.055em;text-transform:uppercase}.r4-value{font:800 15px/1.2 "JetBrains Mono",monospace;margin-top:5px}.r4-value.risk{color:var(--red)}.r4-value.warn{color:var(--gold)}.r4-value.outside{color:var(--green)}.r4-detail{font-size:8px;color:var(--text2);margin-top:5px;line-height:1.4}'+

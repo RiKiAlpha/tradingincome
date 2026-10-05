@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!-- RIKI_PM_RISK_V4_TOS_BETA_PRODUCTION_2026_09_23 -->
+<!-- RIKI_V2_0_20_FAST_ACCOUNT_SWITCH_PM_CONSUMPTION_2026_10_05 -->
 <!-- RIKI_V2_0_18_PNR_CLARITY_BETA_HEALTH_2026_10_05 -->
 <!-- RIKI_INCOME_SCREENER_V1_5_0_2026_09_24 · MANUAL ONLY · NO REFRESH HOOKS -->
 <!-- RIKI_PM_RISK_LAB_V3_AUDITED_2026_09_23 -->
@@ -1081,6 +1082,60 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 @media(max-width:900px){.r4-compare-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.r4-close-summary{grid-template-columns:1fr}.r4-span-3{grid-column:span 1}}
 @media(max-width:600px){.r4-compare-grid,.r4-iv-grid{grid-template-columns:1fr}.r4-limiter{grid-template-columns:1fr;gap:3px}.r4-account-bars{width:52px}.r4-mini-risk{width:22px}}
 </style>
+
+<style id="riki-v220-pm-consumption-fast-switch-style">
+/* RIKI V2.0.20 — cached Screener account views + PM Consumption attribution */
+.scr-v19-account{min-width:126px;text-align:left;transition:border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease}
+.scr-v19-account.on{box-shadow:inset 0 0 0 1px rgba(75,158,255,.10),0 0 16px rgba(75,158,255,.06)}
+.scr-v19-account .scr-v220-account-name{display:block;font-weight:850;color:inherit}
+.scr-v19-account small{line-height:1.2}
+.scr-side-head-badge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;margin-left:5px;padding:0 5px;border-radius:999px;border:1px solid rgba(75,158,255,.26);background:rgba(75,158,255,.08);color:#8bc1ff;font-size:7px;font-weight:950;letter-spacing:.02em;vertical-align:middle;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.scr-side-head-badge.put{border-color:rgba(243,154,85,.28);background:rgba(243,154,85,.08);color:#f6ad76}
+
+.pm-cons-panel{padding:16px 16px 15px;overflow:hidden}
+.pm-cons-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.pm-cons-title{font-size:13px;font-weight:900;letter-spacing:.04em;color:var(--text)}
+.pm-cons-sub{font-size:9px;line-height:1.45;color:var(--text2);margin-top:4px;max-width:920px}
+.pm-cons-active{display:inline-flex;flex-direction:column;align-items:flex-end;gap:2px;padding:7px 9px;border-radius:10px;border:1px solid rgba(40,215,173,.16);background:rgba(40,215,173,.035);white-space:nowrap}
+.pm-cons-active b{font-size:7.5px;letter-spacing:.07em;color:#58dfbe;text-transform:uppercase}
+.pm-cons-active span{font-size:7.5px;color:var(--text3)}
+.pm-cons-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pm-cons-seg{display:flex;padding:3px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.018);gap:2px}
+.pm-cons-seg button{border:0;background:transparent;color:var(--text3);font-size:8px;font-weight:850;padding:6px 9px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.pm-cons-seg button.on{background:rgba(75,158,255,.10);color:#8bc1ff;box-shadow:inset 0 0 0 1px rgba(75,158,255,.14)}
+.pm-cons-seg.side button.on{background:rgba(40,215,173,.085);color:#58dfbe;box-shadow:inset 0 0 0 1px rgba(40,215,173,.14)}
+.pm-cons-sort{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:7.5px;font-weight:850;color:var(--text3);text-transform:uppercase;letter-spacing:.045em}
+.pm-cons-sort select{height:30px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:8px;font-weight:800;padding:0 8px;outline:none}
+.pm-cons-summary{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 11px;border-radius:11px;border:1px solid rgba(91,192,255,.14);background:rgba(91,192,255,.028);min-height:35px}
+.pm-cons-summary span{font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.pm-cons-summary b{font-size:10px;color:var(--text)}
+.pm-cons-summary em{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:9px;color:#8bc1ff}
+.pm-cons-status{padding:20px 8px;text-align:center;font-size:9px;color:var(--text2)}
+.pm-cons-table-wrap{overflow:auto;margin-top:9px;border-radius:13px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(14,18,27,.96),rgba(10,14,21,.96));-webkit-overflow-scrolling:touch}
+.pm-cons-table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-variant-numeric:tabular-nums}
+.pm-cons-table th{position:sticky;top:0;z-index:3;padding:9px 8px;background:rgba(16,22,31,.97);font-size:7px;letter-spacing:.055em;color:var(--text3);text-align:right;cursor:pointer;border-bottom:1px solid rgba(91,192,255,.11)}
+.pm-cons-table th:first-child{text-align:left;min-width:100px}
+.pm-cons-table th.sorted{color:#8bc1ff;box-shadow:inset 0 -2px 0 rgba(75,158,255,.52)}
+.pm-cons-table td{padding:8px;border-bottom:1px solid rgba(255,255,255,.035);font-size:9px;color:var(--text2);text-align:right;vertical-align:middle}
+.pm-cons-table td:first-child{text-align:left}
+.pm-cons-table tbody tr:last-child td{border-bottom:0}
+.pm-cons-table tbody tr:hover td{background:rgba(91,192,255,.018)}
+.pm-cons-ticker{font-family:Inter,sans-serif;font-size:10.5px;font-weight:900;color:var(--text)}
+.pm-cons-ticker-sub{display:block;margin-top:2px;font-size:6.8px;font-weight:650;color:var(--text3);white-space:nowrap}
+.pm-cons-cell{min-width:77px}
+.pm-cons-value{display:block;font-family:'JetBrains Mono',monospace;font-size:8.8px;font-weight:850;color:var(--text2)}
+.pm-cons-value.low{color:#61c9bd}.pm-cons-value.mid{color:#47ddbb}.pm-cons-value.hot{color:#e8bf5b}.pm-cons-value.risk{color:#ff7586}.pm-cons-value.hedge{color:#80aee8}.pm-cons-value.zero{color:var(--text3)}
+.pm-cons-bar{height:3px;margin-top:4px;border-radius:999px;background:rgba(129,151,173,.10);overflow:hidden}
+.pm-cons-bar i{display:block;height:100%;border-radius:inherit;background:#4bbfac}.pm-cons-bar i.mid{background:#36d5b0}.pm-cons-bar i.hot{background:#d6aa4e}.pm-cons-bar i.risk{background:#f06476}.pm-cons-bar i.hedge{background:#6f9edb}
+.pm-cons-pnr{min-width:82px}
+.pm-cons-pnr .pm-cons-value{font-size:9px}
+.pm-cons-note{margin-top:8px;font-size:7.7px;line-height:1.45;color:var(--text3)}
+.pm-cons-note b{color:var(--text2)}
+[data-theme="light"] .pm-cons-table-wrap{background:#fff}
+[data-theme="light"] .pm-cons-table th{background:rgba(247,249,252,.98)}
+@media(max-width:760px){.pm-cons-head{flex-direction:column}.pm-cons-active{align-items:flex-start}.pm-cons-sort{margin-left:0;width:100%}.pm-cons-sort select{flex:1}.pm-cons-panel{padding:13px 12px}.pm-cons-table th,.pm-cons-table td{padding:7px 6px}}
+</style>
+
 </head>
 <body>
 <div id="app">
@@ -1298,6 +1353,7 @@ data-width="320">
 <script>
 var BACKEND = 'https://script.google.com/a/macros/rikiterminal.com/s/AKfycby6iCcORpApTWFEbb4YQqrS3fgeDPOB9G--anUFsT9F30WVhHVNRF1JwfjqURK5FeTeWQ/exec';
 var DATA_JSON = 'https://raw.githubusercontent.com/RiKiAlpha/tradingincome/main/d8f3a.json';
+var RIKI_RELEASE_V220='RIKI_V2_0_20_FAST_ACCOUNT_SWITCH_PM_CONSUMPTION_2026_10_05';
 var RIKI_RELEASE_V218='RIKI_V2_0_18_RISK_LAB_PNR_CLARITY_BETA_HEALTH_2026_10_05';
 var RIKI_RELEASE_V217=RIKI_RELEASE_V218;
 var RIKI_RELEASE_V216=RIKI_RELEASE_V218;
@@ -4983,7 +5039,7 @@ function rikiScreenRestore_(){
   }
 }
 
-function rikiScreenInit_(){var root=rikiScreenEl_('screen-content');if(!root||root.getAttribute('data-ready')==='1')return;if(window.DATA&&typeof rikiScreenStorePmSnapshot_==='function')rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);root.innerHTML='<div class="scr-wrap"><div class="scr-hero"><div class="scr-title">RiKi Income Screener</div><div class="scr-sub">Chain-first premium discovery with account-specific Portfolio Margin sizing. Both account books are modeled from one completed Risk refresh; switch the visible account instantly.</div><span class="scr-badge">MANUAL SCAN · NO TRADING ACTIONS · NO REFRESH HOOKS</span></div><div class="scr-card"><div class="bp-head"><div><div class="bp-title">Scan controls</div><div class="bp-sub">Premium first. Risk ranking second. Nothing runs until you press a scan button.</div></div><span class="engine-mode-badge active">CHAIN-FIRST V2.0.19 · RESPONSIVE PM SIZING · PORTFOLIO OPPORTUNITY</span></div><div class="scr-grid"><label>Side<select id="scr-side"><option>PUT</option><option>CALL</option></select></label><label>Expiry<select id="scr-exp"><option value="FRIDAY">Nearest Friday (Thu if holiday)</option><option value="DATE">Specific date</option></select></label><label id="scr-expdate-wrap" style="display:none">Expiry date<input id="scr-expdate" type="date"></label><label>Min bid $<input id="scr-minbid" type="number" min="0" step="0.01"></label><label>Min OTM %<input id="scr-minotm" type="number" min="0" step="1"></label><label>Max OTM %<input id="scr-maxotm" type="number" min="1" step="1"></label><label>Post-scan max beta<input id="scr-maxbeta" type="number" min="0.1" step="0.1"></label><label>Post-scan max EPR %<input id="scr-maxepr" type="number" min="1" step="1"></label><label>Post-scan min Stability<input id="scr-minstability" type="number" min="0" max="100" step="1"></label><label>Post-scan min market cap $B<input id="scr-minmcap" type="number" min="0" step="1"><span class="scr-epr-toolbox-note">Stocks only · ETFs exempt · 0 disables</span></label><label>EPR stress mode<select id="scr-eprmode"><option value="AUTO">Saved / proxy (default)</option><option value="30">Toolbox 30%</option><option value="40">Toolbox 40%</option><option value="50">Toolbox 50%</option></select><span class="scr-epr-toolbox-note">Temporary scan assumption only</span></label><label>Min price $<input id="scr-minprice" type="number" min="1" step="1"></label><label>Max price $<input id="scr-maxprice" type="number" min="1" step="10"></label></div><div class="scr-checks"><label><input id="scr-exearn" type="checkbox"> Exclude confirmed earnings through expiry</label><label><input id="scr-exlev" type="checkbox"> Exclude special ETFs</label><label><input id="scr-stresssafe" type="checkbox"> Stress-OTM strikes only</label></div><div class="scr-exclude-box"><label>Manual ticker exclusions<input id="scr-exclude" placeholder="MU, VKTX, ..."></label><div class="scr-chip-row" id="scr-exclusion-chips"></div></div><details class="scr-epr-box"><summary>EPR Manager · saved TOS values override the historical proxy</summary><div class="scr-epr-grid"><label>Ticker<input id="scr-epr-ticker" placeholder="INTC" maxlength="10"></label><label>EPR % · same down/up<input id="scr-epr-value" type="number" min="0.01" max="100" step="0.1" placeholder="40"></label><button class="abtn" id="scr-epr-save">Save / Update</button><button class="abtn" id="scr-epr-download">Download EPR CSV</button></div><div class="scr-epr-status" id="scr-epr-status"></div><div class="scr-epr-table-wrap" id="scr-epr-table"></div></details><div class="scr-actions"><button class="abtn" id="scr-scan">Scan Market</button><button class="abtn" id="scr-riki">RiKi Tickers Only</button><button class="abtn" id="scr-earnings">Refresh Earnings</button><button class="abtn" id="scr-clear">Clear</button></div><div class="scr-status" id="scr-status"></div><div class="scr-pm-snapshot" id="scr-pm-snapshot"></div><div class="scr-cal-stamp" id="scr-cal-stamp"></div><div class="scr-progress"><div id="scr-progress-bar"></div></div><details class="scr-adv"><summary>Advanced / market-wide setup</summary><div class="scr-adv-grid"><label>Screener backend (same RiKi webapp)<input class="scr-url" id="scr-metaurl" readonly></label><label>Min avg stock volume<input id="scr-minvol" type="number" step="100000"></label><label>Min option OI<input id="scr-minoi" type="number" min="0" step="10"></label><label>Market chain budget<input id="scr-budget" type="number" min="20" max="500" step="10"></label><label>Target premium-bearing tickers<input id="scr-targethits" type="number" min="3" max="80" step="1"></label><label>Min DTE (Friday mode)<input id="scr-mindte" type="number" min="0" step="1"></label><label>Custom/pinned tickers<input id="scr-custom" placeholder="META, TSLA, ..."></label></div><div class="scr-note">The sizing board selects the newest completed two-account PM snapshot from scheduled data, manual Risk refresh, runtime memory or local storage; scheduled dashboard hydration can now advance the Screener snapshot instead of freezing an older one. The 40-minute PM freshness limit applies during regular market hours; after hours, completed snapshots remain available for planning with a market-closed warning. The default $10B market-cap floor applies to stocks only; ETFs are exempt. Minimum Stability defaults to 50. Earnings remain non-blocking. Scan never waits on Nasdaq. Manual exclusions are applied before option-chain probing. After a scan, Refresh Earnings checks only the premium-bearing tickers and caches the result; re-run Scan to apply automatic earnings exclusions. If that calendar call is slow or unavailable, the premium scan still works and the UI marks earnings coverage as unknown.</div></details></div><div class="scr-board" id="scr-cards"></div><div class="scr-results-head"><div><div class="scr-results-title">Opportunity board</div><div class="scr-results-sub" id="scr-results-sub"></div></div><div class="scr-results-tools"><label class="scr-sort">Sort<select id="scr-sort"><option value="NET">Added Net</option><option value="SCORE">RiKi Score</option><option value="EST">Est Credit</option></select></label><div class="scr-seg"><button id="scr-view-ticker">Best per ticker</button><button id="scr-view-all">All contracts</button></div></div></div><div class="scr-table-wrap" id="scr-results"></div><div class="scr-excluded-panel" id="scr-excluded-panel"><div class="scr-excluded-title">Exclusions this scan</div><div class="scr-chip-row" id="scr-auto-excluded"></div></div><div class="scr-detail" id="scr-detail" style="display:block"></div><div class="scr-note">Standalone effective stress remains the worst modeled short-option loss across SPX +20%, SPX −20%, EPR up and EPR down. The sizing board models a target quantity against the selected account in the newest completed two-account snapshot. PUT rows display the selected account SPX −20 utilization after one contract; CALL rows display SPX +20. After hours these are planning estimates from timestamped snapshots and quotes. PNR is recalculated; EPR is unchanged. OI/volume remain informational only. Saved EPR values from the EPR Manager override the Yahoo proxy. The optional 30/40/50% EPR toolbox mode is a temporary scan assumption and never overwrites the saved registry.</div><div class="scroll-spacer"></div></div>';
+function rikiScreenInit_(){var root=rikiScreenEl_('screen-content');if(!root||root.getAttribute('data-ready')==='1')return;if(window.DATA&&typeof rikiScreenStorePmSnapshot_==='function')rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);root.innerHTML='<div class="scr-wrap"><div class="scr-hero"><div class="scr-title">RiKi Income Screener</div><div class="scr-sub">Chain-first premium discovery with account-specific Portfolio Margin sizing. Both account books are modeled from one completed Risk refresh; switch the visible account instantly.</div><span class="scr-badge">MANUAL SCAN · NO TRADING ACTIONS · NO REFRESH HOOKS</span></div><div class="scr-card"><div class="bp-head"><div><div class="bp-title">Scan controls</div><div class="bp-sub">Premium first. Risk ranking second. Nothing runs until you press a scan button.</div></div><span class="engine-mode-badge active">CHAIN-FIRST V2.0.20 · CACHED PM VIEWS · PORTFOLIO OPPORTUNITY</span></div><div class="scr-grid"><label>Side<select id="scr-side"><option>PUT</option><option>CALL</option></select></label><label>Expiry<select id="scr-exp"><option value="FRIDAY">Nearest Friday (Thu if holiday)</option><option value="DATE">Specific date</option></select></label><label id="scr-expdate-wrap" style="display:none">Expiry date<input id="scr-expdate" type="date"></label><label>Min bid $<input id="scr-minbid" type="number" min="0" step="0.01"></label><label>Min OTM %<input id="scr-minotm" type="number" min="0" step="1"></label><label>Max OTM %<input id="scr-maxotm" type="number" min="1" step="1"></label><label>Post-scan max beta<input id="scr-maxbeta" type="number" min="0.1" step="0.1"></label><label>Post-scan max EPR %<input id="scr-maxepr" type="number" min="1" step="1"></label><label>Post-scan min Stability<input id="scr-minstability" type="number" min="0" max="100" step="1"></label><label>Post-scan min market cap $B<input id="scr-minmcap" type="number" min="0" step="1"><span class="scr-epr-toolbox-note">Stocks only · ETFs exempt · 0 disables</span></label><label>EPR stress mode<select id="scr-eprmode"><option value="AUTO">Saved / proxy (default)</option><option value="30">Toolbox 30%</option><option value="40">Toolbox 40%</option><option value="50">Toolbox 50%</option></select><span class="scr-epr-toolbox-note">Temporary scan assumption only</span></label><label>Min price $<input id="scr-minprice" type="number" min="1" step="1"></label><label>Max price $<input id="scr-maxprice" type="number" min="1" step="10"></label></div><div class="scr-checks"><label><input id="scr-exearn" type="checkbox"> Exclude confirmed earnings through expiry</label><label><input id="scr-exlev" type="checkbox"> Exclude special ETFs</label><label><input id="scr-stresssafe" type="checkbox"> Stress-OTM strikes only</label></div><div class="scr-exclude-box"><label>Manual ticker exclusions<input id="scr-exclude" placeholder="MU, VKTX, ..."></label><div class="scr-chip-row" id="scr-exclusion-chips"></div></div><details class="scr-epr-box"><summary>EPR Manager · saved TOS values override the historical proxy</summary><div class="scr-epr-grid"><label>Ticker<input id="scr-epr-ticker" placeholder="INTC" maxlength="10"></label><label>EPR % · same down/up<input id="scr-epr-value" type="number" min="0.01" max="100" step="0.1" placeholder="40"></label><button class="abtn" id="scr-epr-save">Save / Update</button><button class="abtn" id="scr-epr-download">Download EPR CSV</button></div><div class="scr-epr-status" id="scr-epr-status"></div><div class="scr-epr-table-wrap" id="scr-epr-table"></div></details><div class="scr-actions"><button class="abtn" id="scr-scan">Scan Market</button><button class="abtn" id="scr-riki">RiKi Tickers Only</button><button class="abtn" id="scr-earnings">Refresh Earnings</button><button class="abtn" id="scr-clear">Clear</button></div><div class="scr-status" id="scr-status"></div><div class="scr-pm-snapshot" id="scr-pm-snapshot"></div><div class="scr-cal-stamp" id="scr-cal-stamp"></div><div class="scr-progress"><div id="scr-progress-bar"></div></div><details class="scr-adv"><summary>Advanced / market-wide setup</summary><div class="scr-adv-grid"><label>Screener backend (same RiKi webapp)<input class="scr-url" id="scr-metaurl" readonly></label><label>Min avg stock volume<input id="scr-minvol" type="number" step="100000"></label><label>Min option OI<input id="scr-minoi" type="number" min="0" step="10"></label><label>Market chain budget<input id="scr-budget" type="number" min="20" max="500" step="10"></label><label>Target premium-bearing tickers<input id="scr-targethits" type="number" min="3" max="80" step="1"></label><label>Min DTE (Friday mode)<input id="scr-mindte" type="number" min="0" step="1"></label><label>Custom/pinned tickers<input id="scr-custom" placeholder="META, TSLA, ..."></label></div><div class="scr-note">The sizing board selects the newest completed two-account PM snapshot from scheduled data, manual Risk refresh, runtime memory or local storage; scheduled dashboard hydration can now advance the Screener snapshot instead of freezing an older one. The 40-minute PM freshness limit applies during regular market hours; after hours, completed snapshots remain available for planning with a market-closed warning. The default $10B market-cap floor applies to stocks only; ETFs are exempt. Minimum Stability defaults to 50. Earnings remain non-blocking. Scan never waits on Nasdaq. Manual exclusions are applied before option-chain probing. After a scan, Refresh Earnings checks only the premium-bearing tickers and caches the result; re-run Scan to apply automatic earnings exclusions. If that calendar call is slow or unavailable, the premium scan still works and the UI marks earnings coverage as unknown.</div></details></div><div class="scr-board" id="scr-cards"></div><div class="scr-results-head"><div><div class="scr-results-title">Opportunity board</div><div class="scr-results-sub" id="scr-results-sub"></div></div><div class="scr-results-tools"><label class="scr-sort">Sort<select id="scr-sort"><option value="NET">Added Net</option><option value="SCORE">RiKi Score</option><option value="EST">Est Credit</option></select></label><div class="scr-seg"><button id="scr-view-ticker">Best per ticker</button><button id="scr-view-all">All contracts</button></div></div></div><div class="scr-table-wrap" id="scr-results"></div><div class="scr-excluded-panel" id="scr-excluded-panel"><div class="scr-excluded-title">Exclusions this scan</div><div class="scr-chip-row" id="scr-auto-excluded"></div></div><div class="scr-detail" id="scr-detail" style="display:block"></div><div class="scr-note">Standalone effective stress remains the worst modeled short-option loss across SPX +20%, SPX −20%, EPR up and EPR down. The sizing board models a target quantity against the selected account in the newest completed two-account snapshot. PUT rows display the selected account SPX −20 utilization after one contract; CALL rows display SPX +20. After hours these are planning estimates from timestamped snapshots and quotes. PNR is recalculated; EPR is unchanged. OI/volume remain informational only. Saved EPR values from the EPR Manager override the Yahoo proxy. The optional 30/40/50% EPR toolbox mode is a temporary scan assumption and never overwrites the saved registry.</div><div class="scroll-spacer"></div></div>';
   var s=rikiScreenLoadSettings_();rikiScreenApplySettings_(s);
   rikiScreenEl_('scr-scan').onclick=function(){rikiScreenStartScope_('MARKET');};
   rikiScreenEl_('scr-riki').onclick=function(){rikiScreenStartScope_('RIKI');};
@@ -5258,6 +5314,170 @@ function rikiScreenV19SwitchUi_(){var risk=rikiScreenCurrentPmRisk_(),a=(risk&&r
 }
 var rikiScreenV19OldReapply_=rikiScreenReapplyPortfolioOverlay_;
 rikiScreenReapplyPortfolioOverlay_=function(){rikiScreenV19SwitchUi_();rikiScreenV19OldReapply_();rikiScreenScheduleFreshnessBoundary_();};
+
+
+/* ============================================================
+   RIKI V2.0.20 — FAST SCREENER ACCOUNT VIEWS + PM CONSUMPTION
+   Frontend-only. No Schwab calls. No PM equation/backend changes.
+   ============================================================ */
+var RIKI_SCREEN_SWITCH_TOKEN_V220=0;
+function rikiScreenV220AccountLabel_(risk,acct){
+  var a=(risk&&risk.accounts)||[],idx=a.findIndex(function(x){return x&&x.account===acct;});
+  return idx>=0?'Account '+(idx+1):String(acct||'Account');
+}
+function rikiScreenV220CachedRows_(acct){
+  var c=(typeof RIKI_SCREEN_OVERLAY_CACHE_V19!=='undefined'&&RIKI_SCREEN_OVERLAY_CACHE_V19)||null;
+  if(!c||!c.byAccount||!Array.isArray(c.byAccount[acct]))return null;
+  var excluded=typeof rikiScreenExcluded_==='function'?rikiScreenExcluded_():[];
+  return c.byAccount[acct].filter(function(r){return excluded.indexOf(String(r&&r.ticker||'').toUpperCase())<0;});
+}
+function rikiScreenV220ReadyStatus_(acct){
+  var risk=rikiScreenCurrentPmRisk_(),label=rikiScreenV220AccountLabel_(risk,acct);
+  rikiScreenStatus_(label+' ready','good');
+}
+function rikiScreenV220SelectAccount_(acct){
+  acct=String(acct||'');if(!acct||acct===RIKI_SCREEN_SELECTED_ACCOUNT_V19)return;
+  RIKI_SCREEN_SELECTED_ACCOUNT_V19=acct;
+  try{localStorage.setItem(RIKI_SCREEN_ACCOUNT_KEY_V19,acct);}catch(e){}
+  rikiScreenV19SwitchUi_();
+  var risk=rikiScreenCurrentPmRisk_(),label=rikiScreenV220AccountLabel_(risk,acct),token=++RIKI_SCREEN_SWITCH_TOKEN_V220;
+  rikiScreenStatus_('Loading '+label+' portfolio view…');
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    if(token!==RIKI_SCREEN_SWITCH_TOKEN_V220)return;
+    var cached=rikiScreenV220CachedRows_(acct);
+    if(cached){
+      RIKI_SCREEN_RESULTS=cached.slice();
+      rikiScreenOpportunityScores_(RIKI_SCREEN_RESULTS);
+      rikiScreenRender_(RIKI_SCREEN_RESULTS);
+      rikiScreenV220ReadyStatus_(acct);
+      return;
+    }
+    // A restored/older scan may not have both account views yet. Yield first,
+    // then perform one local PM sizing pass. This path never calls Schwab.
+    setTimeout(function(){
+      if(token!==RIKI_SCREEN_SWITCH_TOKEN_V220)return;
+      try{
+        rikiScreenV19OldReapply_();
+        rikiScreenV220ReadyStatus_(acct);
+      }catch(e){rikiScreenStatus_('Could not build '+label+' portfolio view: '+errMsg(e),'err');}
+    },0);
+  });});
+}
+
+// Clean account labels + immediate-highlight click path. Replaces the old
+// click handler that synchronously re-sized and then renderAll(DATA).
+rikiScreenV19SwitchUi_=function(){
+  var risk=rikiScreenCurrentPmRisk_(),a=(risk&&risk.accounts)||[],host=rikiScreenEl_('scr-v19-switch'),age=rikiScreenEl_('scr-v19-age');
+  if(!host)return;
+  if(!RIKI_SCREEN_SELECTED_ACCOUNT_V19&&a.length)RIKI_SCREEN_SELECTED_ACCOUNT_V19=a[0].account;
+  host.innerHTML=a.map(function(x,i){var active=x.account===RIKI_SCREEN_SELECTED_ACCOUNT_V19,label='Account '+(i+1);return '<button type="button" class="scr-v19-account'+(active?' on':'')+'" aria-pressed="'+(active?'true':'false')+'" data-v19-account="'+rikiScreenEscape_(x.account)+'"><span class="scr-v220-account-name">'+label+'</span><small>'+(x.isPortfolioMargin===true?'PM ready':'PM pending')+'</small></button>';}).join('')||'<span>Refresh Risk to load both accounts</span>';
+  var ms=Number(risk&&risk.capturedMs||0);if(age)age.textContent=ms?'Snapshot '+(risk.capturedAtEt||rikiEtTime_(ms)+' ET')+(rikiRegularMarketClosed_()?' · market closed':''):'No snapshot';
+  Array.prototype.forEach.call(host.querySelectorAll('button[data-v19-account]'),function(b){b.onclick=function(){rikiScreenV220SelectAccount_(b.getAttribute('data-v19-account'));};});
+};
+
+function rikiScreenV220ApplySideBadge_(rows){
+  var th=document.querySelector('#scr-results .scr-table thead th:nth-child(3)');if(!th)return;
+  var side='',arr=rows||[];for(var i=0;i<arr.length&&!side;i++)side=String(arr[i]&&arr[i].side||'').toUpperCase();
+  if(side!=='PUT'&&side!=='CALL'){var ctl=rikiScreenEl_('scr-side');side=String(ctl&&ctl.value||'').toUpperCase();}
+  if(side!=='PUT'&&side!=='CALL')return;
+  var badge=document.createElement('span');badge.className='scr-side-head-badge '+(side==='PUT'?'put':'call');badge.textContent=side==='PUT'?'P':'C';badge.title=side+' scan';badge.setAttribute('aria-label',side+' scan');th.appendChild(badge);
+}
+var rikiScreenV220OldRender_=rikiScreenRender_;
+rikiScreenRender_=function(rows){rikiScreenV220OldRender_(rows);rikiScreenV220ApplySideBadge_(rows);};
+
+/* ---------- PM Consumption attribution ---------- */
+var RIKI_PM_CONS_CACHE_V220=null;
+var RIKI_PM_CONS_BUILD_KEY_V220='';
+var RIKI_PM_CONS_STATE_V220={account:'',side:'CALL',sort:'OVERALL'};
+try{var _pcst=JSON.parse(localStorage.getItem('riki_pm_consumption_v220')||'{}');if(_pcst&&typeof _pcst==='object')RIKI_PM_CONS_STATE_V220=Object.assign(RIKI_PM_CONS_STATE_V220,_pcst);}catch(e){}
+function rikiPmConsSaveStateV220_(){try{localStorage.setItem('riki_pm_consumption_v220',JSON.stringify(RIKI_PM_CONS_STATE_V220));}catch(e){}}
+function rikiPmConsNumV220_(v){var n=Number(v);return v===null||v===undefined||v===''||!isFinite(n)?null:n;}
+function rikiPmConsEtPartsV220_(now){var ps=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now||new Date()),o={};ps.forEach(function(p){o[p.type]=p.value;});return{y:Number(o.year),m:Number(o.month),d:Number(o.day)};}
+function rikiPmConsYmdV220_(d){return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');}
+function rikiPmConsActiveWindowV220_(now){
+  var p=rikiPmConsEtPartsV220_(now||new Date()),d=new Date(Date.UTC(p.y,p.m-1,p.d)),dow=d.getUTCDay(),start=new Date(d),end;
+  if(dow===6)start.setUTCDate(start.getUTCDate()+2);else if(dow===0)start.setUTCDate(start.getUTCDate()+1);
+  var sd=start.getUTCDay();end=new Date(start);
+  if(dow===0||dow===6)end.setUTCDate(end.getUTCDate()+(5-sd)+7);else end.setUTCDate(end.getUTCDate()+(5-sd)+7);
+  return{start:rikiPmConsYmdV220_(start),end:rikiPmConsYmdV220_(end)};
+}
+function rikiPmConsWindowLabelV220_(w){
+  function f(s){var d=new Date(s+'T12:00:00Z');return new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'}).format(d).toUpperCase();}
+  return f(w.start)+' → '+f(w.end);
+}
+function rikiPmConsInWindowV220_(expiry,w){expiry=String(expiry||'');return /^\d{4}-\d{2}-\d{2}$/.test(expiry)&&expiry>=w.start&&expiry<=w.end;}
+function rikiPmConsSideUnitsV220_(book,side,removeActive,w){var l=0,sh=0;(book&&book.legs||[]).forEach(function(x){if(String(x.side||'').toUpperCase()!==side)return;var q=Number(x.netQty||0);if(q>0)l+=q;else if(q<0){if(removeActive&&rikiPmConsInWindowV220_(x.expiry,w))return;sh+=-q;}});return{long:l,short:sh,netShort:Math.max(0,sh-l)};}
+function rikiPmConsLegV220_(raw,ticker,book,beta,risk){var b=rikiPmConsNumV220_(beta);if(b===null)b=rikiPmConsNumV220_(raw.beta);if(b===null)b=1;return Object.assign({},raw,{kind:'OPTION',ticker:ticker,spot:Number(raw.spot||book.spot||0),beta:b,side:String(raw.side||'').toUpperCase(),multiplier:Number(raw.multiplier||100),iv:Number(raw.iv||book.weightedIv||0),dividendYield:Number(raw.dividendYield||book.dividendYield||0),riskFreeRate:Number(raw.riskFreeRate||risk.riskFreeRate||.04)});}
+function rikiPmConsPressureV220_(risk,ticker,tr,side){
+  var api=window.RIKI_PM_V4_API||{},pnr=rikiPmConsNumV220_(tr&&(side==='PUT'?tr.downPnr:tr.upPnr)),epr=rikiPmConsNumV220_(tr&&(side==='PUT'?tr.downEpr:tr.upEpr)),buffer=api.buffer?Number(api.buffer(risk,ticker,tr||{})):10;
+  if(epr===null)return{pressure:null,pnr:pnr,epr:null,buffer:buffer,noCross:false};
+  if(pnr===null)return{pressure:5,pnr:null,epr:epr,buffer:buffer,noCross:true};
+  var pa=Math.abs(pnr),pressure=pa>1e-9?100*(Math.abs(epr)+buffer)/pa:999;
+  return{pressure:pressure,pnr:pnr,epr:epr,buffer:buffer,noCross:false};
+}
+function rikiPmConsContributionV220_(risk,account,side,ticker,book,w){
+  var api=window.RIKI_PM_V4_API||{},ar=(risk.accounts||[]).filter(function(a){return a&&a.account===account;})[0],model=((((risk||{}).localModel||{}).accounts)||{})[account];
+  if(!api.stressPnl||!api.findRow||!ar||!model||!book)return null;
+  var tr=api.findRow(risk,account,ticker),beta=rikiPmConsNumV220_(tr&&tr.beta),removals=[],qty=0,expiries={};
+  (book.legs||[]).forEach(function(raw){var q=Number(raw.netQty||0),s=String(raw.side||'').toUpperCase(),expiry=String(raw.expiry||'');if(s!==side||!(q<0)||!rikiPmConsInWindowV220_(expiry,w))return;var leg=rikiPmConsLegV220_(raw,ticker,book,beta,risk);leg.netQty=Math.abs(q);removals.push(leg);qty+=Math.abs(q);expiries[expiry]=1;});
+  if(!removals.length)return null;
+  var vals={},defs=risk.stressDefinition||[],stress=ar.stress||{};
+  defs.forEach(function(def){var b=stress[def.key]||{},pnl=rikiPmConsNumV220_(b.pnl),lim=rikiPmConsNumV220_(b.schwabLimit),before=rikiPmConsNumV220_(b.schwabUtilization);if(pnl===null||!(lim>0)){vals[def.key]=null;return;}if(before===null)before=Math.max(0,-pnl)/lim;var baseLoss=Math.max(0,-pnl),afterLoss=Math.max(0,-(pnl+api.stressPnl(removals,Number(def.spxMove),false,risk))),after=before+(afterLoss-baseLoss)/lim;vals[def.key]=100*(before-after);});
+  var ub=ar.uniformDown20||{},up=rikiPmConsNumV220_(ub.pnl),ulim=rikiPmConsNumV220_(ub.schwabLimit),ubefore=rikiPmConsNumV220_(ub.schwabUtilization);if(up!==null&&ulim>0){if(ubefore===null)ubefore=Math.max(0,-up)/ulim;var ul0=Math.max(0,-up),ul1=Math.max(0,-(up+api.stressPnl(removals,-.20,true,risk)));vals.uniform=100*((ubefore)-(ubefore+(ul1-ul0)/ulim));}else vals.uniform=null;
+  var nlv=Number(model.netLiq||ar.netLiq||0),ns=ar.netShort||{},nsBefore=rikiPmConsNumV220_(side==='CALL'?ns.callUtilization:ns.putUtilization),allUnits=rikiPmConsSideUnitsV220_(book,side,false,w),afterUnits=rikiPmConsSideUnitsV220_(book,side,true,w),freedUnits=Math.max(0,allUnits.netShort-afterUnits.netShort),detail=(model.shortDetail||[]).filter(function(x){return x&&x.ticker===ticker;})[0]||{},req=rikiPmConsNumV220_(book.shortReqPerContract);if(req===null)req=rikiPmConsNumV220_(detail.dollarsPerContract);var baseReq=rikiPmConsNumV220_((model.baseNetShort||{})[side==='CALL'?'callRequirementDollars':'putRequirementDollars']);if(nsBefore===null&&baseReq!==null&&nlv>0)nsBefore=baseReq/nlv;if(nsBefore!==null&&req!==null&&nlv>0){var nsAfter=Math.max(0,nsBefore-freedUnits*req/nlv);vals.netShort=100*(nsBefore-nsAfter);}else vals.netShort=null;
+  var pressure=rikiPmConsPressureV220_(risk,ticker,tr,side),pmKeys=['up20','up10','dn12','dn20','uniform','netShort'],largest=0,limit='—';pmKeys.forEach(function(k){var v=vals[k];if(v!==null&&v>largest){largest=v;limit=k;}});
+  var labels={up20:'SPX +20',up10:'SPX +10',dn12:'SPX −12',dn20:'SPX −20',uniform:'Uniform −20',netShort:'Net Short'};
+  return{ticker:ticker,side:side,qty:qty,expiryCount:Object.keys(expiries).length,expiries:Object.keys(expiries).sort(),up20:vals.up20,up10:vals.up10,dn12:vals.dn12,dn20:vals.dn20,uniform:vals.uniform,netShort:vals.netShort,pnrPressure:pressure.pressure,pnr:pressure.pnr,epr:pressure.epr,buffer:pressure.buffer,pnrNoCross:pressure.noCross,overall:largest,limiting:largest>0?(labels[limit]||limit):'Hedge / neutral'};
+}
+function rikiPmConsBuildV220_(risk){
+  var w=rikiPmConsActiveWindowV220_(),out={key:rikiPmConsKeyV220_(risk),window:w,accounts:{}};
+  (risk.accounts||[]).forEach(function(a){var acct=String(a.account||''),model=((((risk||{}).localModel||{}).accounts)||{})[acct],books=model&&model.tickerBooks||{};out.accounts[acct]={CALL:[],PUT:[]};['CALL','PUT'].forEach(function(side){Object.keys(books).sort().forEach(function(t){var row=rikiPmConsContributionV220_(risk,acct,side,t,books[t],w);if(row)out.accounts[acct][side].push(row);});});});
+  return out;
+}
+function rikiPmConsKeyV220_(risk){var st=(typeof RIKI_PM_SETTINGS_LOCAL!=='undefined'&&RIKI_PM_SETTINGS_LOCAL)||((risk&&risk.settings)||{}),w=rikiPmConsActiveWindowV220_();return [String(risk&&risk.version||''),Number(risk&&risk.capturedMs||0),rikiPmConsNumV220_(st.pnrBufferPoints),JSON.stringify(st.pnrBufferByTicker||{}),w.start,w.end].join('|');}
+function rikiPmConsSortV220_(rows,sort){var key={UP20:'up20',UP10:'up10',DN12:'dn12',DN20:'dn20',UNIFORM:'uniform',NETSHORT:'netShort',PNR:'pnrPressure'}[sort]||'overall';return(rows||[]).slice().sort(function(a,b){var av=rikiPmConsNumV220_(a[key]),bv=rikiPmConsNumV220_(b[key]);if(av===null&&bv===null)return a.ticker.localeCompare(b.ticker);if(av===null)return 1;if(bv===null)return-1;return bv-av||a.ticker.localeCompare(b.ticker);});}
+function rikiPmConsToneV220_(v){if(v===null)return'zero';if(v<-.05)return'hedge';if(Math.abs(v)<.05)return'zero';if(v>=10)return'risk';if(v>=5)return'hot';if(v>=2)return'mid';return'low';}
+function rikiPmConsCellV220_(v,max,title){if(v===null)return'<td class="pm-cons-cell" title="'+escHtml(title||'Unavailable')+'"><span class="pm-cons-value zero">—</span></td>';var tone=rikiPmConsToneV220_(v);if(Math.abs(v)<.05)return'<td class="pm-cons-cell" title="'+escHtml(title||'Negligible marginal change')+'"><span class="pm-cons-value zero">—</span></td>';var width=Math.max(5,Math.min(100,100*Math.abs(v)/Math.max(.01,max||Math.abs(v)))),txt=(v>0?'+':'')+v.toFixed(1)+' pp';return'<td class="pm-cons-cell" title="'+escHtml(title||'')+'"><span class="pm-cons-value '+tone+'">'+txt+'</span><div class="pm-cons-bar"><i class="'+tone+'" style="width:'+width.toFixed(0)+'%"></i></div></td>';}
+function rikiPmConsPnrCellV220_(r){if(r.pnrPressure===null)return'<td class="pm-cons-pnr"><span class="pm-cons-value zero">—</span></td>';var tone=r.pnrPressure>=100?'risk':r.pnrPressure>=75?'hot':r.pnrPressure>=50?'mid':'low',tip=r.pnrNoCross?'No modeled PNR crossing · EPR '+Number(r.epr).toFixed(1)+'% · required cushion '+Number(r.buffer).toFixed(0)+' pp':'PNR '+Math.abs(Number(r.pnr)).toFixed(1)+'% · EPR '+Math.abs(Number(r.epr)).toFixed(1)+'% · required cushion '+Number(r.buffer).toFixed(0)+' pp';return'<td class="pm-cons-pnr" title="'+escHtml(tip)+'"><span class="pm-cons-value '+tone+'">'+Number(r.pnrPressure).toFixed(0)+'%</span><div class="pm-cons-bar"><i class="'+tone+'" style="width:'+Math.max(5,Math.min(100,r.pnrPressure)).toFixed(0)+'%"></i></div></td>';}
+function rikiPmConsSortLabelV220_(s){return{OVERALL:'Overall PM Use',UP20:'SPX +20',UP10:'SPX +10',DN12:'SPX −12',DN20:'SPX −20',UNIFORM:'Uniform −20',NETSHORT:'Net Short',PNR:'PNR-EPR'}[s]||'Overall PM Use';}
+function rikiPmConsRenderV220_(risk){
+  var host=document.getElementById('riki-pm-consumption-v220');if(!host)return;var cache=RIKI_PM_CONS_CACHE_V220,key=rikiPmConsKeyV220_(risk),accounts=(risk.accounts||[]).filter(function(a){return a&&a.isPortfolioMargin===true;});
+  if(!accounts.length){host.innerHTML='<div class="pm-cons-title">PM Consumption</div><div class="pm-cons-status">No Portfolio Margin account is available in this Risk snapshot.</div>';return;}
+  if(accounts.every(function(a){return a.account!==RIKI_PM_CONS_STATE_V220.account;}))RIKI_PM_CONS_STATE_V220.account=accounts[0].account;
+  if(RIKI_PM_CONS_STATE_V220.side!=='PUT')RIKI_PM_CONS_STATE_V220.side='CALL';
+  var w=(cache&&cache.key===key?cache.window:rikiPmConsActiveWindowV220_()),label=rikiPmConsWindowLabelV220_(w);
+  var accountButtons=accounts.map(function(a,i){return'<button type="button" data-pmc-account="'+escHtml(a.account)+'" class="'+(a.account===RIKI_PM_CONS_STATE_V220.account?'on':'')+'">Account '+(i+1)+'</button>';}).join('');
+  host.innerHTML='<div class="pm-cons-head"><div><div class="pm-cons-title">PM Consumption</div><div class="pm-cons-sub">Marginal portfolio attribution from the completed authoritative PM snapshot. Positive values are utilization freed by removing only this ticker’s active short '+RIKI_PM_CONS_STATE_V220.side.toLowerCase()+'s; negative values are hedge contribution.</div></div><div class="pm-cons-active"><b>Active book · '+escHtml(label)+'</b><span>All expiries · full portfolio retained as baseline</span></div></div><div class="pm-cons-controls"><div class="pm-cons-seg">'+accountButtons+'</div><div class="pm-cons-seg side"><button type="button" data-pmc-side="CALL" class="'+(RIKI_PM_CONS_STATE_V220.side==='CALL'?'on':'')+'">CALLS</button><button type="button" data-pmc-side="PUT" class="'+(RIKI_PM_CONS_STATE_V220.side==='PUT'?'on':'')+'">PUTS</button></div><label class="pm-cons-sort">Sort <select id="pm-cons-sort-v220"><option value="OVERALL">Overall PM Use</option><option value="UP20">SPX +20</option><option value="UP10">SPX +10</option><option value="DN12">SPX −12</option><option value="DN20">SPX −20</option><option value="UNIFORM">Uniform −20</option><option value="NETSHORT">Net Short</option><option value="PNR">PNR-EPR</option></select></label></div><div id="pm-cons-body-v220"></div><div class="pm-cons-note"><b>Interpretation:</b> +12.4 pp means closing that ticker/side’s active-book shorts would lower the selected utilization by 12.4 percentage points. −1.1 pp means those shorts currently provide about 1.1 pp of hedge in that scenario. PNR/EPR is the current full-baseline side pressure = (EPR + required cushion) ÷ PNR.</div>';
+  var sort=document.getElementById('pm-cons-sort-v220');if(sort){sort.value=RIKI_PM_CONS_STATE_V220.sort;sort.onchange=function(){RIKI_PM_CONS_STATE_V220.sort=this.value;rikiPmConsSaveStateV220_();rikiPmConsRenderBodyV220_(risk);};}
+  Array.prototype.forEach.call(host.querySelectorAll('[data-pmc-account]'),function(b){b.onclick=function(){RIKI_PM_CONS_STATE_V220.account=b.getAttribute('data-pmc-account');rikiPmConsSaveStateV220_();rikiPmConsRenderV220_(risk);};});
+  Array.prototype.forEach.call(host.querySelectorAll('[data-pmc-side]'),function(b){b.onclick=function(){RIKI_PM_CONS_STATE_V220.side=b.getAttribute('data-pmc-side');rikiPmConsSaveStateV220_();rikiPmConsRenderV220_(risk);};});
+  if(!cache||cache.key!==key){document.getElementById('pm-cons-body-v220').innerHTML='<div class="pm-cons-status">Calculating portfolio attribution…</div>';rikiPmConsEnsureV220_(risk);return;}
+  rikiPmConsRenderBodyV220_(risk);
+}
+function rikiPmConsRenderBodyV220_(risk){
+  var body=document.getElementById('pm-cons-body-v220'),cache=RIKI_PM_CONS_CACHE_V220;if(!body||!cache||cache.key!==rikiPmConsKeyV220_(risk))return;if(cache.error){body.innerHTML='<div class="pm-cons-status">PM Consumption calculation unavailable: '+escHtml(cache.error)+'</div>';return;}
+  var rows=((((cache.accounts||{})[RIKI_PM_CONS_STATE_V220.account]||{})[RIKI_PM_CONS_STATE_V220.side])||[]),sorted=rikiPmConsSortV220_(rows,RIKI_PM_CONS_STATE_V220.sort);
+  if(!sorted.length){body.innerHTML='<div class="pm-cons-status">No active-book short '+RIKI_PM_CONS_STATE_V220.side.toLowerCase()+' positions fall inside '+escHtml(rikiPmConsWindowLabelV220_(cache.window))+'.</div>';return;}
+  var top=sorted[0],summary=RIKI_PM_CONS_STATE_V220.sort==='OVERALL'?(top.ticker+' '+RIKI_PM_CONS_STATE_V220.side+'S · '+top.limiting+' · '+top.overall.toFixed(1)+' pp'):(top.ticker+' '+RIKI_PM_CONS_STATE_V220.side+'S · '+rikiPmConsSortLabelV220_(RIKI_PM_CONS_STATE_V220.sort));
+  var keys=['up20','up10','dn12','dn20','uniform','netShort'],max={};keys.forEach(function(k){max[k]=Math.max(.01,...rows.map(function(r){return Math.abs(Number(r[k]||0));}));});
+  var map={up20:'UP20',up10:'UP10',dn12:'DN12',dn20:'DN20',uniform:'UNIFORM',netShort:'NETSHORT',pnrPressure:'PNR'};
+  function th(label,key){var s=map[key],cls=RIKI_PM_CONS_STATE_V220.sort===s?' sorted':'';return'<th class="'+cls+'" data-pmc-sort="'+s+'">'+label+'</th>';}
+  var html='<div class="pm-cons-summary"><span>Top consumer</span><b>'+escHtml(summary)+'</b><em>'+sorted.length+' ticker'+(sorted.length===1?'':'s')+'</em></div><div class="pm-cons-table-wrap"><table class="pm-cons-table"><thead><tr><th>Ticker</th>'+th('SPX +20','up20')+th('SPX +10','up10')+th('SPX −12','dn12')+th('SPX −20','dn20')+th('Uniform −20','uniform')+th('Net Short','netShort')+th('PNR/EPR','pnrPressure')+'</tr></thead><tbody>';
+  sorted.forEach(function(r){html+='<tr><td><span class="pm-cons-ticker">'+escHtml(r.ticker)+'</span><span class="pm-cons-ticker-sub">'+Number(r.qty).toFixed(0)+' short · '+r.expiryCount+' expir'+(r.expiryCount===1?'y':'ies')+'</span></td>'+rikiPmConsCellV220_(r.up20,max.up20,'Closing active '+r.ticker+' '+r.side+'s: SPX +20 marginal consumption')+rikiPmConsCellV220_(r.up10,max.up10,'Closing active '+r.ticker+' '+r.side+'s: SPX +10 marginal consumption')+rikiPmConsCellV220_(r.dn12,max.dn12,'Closing active '+r.ticker+' '+r.side+'s: SPX −12 marginal consumption')+rikiPmConsCellV220_(r.dn20,max.dn20,'Closing active '+r.ticker+' '+r.side+'s: SPX −20 marginal consumption')+rikiPmConsCellV220_(r.uniform,max.uniform,'Closing active '+r.ticker+' '+r.side+'s: Uniform −20 marginal consumption')+rikiPmConsCellV220_(r.netShort,max.netShort,'Closing active '+r.ticker+' '+r.side+'s: Net Short marginal consumption')+rikiPmConsPnrCellV220_(r)+'</tr>';});html+='</tbody></table></div>';body.innerHTML=html;
+  Array.prototype.forEach.call(body.querySelectorAll('[data-pmc-sort]'),function(h){h.onclick=function(){RIKI_PM_CONS_STATE_V220.sort=h.getAttribute('data-pmc-sort');rikiPmConsSaveStateV220_();var s=document.getElementById('pm-cons-sort-v220');if(s)s.value=RIKI_PM_CONS_STATE_V220.sort;rikiPmConsRenderBodyV220_(risk);};});
+}
+function rikiPmConsEnsureV220_(risk){
+  var key=rikiPmConsKeyV220_(risk);if(RIKI_PM_CONS_CACHE_V220&&RIKI_PM_CONS_CACHE_V220.key===key){rikiPmConsRenderBodyV220_(risk);return;}if(RIKI_PM_CONS_BUILD_KEY_V220===key)return;RIKI_PM_CONS_BUILD_KEY_V220=key;
+  requestAnimationFrame(function(){setTimeout(function(){try{RIKI_PM_CONS_CACHE_V220=rikiPmConsBuildV220_(risk);}catch(e){RIKI_PM_CONS_CACHE_V220={key:key,window:rikiPmConsActiveWindowV220_(),accounts:{},error:errMsg(e)};}RIKI_PM_CONS_BUILD_KEY_V220='';if(document.getElementById('riki-pm-consumption-v220'))rikiPmConsRenderV220_(risk);},0);});
+}
+function rikiPmConsMountV220_(d){
+  var host=document.getElementById('risk-content'),risk=(d&&d.pmRisk)||{};if(!host)return;var old=document.getElementById('riki-pm-consumption-v220');if(old)old.remove();var box=document.createElement('div');box.id='riki-pm-consumption-v220';box.className='pm-panel pm-cons-panel';host.appendChild(box);
+  if(!/^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||''))||!risk.localModel||!risk.localModel.accounts){box.innerHTML='<div class="pm-cons-title">PM Consumption</div><div class="pm-cons-status">Refresh Risk to build portfolio attribution from a completed PM snapshot.</div>';return;}
+  rikiPmConsRenderV220_(risk);
+}
+var rikiPmConsOldRiskRenderV220_=window.renderRiskLab;
+window.renderRiskLab=function(d){rikiPmConsOldRiskRenderV220_(d);rikiPmConsMountV220_(d||window.DATA||{});};
+
 
 // FAST BOOT: do not build the hidden Screener DOM during page parse.
 // switchTab('q') / rikiRenderActiveTab_ initializes it on first use.

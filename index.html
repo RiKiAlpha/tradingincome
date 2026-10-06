@@ -5,6 +5,8 @@
 <!-- RIKI_V2_0_21_PM_CONSUMPTION_CREDIT_EFFICIENCY_HOVER_2026_10_05 -->
 <!-- RIKI_V2_0_20_FAST_ACCOUNT_SWITCH_PM_CONSUMPTION_2026_10_05 -->
 <!-- RIKI_V2_0_18_PNR_CLARITY_BETA_HEALTH_2026_10_05 -->
+<!-- RIKI_V2_0_25_CREDIT_PER_CONTRACT_CLEANUP_2026_10_06 -->
+<!-- RIKI_V2_0_26_PERSISTENT_RISK_REFRESH_BUSY_UI_2026_10_06 -->
 <!-- RIKI_V2_0_24_AVG_STRIKE_CREDIT_ROUNDING_OPP_DEFAULT_2026_10_06 -->
 <!-- RIKI_INCOME_SCREENER_V1_5_0_2026_09_24 · MANUAL ONLY · NO REFRESH HOOKS -->
 <!-- RIKI_PM_RISK_LAB_V3_AUDITED_2026_09_23 -->
@@ -1210,6 +1212,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 }
 </style>
 <style id="riki-v224-avg-strike-credit-rounding-style">
+/* RIKI V2.0.25 — Net Credit per-contract display cleanup. */
 /* RIKI V2.0.24 — fast basket reference + whole-cent Screener credit targets. */
 .pm-cons-credit-strike{display:block;margin-top:3px;font-family:'JetBrains Mono',monospace;font-size:8.2px;font-weight:760;color:#aebbd0;white-space:nowrap}
 [data-theme="light"] .pm-cons-credit-strike{color:rgba(28,44,62,.62)}
@@ -1437,6 +1440,8 @@ var RIKI_RELEASE_V222=RIKI_RELEASE_V223;
 var RIKI_RELEASE_V221=RIKI_RELEASE_V223;
 var RIKI_RELEASE_V220=RIKI_RELEASE_V223;
 var RIKI_RELEASE_V224='RIKI_V2_0_24_AVG_STRIKE_CREDIT_ROUNDING_OPP_DEFAULT_2026_10_06';
+var RIKI_RELEASE_V225='RIKI_V2_0_25_CREDIT_PER_CONTRACT_CLEANUP_2026_10_06';
+var RIKI_RELEASE_V226='RIKI_V2_0_26_PERSISTENT_RISK_REFRESH_BUSY_UI_2026_10_06';
 var RIKI_RELEASE_V218='RIKI_V2_0_18_RISK_LAB_PNR_CLARITY_BETA_HEALTH_2026_10_05';
 var RIKI_RELEASE_V217=RIKI_RELEASE_V218;
 var RIKI_RELEASE_V216=RIKI_RELEASE_V218;
@@ -4098,6 +4103,20 @@ var RIKI_BETA_CACHE_KEY='riki_beta_registry_v1';
 var RIKI_BETA_BANNER_DISMISS_KEY='riki_beta_banner_dismiss_v1';
 var RIKI_BETA_STATUS_CACHE=null;
 var RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE=null;
+// V2.0.26: keep every visible Risk refresh control tied to the single
+// authoritative in-flight promise. If the Risk tab is rebuilt mid-refresh,
+// the newly created button still paints disabled/Reading… until completion.
+function rikiBetaSyncRiskRefreshUi_(){
+  var busy=!!RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE;
+  ['r4-refresh','pm-refresh'].forEach(function(id){
+    var btn=document.getElementById(id);
+    if(!btn)return;
+    btn.disabled=busy;
+    btn.classList.toggle('is-busy',busy);
+    btn.textContent=busy?'Reading…':'Refresh risk';
+    btn.setAttribute('aria-busy',busy?'true':'false');
+  });
+}
 var RIKI_BETA_STATUS_FETCH_MS=0;
 var RIKI_BETA_STATUS_IN_FLIGHT=false;
 
@@ -4326,11 +4345,12 @@ function rikiBetaAdoptAuthoritativeRisk_(j){
 }
 function rikiBetaRefreshRiskAuthoritative_(opts){
   opts=opts||{};
-  if(RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE)return RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE;
+  if(RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE){rikiBetaSyncRiskRefreshUi_();return RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE;}
   RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE=fetch(BACKEND+'?action=pmRiskRefresh&_='+Date.now(),{cache:'no-store'})
     .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();})
     .then(function(j){return rikiBetaAdoptAuthoritativeRisk_(j);})
-    .finally(function(){RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE=null;});
+    .finally(function(){RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE=null;rikiBetaSyncRiskRefreshUi_();});
+  rikiBetaSyncRiskRefreshUi_();
   return RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE;
 }
 function rikiBetaSyncStatus_(force){
@@ -4707,11 +4727,11 @@ function r4RenderLab(box,risk){
 window.rikiPmRenderPanel_=function(host,d){
   r4InstallStyles();var risk=(d||{}).pmRisk||{},box=document.createElement('div');box.className='pm-panel';
   box.innerHTML='<div class="bp-head"><div><div class="bp-title">Portfolio Risk Lab</div><div class="bp-sub">Schwab fundamental beta primary · cached/TOS fallback protection · configurable RiKi guardrails</div></div><button class="abtn" id="r4-refresh">Refresh risk</button></div><div class="ssub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+' · ticker risk bars persist until a completed manual, automatic, CSV import, or Risk refresh replaces the snapshot.</div><div class="ssub" style="margin-top:4px">TOS validation · current date · P/L Day · exclude stale simulated trades.</div>';
-  if(!r4Ready(d)){box.innerHTML+='<div class="r4-result"><strong>Backend V4 required.</strong><br>Current risk snapshot: '+escHtml(risk.version||'none')+'. Replace the V3 risk backend module with V4, deploy the existing web app, then press Refresh risk.</div>';host.appendChild(box);var b0=box.querySelector('#r4-refresh');b0.onclick=function(){toast('Deploy Risk backend V4 first',4500);};return;}
+  if(!r4Ready(d)){box.innerHTML+='<div class="r4-result"><strong>Backend V4 required.</strong><br>Current risk snapshot: '+escHtml(risk.version||'none')+'. Replace the V3 risk backend module with V4, deploy the existing web app, then press Refresh risk.</div>';host.appendChild(box);var b0=box.querySelector('#r4-refresh');b0.onclick=function(){toast('Deploy Risk backend V4 first',4500);};rikiBetaSyncRiskRefreshUi_();return;}
   var accountGrid=document.createElement('div');accountGrid.className='r4-accounts-grid';(risk.accounts||[]).forEach(function(a){accountGrid.insertAdjacentHTML('beforeend',r4AccountHtml(risk,a));});box.appendChild(accountGrid);
   var anyPm=(risk.accounts||[]).some(function(a){return a&&a.isPortfolioMargin===true;});if(anyPm){var gn=document.createElement('div');gn.className='r4-guard-note';gn.innerHTML='Card fill = percentage of Schwab threshold used. Color only: green &lt; '+(r4Warn(risk)*100).toFixed(0)+'% · amber '+(r4Warn(risk)*100).toFixed(0)+'–&lt;'+r4GuardPct(risk).toFixed(0)+'% · red ≥ '+r4GuardPct(risk).toFixed(0)+'%. Marker = RiKi threshold. PNR/EPR remains ticker-specific.';box.appendChild(gn);}
   r4Controls(box,risk,d);r4EprEditor(box,risk,d);r4RenderLab(box,risk);host.appendChild(box);
-  var btn=box.querySelector('#r4-refresh');btn.onclick=function(){btn.disabled=true;btn.textContent='Reading…';rikiBetaRefreshRiskAuthoritative_({reason:'MANUAL_RISK_REFRESH'}).then(function(){toast('Risk refreshed · authoritative Schwab beta applied',3000);}).catch(function(e){toast(errMsg(e),7000);btn.disabled=false;btn.textContent='Refresh risk';});};
+  var btn=box.querySelector('#r4-refresh');btn.onclick=function(){var p=rikiBetaRefreshRiskAuthoritative_({reason:'MANUAL_RISK_REFRESH'});rikiBetaSyncRiskRefreshUi_();p.then(function(){toast('Risk refreshed · authoritative Schwab beta applied',3000);}).catch(function(e){toast(errMsg(e),7000);});};rikiBetaSyncRiskRefreshUi_();
 };
 window.renderRiskLab=function(d){var host=ge('risk-content');if(!host)return;host.innerHTML='';try{window.rikiPmRenderPanel_(host,d||DATA||{});}catch(e){host.innerHTML='<div class="pm-panel"><div class="bp-title">Portfolio Risk Lab</div><div class="r4-result" style="color:var(--red)">Risk Lab render error: '+escHtml(errMsg(e))+'</div></div>';}};
 
@@ -4768,7 +4788,7 @@ function rikiPmRenderPanel_(host,d){
   else if(check.success){var note=document.createElement('div');note.className='ssub';note.textContent='Risk calculated before publication · '+Number(check.validRows||0)+' / '+Number(check.pmRows||0)+' PM ticker estimates have valid inputs.';box.appendChild(note);}
   host.appendChild(box);
   box.querySelector('#pm-ticker').onchange=function(){var cfg=(settings.epr||{})[this.value]||{};box.querySelector('#pm-down').value=cfg.down||'';box.querySelector('#pm-up').value=cfg.up||'';};
-  box.querySelector('#pm-refresh').onclick=function(){var btn=this;btn.disabled=true;btn.textContent='Reading…';rikiBetaRefreshRiskAuthoritative_({reason:'LEGACY_PM_REFRESH_BUTTON'}).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;btn.textContent='Refresh risk';});};
+  box.querySelector('#pm-refresh').onclick=function(){var p=rikiBetaRefreshRiskAuthoritative_({reason:'LEGACY_PM_REFRESH_BUTTON'});rikiBetaSyncRiskRefreshUi_();p.catch(function(e){toast(errMsg(e),6500);});};rikiBetaSyncRiskRefreshUi_();
   box.querySelector('#pm-save').onclick=function(){var btn=this;btn.disabled=true;rikiPmPost_('pmSaveEpr',{ticker:box.querySelector('#pm-ticker').value,down:box.querySelector('#pm-down').value,up:box.querySelector('#pm-up').value}).then(function(j){if(!j.success)throw Error(j.error||'Save failed');RIKI_PM_SETTINGS_LOCAL=j.settings;var rr=(DATA.pmRisk||{}).rows||[];rr.forEach(function(r){var e=j.settings.epr[r.ticker]||{};r.downEpr=e.down||null;r.upEpr=e.up||null;r.eprUpdatedAt=e.updatedAt||'';r.downLossAtEpr=null;r.upLossAtEpr=null;});if(DATA.pmRisk)DATA.pmRisk.settings=j.settings;saveCache(DATA);renderAll(DATA);toast('EPR saved. Refresh risk to update stress losses.');}).catch(function(e){toast(errMsg(e),6500);btn.disabled=false;});};
 }
 function rikiNickelRenderManual_(host,d){
@@ -5620,7 +5640,7 @@ function rikiPmConsRenderBodyV220_(risk){
       ctext=r.netCredit===null?'—':rikiPmConsMoneyV221_(r.netCredit)+(r.creditComplete?'':'*'),
       ccls=r.creditComplete?'':' partial',
       avg=rikiPmConsNumV220_(r.avgCreditPerContract),
-      avgLine=avg===null?(r.netCredit!==null&&!r.creditComplete?'<span class="pm-cons-credit-avg warn">AVG PARTIAL</span>':''):'<span class="pm-cons-credit-avg">'+avg.toFixed(2)+'¢ avg · '+rikiPmConsMoney2V223_(avg)+'/ct</span>',
+      avgLine=avg===null?(r.netCredit!==null&&!r.creditComplete?'<span class="pm-cons-credit-avg warn">AVG PARTIAL</span>':''):'<span class="pm-cons-credit-avg">'+rikiPmConsMoney2V223_(avg)+'/ct</span>',
       avgStrike=rikiPmConsNumV220_(r.avgStrike),avgOtm=rikiPmConsNumV220_(r.avgOtmPct),
       strikeLine=avgStrike===null?'':'<span class="pm-cons-credit-strike">Avg '+rikiPmConsStrikeV224_(avgStrike,r.side)+(avgOtm===null?'':' · '+avgOtm.toFixed(1)+'% OTM')+'</span>',
       rd=r.riskDollars||{};

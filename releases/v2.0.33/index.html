@@ -8,8 +8,8 @@
 <!-- RIKI_V2_0_25_CREDIT_PER_CONTRACT_CLEANUP_2026_10_06 -->
 <!-- RIKI_V2_0_26_PERSISTENT_RISK_REFRESH_BUSY_UI_2026_10_06 -->
 <!-- RIKI_V2_0_27_COMPARABLE_PNR_EFFICIENCY_2026_10_06 -->
-<!-- RIKI_V2_0_34_VISUAL_CLEANUP_2026_10_09 -->
-<!-- Base: V2.0.33. Frontend presentation cleanup; PM math/backend unchanged. -->
+<!-- RIKI_V2_0_33_HIGH_IV_WHATIF_FIX_2026_10_09 -->
+<!-- Base: V2.0.32. Minimal Risk Lab high-IV validation fix; PM math/backend unchanged. -->
 <!-- RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07 -->
 <!-- RIKI_V2_0_28_UNIFIED_RISK_SCREENER_EFFICIENCY_2026_10_06 -->
 <!-- RIKI_V2_0_24_AVG_STRIKE_CREDIT_ROUNDING_OPP_DEFAULT_2026_10_06 -->
@@ -1226,77 +1226,6 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 [data-theme="light"] .pm-cons-credit-strike{color:rgba(28,44,62,.62)}
 </style>
 
-
-<style id="riki-v234-visual-cleanup-style">
-/* V2.0.34 presentation only — no PM/risk equation changes. */
-.scr-hero{
-  background:var(--panel)!important;
-  border-color:var(--border)!important;
-  box-shadow:none!important;
-}
-.scr-hero:after{display:none!important}
-.scr-card,.scr-table-wrap,.scr-leader,.scr-detail{
-  background:var(--panel)!important;
-  box-shadow:none!important;
-}
-.scr-leader:before{background:var(--green)!important}
-.scr-progress{height:5px;background:rgba(129,151,173,.12)!important}
-.scr-progress>div{background:var(--green)!important;box-shadow:none!important}
-
-.r4-risk-heading{align-items:center;margin-bottom:8px}
-.r4-risk-heading .scr-title{font-size:18px}
-.r4-risk-heading .scr-sub{font-size:10px;margin-top:5px}
-.r4-risk-heading .abtn{min-width:108px}
-
-.r4-file-input{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
-.r4-file-picker{
-  display:flex;align-items:center;gap:10px;min-width:290px;max-width:430px;height:38px;
-  padding:0 12px;border:1px solid rgba(75,158,255,.30);border-radius:11px;
-  background:rgba(75,158,255,.055);cursor:pointer;transition:border-color .15s ease,background .15s ease;
-}
-.r4-file-picker:hover{border-color:rgba(75,158,255,.52);background:rgba(75,158,255,.085)}
-.r4-file-picker span{font-size:9px;font-weight:850;color:#8bc1ff;white-space:nowrap}
-.r4-file-picker small{font-size:8.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.r4-upload-row{gap:10px}
-.r4-upload-row .abtn{height:38px}
-
-.pm-cons-panel{padding:18px 18px 16px}
-.pm-cons-title{font-size:16px;letter-spacing:-.01em}
-.pm-cons-sub{font-size:10.5px;line-height:1.4;margin-top:4px}
-.pm-cons-active{padding:8px 11px}
-.pm-cons-active b{font-size:8.5px}
-.pm-cons-summary{min-height:40px;padding:10px 12px}
-.pm-cons-summary span{font-size:7.8px}
-.pm-cons-summary b{font-size:12px}
-.pm-cons-summary em{font-size:10px}
-.pm-cons-table-wrap{margin-top:10px;background:var(--panel)!important}
-.pm-cons-table th{font-size:8.6px;padding:11px 10px;letter-spacing:.045em}
-.pm-cons-table td{font-size:11.5px;padding:12px 10px}
-.pm-cons-ticker{font-size:13.5px}
-.pm-cons-ticker-sub{font-size:8.5px;margin-top:4px}
-.pm-cons-cell{min-width:106px}
-.pm-cons-credit{min-width:122px}
-.pm-cons-value{font-size:12.8px}
-.pm-cons-credit .pm-cons-value{font-size:13.4px}
-.pm-cons-eff{font-size:9.2px;margin-top:5px}
-.pm-cons-credit-avg,.pm-cons-credit-strike{font-size:9px}
-.pm-cons-pnr{min-width:128px}
-.pm-cons-pnr .pm-cons-value{font-size:13px}
-.pm-cons-pnr-remaining{font-size:9.2px}
-.pm-cons-pnr-detail{font-size:8.5px;margin-top:4px}
-.pm-cons-bar{height:5px;margin-top:7px}
-.pm-cons-sort{font-size:8.5px}
-.pm-cons-sort select{font-size:9px;height:32px}
-.pm-cons-seg button{font-size:9px;padding:7px 10px}
-
-@media(max-width:760px){
-  .r4-file-picker{min-width:0;width:100%;max-width:none}
-  .pm-cons-table th{font-size:8px;padding:9px 8px}
-  .pm-cons-table td{font-size:10.5px;padding:10px 8px}
-  .pm-cons-value{font-size:11.5px}
-}
-</style>
-
 </head>
 <body>
 <div id="app">
@@ -1388,7 +1317,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.34</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.33</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1526,8 +1455,7 @@ var RIKI_RELEASE_V230='RIKI_V2_0_30_CLOSE_SCOPE_EXPIRY_ALL_2026_10_07';
 var RIKI_RELEASE_V231='RIKI_V2_0_31_WING_IV_DIAGNOSTIC_2026_10_08';
 var RIKI_RELEASE_V232='RIKI_V2_0_32_WING_IV_DIVERGENCE_GATE_2026_10_08';
 var RIKI_RELEASE_V233='RIKI_V2_0_33_HIGH_IV_WHATIF_FIX_2026_10_09';
-var RIKI_RELEASE_V234='RIKI_V2_0_34_VISUAL_CLEANUP_2026_10_09';
-var RIKI_APP_VERSION='V2.0.34';
+var RIKI_APP_VERSION='V2.0.33';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -4629,7 +4557,7 @@ function r4Controls(box,risk,d){
       '<label>Ticker override<select id="r4-buffer-ticker"><option value="">Select ticker</option>'+tickers.map(function(t){return'<option value="'+escHtml(t)+'">'+escHtml(t)+'</option>';}).join('')+'</select></label>'+
       '<label>Ticker cushion<select id="r4-ticker-buffer">'+r4BufferList('GLOBAL')+'</select></label>'+
     '</div><div class="r4-actions"><button class="abtn" id="r4-config-save">Save thresholds</button></div>'+
-    '<div class="r4-upload"><div class="r4-upload-row"><button class="abtn" id="r4-beta-refresh">Update beta from Schwab</button><input class="r4-file-input" id="r4-tos-file" type="file" accept=".csv,text/csv"><label class="r4-file-picker" for="r4-tos-file"><span>Choose TOS CSV</span><small id="r4-tos-file-name">No file selected</small></label><button class="abtn" id="r4-tos-import">Upload CSV</button></div>'+
+    '<div class="r4-upload"><div class="r4-upload-row"><button class="abtn" id="r4-beta-refresh">Update beta from Schwab</button><input class="r4-file" id="r4-tos-file" type="file" accept=".csv,text/csv"><button class="abtn" id="r4-tos-import">Upload TOS Position CSV</button></div>'+
     '<div class="r4-beta-status" id="r4-beta-status"></div><div class="r4-cal-status" id="r4-cal-status"></div></div>';
   box.appendChild(wrap);
 
@@ -4664,8 +4592,6 @@ function r4Controls(box,risk,d){
     rikiBetaRefreshNow_(true).then(function(){betaBtn.disabled=false;betaBtn.textContent='Update beta from Schwab';}).catch(function(){betaBtn.disabled=false;betaBtn.textContent='Update beta from Schwab';});
   };
 
-  file.onchange=function(){var n=wrap.querySelector('#r4-tos-file-name');if(n)n.textContent=(file.files&&file.files[0])?file.files[0].name:'No file selected';};
-
   importBtn.onclick=function(){
     if(!file.files||!file.files[0]){toast('Choose an expanded TOS Position Statement CSV',3500);return;}
     var chosen=file.files[0];
@@ -4680,9 +4606,9 @@ function r4Controls(box,risk,d){
         return rikiBetaRefreshRiskAuthoritative_({reason:'TOS_TEMP_OVERRIDE_REFRESH'}).then(function(){
           toast('TOS temporary fallback stored · '+cc+' tickers · authoritative risk refreshed',4400);
         });
-      }).catch(function(e){importBtn.disabled=false;importBtn.textContent='Upload CSV';toast(errMsg(e),7000);});
+      }).catch(function(e){importBtn.disabled=false;importBtn.textContent='Upload TOS Position CSV';toast(errMsg(e),7000);});
     };
-    reader.onerror=function(){importBtn.disabled=false;importBtn.textContent='Upload CSV';toast('Could not read CSV',5000);};
+    reader.onerror=function(){importBtn.disabled=false;importBtn.textContent='Upload TOS Position CSV';toast('Could not read CSV',5000);};
     reader.readAsText(chosen);
   };
 }
@@ -4956,7 +4882,7 @@ function r4RenderLab(box,risk){
 
 window.rikiPmRenderPanel_=function(host,d){
   r4InstallStyles();var risk=(d||{}).pmRisk||{},box=document.createElement('div');box.className='pm-panel';
-  box.innerHTML='<div class="bp-head r4-risk-heading"><div><div class="scr-title">Portfolio Risk Lab</div><div class="scr-sub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+'</div></div><button class="abtn" id="r4-refresh">Refresh risk</button></div>';
+  box.innerHTML='<div class="bp-head"><div><div class="bp-title">Portfolio Risk Lab</div><div class="bp-sub">Schwab fundamental beta primary · Sticky-Strike conservative guardrail · ≥5% divergence watch</div></div><button class="abtn" id="r4-refresh">Refresh risk</button></div><div class="ssub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+' · ticker risk bars persist until a completed manual, automatic, CSV import, or Risk refresh replaces the snapshot.</div><div class="ssub" style="margin-top:4px">TOS validation · current date · P/L Day · exclude stale simulated trades.</div>';
   if(!r4Ready(d)){box.innerHTML+='<div class="r4-result"><strong>Backend V4 required.</strong><br>Current risk snapshot: '+escHtml(risk.version||'none')+'. Replace the V3 risk backend module with V4, deploy the existing web app, then press Refresh risk.</div>';host.appendChild(box);var b0=box.querySelector('#r4-refresh');b0.onclick=function(){toast('Deploy Risk backend V4 first',4500);};rikiBetaSyncRiskRefreshUi_();return;}
   var wingDiag=r4WingIvDiagHtml_(risk);if(wingDiag)box.insertAdjacentHTML('beforeend',wingDiag);
   var accountGrid=document.createElement('div');accountGrid.className='r4-accounts-grid';(risk.accounts||[]).forEach(function(a){accountGrid.insertAdjacentHTML('beforeend',r4AccountHtml(risk,a));});box.appendChild(accountGrid);
@@ -5389,7 +5315,7 @@ function rikiScreenRestore_(){
   }
 }
 
-function rikiScreenInit_(){var root=rikiScreenEl_('screen-content');if(!root||root.getAttribute('data-ready')==='1')return;if(window.DATA&&typeof rikiScreenStorePmSnapshot_==='function')rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);root.innerHTML='<div class="scr-wrap"><div class="scr-hero"><div class="scr-title">Income Screener</div><div class="scr-sub">Premium discovery with PM-aware sizing.</div><span class="scr-badge">MANUAL · READ ONLY</span></div><div class="scr-card"><div class="bp-head"><div><div class="bp-title">Scan controls</div><div class="bp-sub">Premium scan with PM-aware ranking.</div></div><span class="engine-mode-badge active">'+rikiAppVersionLabel_()+'</span></div><div class="scr-grid"><label>Side<select id="scr-side"><option>PUT</option><option>CALL</option></select></label><label>Expiry<select id="scr-exp"><option value="FRIDAY">Nearest Friday (Thu if holiday)</option><option value="DATE">Specific date</option></select></label><label id="scr-expdate-wrap" style="display:none">Expiry date<input id="scr-expdate" type="date"></label><label>Min bid $<input id="scr-minbid" type="number" min="0" step="0.01"></label><label>Min OTM %<input id="scr-minotm" type="number" min="0" step="1"></label><label>Max OTM %<input id="scr-maxotm" type="number" min="1" step="1"></label><label>Post-scan max beta<input id="scr-maxbeta" type="number" min="0.1" step="0.1"></label><label>Post-scan max EPR %<input id="scr-maxepr" type="number" min="1" step="1"></label><label>Post-scan min Stability<input id="scr-minstability" type="number" min="0" max="100" step="1"></label><label>Post-scan min market cap $B<input id="scr-minmcap" type="number" min="0" step="1"><span class="scr-epr-toolbox-note">Stocks only · ETFs exempt · 0 disables</span></label><label>EPR stress mode<select id="scr-eprmode"><option value="AUTO">Saved / proxy (default)</option><option value="30">Toolbox 30%</option><option value="40">Toolbox 40%</option><option value="50">Toolbox 50%</option></select><span class="scr-epr-toolbox-note">Temporary scan assumption only</span></label><label>Min price $<input id="scr-minprice" type="number" min="1" step="1"></label><label>Max price $<input id="scr-maxprice" type="number" min="1" step="10"></label></div><div class="scr-checks"><label><input id="scr-exearn" type="checkbox"> Exclude confirmed earnings through expiry</label><label><input id="scr-exlev" type="checkbox"> Exclude special ETFs</label><label><input id="scr-stresssafe" type="checkbox"> Stress-OTM strikes only</label></div><div class="scr-exclude-box"><label>Manual ticker exclusions<input id="scr-exclude" placeholder="MU, VKTX, ..."></label><div class="scr-chip-row" id="scr-exclusion-chips"></div></div><details class="scr-epr-box"><summary>EPR Manager · saved TOS values override the historical proxy</summary><div class="scr-epr-grid"><label>Ticker<input id="scr-epr-ticker" placeholder="INTC" maxlength="10"></label><label>EPR % · same down/up<input id="scr-epr-value" type="number" min="0.01" max="100" step="0.1" placeholder="40"></label><button class="abtn" id="scr-epr-save">Save / Update</button><button class="abtn" id="scr-epr-download">Download EPR CSV</button></div><div class="scr-epr-status" id="scr-epr-status"></div><div class="scr-epr-table-wrap" id="scr-epr-table"></div></details><div class="scr-actions"><button class="abtn" id="scr-scan">Scan Market</button><button class="abtn" id="scr-riki">RiKi Tickers Only</button><button class="abtn" id="scr-earnings">Refresh Earnings</button><button class="abtn" id="scr-clear">Clear</button></div><div class="scr-status" id="scr-status"></div><div class="scr-pm-snapshot" id="scr-pm-snapshot"></div><div class="scr-cal-stamp" id="scr-cal-stamp"></div><div class="scr-progress"><div id="scr-progress-bar"></div></div><details class="scr-adv"><summary>Advanced / market-wide setup</summary><div class="scr-adv-grid"><label>Screener backend (same RiKi webapp)<input class="scr-url" id="scr-metaurl" readonly></label><label>Min avg stock volume<input id="scr-minvol" type="number" step="100000"></label><label>Min option OI<input id="scr-minoi" type="number" min="0" step="10"></label><label>Market chain budget<input id="scr-budget" type="number" min="20" max="500" step="10"></label><label>Target premium-bearing tickers<input id="scr-targethits" type="number" min="3" max="80" step="1"></label><label>Min DTE (Friday mode)<input id="scr-mindte" type="number" min="0" step="1"></label><label>Custom/pinned tickers<input id="scr-custom" placeholder="META, TSLA, ..."></label></div><div class="scr-note">The sizing board selects the newest completed two-account PM snapshot from scheduled data, manual Risk refresh, runtime memory or local storage; scheduled dashboard hydration can now advance the Screener snapshot instead of freezing an older one. The 40-minute PM freshness limit applies during regular market hours; after hours, completed snapshots remain available for planning with a market-closed warning. The default $10B market-cap floor applies to stocks only; ETFs are exempt. Minimum Stability defaults to 50. Earnings remain non-blocking. Scan never waits on Nasdaq. Manual exclusions are applied before option-chain probing. After a scan, Refresh Earnings checks only the premium-bearing tickers and caches the result; re-run Scan to apply automatic earnings exclusions. If that calendar call is slow or unavailable, the premium scan still works and the UI marks earnings coverage as unknown.</div></details></div><div class="scr-board" id="scr-cards"></div><div class="scr-results-head"><div><div class="scr-results-title">Opportunity board</div><div class="scr-results-sub" id="scr-results-sub"></div></div><div class="scr-results-tools"><label class="scr-sort">Sort<select id="scr-sort"><option value="OPP">Portfolio Opportunity</option><option value="PNREFF">PNR $/1% after</option><option value="NET">Added Net</option><option value="SCORE">RiKi Score</option><option value="EST">Est Credit</option></select></label><div class="scr-seg"><button id="scr-view-ticker">Best per ticker</button><button id="scr-view-all">All contracts</button></div></div></div><div class="scr-table-wrap" id="scr-results"></div><div class="scr-excluded-panel" id="scr-excluded-panel"><div class="scr-excluded-title">Exclusions this scan</div><div class="scr-chip-row" id="scr-auto-excluded"></div></div><div class="scr-detail" id="scr-detail" style="display:block"></div><div class="scr-note">Standalone effective stress remains the worst modeled short-option loss across SPX +20%, SPX −20%, EPR up and EPR down. The sizing board models a target quantity against the selected account in the newest completed two-account snapshot. PNR $/1% and SPX $/1K use the same active-book efficiency definitions as PM Consumption and show current → after Suggested Add; PUT rows use SPX −20 and CALL rows use SPX +20. After hours these are planning estimates from timestamped snapshots and quotes. PNR is recalculated; EPR is unchanged. OI/volume remain informational only. Saved EPR values from the EPR Manager override the Yahoo proxy. The optional 30/40/50% EPR toolbox mode is a temporary scan assumption and never overwrites the saved registry.</div><div class="scroll-spacer"></div></div>';
+function rikiScreenInit_(){var root=rikiScreenEl_('screen-content');if(!root||root.getAttribute('data-ready')==='1')return;if(window.DATA&&typeof rikiScreenStorePmSnapshot_==='function')rikiScreenStorePmSnapshot_(DATA.pmRisk,DATA.accountBuyingPower);root.innerHTML='<div class="scr-wrap"><div class="scr-hero"><div class="scr-title">RiKi Income Screener</div><div class="scr-sub">Premium discovery with PM-aware sizing.</div><span class="scr-badge">MANUAL · READ ONLY</span></div><div class="scr-card"><div class="bp-head"><div><div class="bp-title">Scan controls</div><div class="bp-sub">Premium scan with PM-aware ranking.</div></div><span class="engine-mode-badge active">'+rikiAppVersionLabel_()+'</span></div><div class="scr-grid"><label>Side<select id="scr-side"><option>PUT</option><option>CALL</option></select></label><label>Expiry<select id="scr-exp"><option value="FRIDAY">Nearest Friday (Thu if holiday)</option><option value="DATE">Specific date</option></select></label><label id="scr-expdate-wrap" style="display:none">Expiry date<input id="scr-expdate" type="date"></label><label>Min bid $<input id="scr-minbid" type="number" min="0" step="0.01"></label><label>Min OTM %<input id="scr-minotm" type="number" min="0" step="1"></label><label>Max OTM %<input id="scr-maxotm" type="number" min="1" step="1"></label><label>Post-scan max beta<input id="scr-maxbeta" type="number" min="0.1" step="0.1"></label><label>Post-scan max EPR %<input id="scr-maxepr" type="number" min="1" step="1"></label><label>Post-scan min Stability<input id="scr-minstability" type="number" min="0" max="100" step="1"></label><label>Post-scan min market cap $B<input id="scr-minmcap" type="number" min="0" step="1"><span class="scr-epr-toolbox-note">Stocks only · ETFs exempt · 0 disables</span></label><label>EPR stress mode<select id="scr-eprmode"><option value="AUTO">Saved / proxy (default)</option><option value="30">Toolbox 30%</option><option value="40">Toolbox 40%</option><option value="50">Toolbox 50%</option></select><span class="scr-epr-toolbox-note">Temporary scan assumption only</span></label><label>Min price $<input id="scr-minprice" type="number" min="1" step="1"></label><label>Max price $<input id="scr-maxprice" type="number" min="1" step="10"></label></div><div class="scr-checks"><label><input id="scr-exearn" type="checkbox"> Exclude confirmed earnings through expiry</label><label><input id="scr-exlev" type="checkbox"> Exclude special ETFs</label><label><input id="scr-stresssafe" type="checkbox"> Stress-OTM strikes only</label></div><div class="scr-exclude-box"><label>Manual ticker exclusions<input id="scr-exclude" placeholder="MU, VKTX, ..."></label><div class="scr-chip-row" id="scr-exclusion-chips"></div></div><details class="scr-epr-box"><summary>EPR Manager · saved TOS values override the historical proxy</summary><div class="scr-epr-grid"><label>Ticker<input id="scr-epr-ticker" placeholder="INTC" maxlength="10"></label><label>EPR % · same down/up<input id="scr-epr-value" type="number" min="0.01" max="100" step="0.1" placeholder="40"></label><button class="abtn" id="scr-epr-save">Save / Update</button><button class="abtn" id="scr-epr-download">Download EPR CSV</button></div><div class="scr-epr-status" id="scr-epr-status"></div><div class="scr-epr-table-wrap" id="scr-epr-table"></div></details><div class="scr-actions"><button class="abtn" id="scr-scan">Scan Market</button><button class="abtn" id="scr-riki">RiKi Tickers Only</button><button class="abtn" id="scr-earnings">Refresh Earnings</button><button class="abtn" id="scr-clear">Clear</button></div><div class="scr-status" id="scr-status"></div><div class="scr-pm-snapshot" id="scr-pm-snapshot"></div><div class="scr-cal-stamp" id="scr-cal-stamp"></div><div class="scr-progress"><div id="scr-progress-bar"></div></div><details class="scr-adv"><summary>Advanced / market-wide setup</summary><div class="scr-adv-grid"><label>Screener backend (same RiKi webapp)<input class="scr-url" id="scr-metaurl" readonly></label><label>Min avg stock volume<input id="scr-minvol" type="number" step="100000"></label><label>Min option OI<input id="scr-minoi" type="number" min="0" step="10"></label><label>Market chain budget<input id="scr-budget" type="number" min="20" max="500" step="10"></label><label>Target premium-bearing tickers<input id="scr-targethits" type="number" min="3" max="80" step="1"></label><label>Min DTE (Friday mode)<input id="scr-mindte" type="number" min="0" step="1"></label><label>Custom/pinned tickers<input id="scr-custom" placeholder="META, TSLA, ..."></label></div><div class="scr-note">The sizing board selects the newest completed two-account PM snapshot from scheduled data, manual Risk refresh, runtime memory or local storage; scheduled dashboard hydration can now advance the Screener snapshot instead of freezing an older one. The 40-minute PM freshness limit applies during regular market hours; after hours, completed snapshots remain available for planning with a market-closed warning. The default $10B market-cap floor applies to stocks only; ETFs are exempt. Minimum Stability defaults to 50. Earnings remain non-blocking. Scan never waits on Nasdaq. Manual exclusions are applied before option-chain probing. After a scan, Refresh Earnings checks only the premium-bearing tickers and caches the result; re-run Scan to apply automatic earnings exclusions. If that calendar call is slow or unavailable, the premium scan still works and the UI marks earnings coverage as unknown.</div></details></div><div class="scr-board" id="scr-cards"></div><div class="scr-results-head"><div><div class="scr-results-title">Opportunity board</div><div class="scr-results-sub" id="scr-results-sub"></div></div><div class="scr-results-tools"><label class="scr-sort">Sort<select id="scr-sort"><option value="OPP">Portfolio Opportunity</option><option value="PNREFF">PNR $/1% after</option><option value="NET">Added Net</option><option value="SCORE">RiKi Score</option><option value="EST">Est Credit</option></select></label><div class="scr-seg"><button id="scr-view-ticker">Best per ticker</button><button id="scr-view-all">All contracts</button></div></div></div><div class="scr-table-wrap" id="scr-results"></div><div class="scr-excluded-panel" id="scr-excluded-panel"><div class="scr-excluded-title">Exclusions this scan</div><div class="scr-chip-row" id="scr-auto-excluded"></div></div><div class="scr-detail" id="scr-detail" style="display:block"></div><div class="scr-note">Standalone effective stress remains the worst modeled short-option loss across SPX +20%, SPX −20%, EPR up and EPR down. The sizing board models a target quantity against the selected account in the newest completed two-account snapshot. PNR $/1% and SPX $/1K use the same active-book efficiency definitions as PM Consumption and show current → after Suggested Add; PUT rows use SPX −20 and CALL rows use SPX +20. After hours these are planning estimates from timestamped snapshots and quotes. PNR is recalculated; EPR is unchanged. OI/volume remain informational only. Saved EPR values from the EPR Manager override the Yahoo proxy. The optional 30/40/50% EPR toolbox mode is a temporary scan assumption and never overwrites the saved registry.</div><div class="scroll-spacer"></div></div>';
   var s=rikiScreenLoadSettings_();rikiScreenApplySettings_(s);
   rikiScreenEl_('scr-scan').onclick=function(){rikiScreenStartScope_('MARKET');};
   rikiScreenEl_('scr-riki').onclick=function(){rikiScreenStartScope_('RIKI');};
@@ -5921,7 +5847,7 @@ function rikiPmConsRenderV220_(risk){
   if(RIKI_PM_CONS_STATE_V220.side!=='PUT')RIKI_PM_CONS_STATE_V220.side='CALL';
   var w=(cache&&cache.key===key?cache.window:rikiPmConsActiveWindowV220_()),label=rikiPmConsWindowLabelV220_(w),sideEffLabel=RIKI_PM_CONS_STATE_V220.side==='PUT'?'SPX −20 $/1K efficiency':'SPX +20 $/1K efficiency';
   var accountButtons=accounts.map(function(a,i){return'<button type="button" data-pmc-account="'+escHtml(a.account)+'" class="'+(a.account===RIKI_PM_CONS_STATE_V220.account?'on':'')+'">Account '+(i+1)+'</button>';}).join('');
-  host.innerHTML='<div class="pm-cons-head"><div><div class="pm-cons-title">PM Consumption</div><div class="pm-cons-sub">Marginal PM use by ticker and side.</div></div><div class="pm-cons-active"><b>Active book · '+escHtml(label)+'</b></div></div><div class="pm-cons-controls"><div class="pm-cons-seg">'+accountButtons+'</div><div class="pm-cons-seg side"><button type="button" data-pmc-side="CALL" class="'+(RIKI_PM_CONS_STATE_V220.side==='CALL'?'on':'')+'">CALLS</button><button type="button" data-pmc-side="PUT" class="'+(RIKI_PM_CONS_STATE_V220.side==='PUT'?'on':'')+'">PUTS</button></div><label class="pm-cons-sort">Sort <select id="pm-cons-sort-v220"><option value="OVERALL">Overall PM Use</option><option value="CREDIT">Net Credit</option><option value="EFF">Limiting $/1K</option><option value="SIDEEFF">'+escHtml(sideEffLabel)+'</option><option value="UP20">SPX +20</option><option value="UP10">SPX +10</option><option value="DN12">SPX −12</option><option value="DN20">SPX −20</option><option value="UNIFORM">Uniform −20</option><option value="NETSHORT">Net Short</option><option value="PNREFF">PNR/EPR $/1% risk</option><option value="PNRCAP">PNR/EPR capacity used</option></select></label></div><div id="pm-cons-body-v220"></div><div class="pm-cons-note"><b>Interpretation:</b> +12.4 pp means closing that ticker/side’s active-book shorts would lower the selected utilization by 12.4 percentage points. Each positive account guardrail also shows net credit per $1K marginal risk. PNR/EPR preserves every active strike and expiry, scales that exact short basket proportionally, and solves how much of its PNR capacity is already used before PNR reaches EPR + required cushion. Its efficiency is net credit per 1% PNR capacity used. The side-specific efficiency sort ranks the exact $/1K shown in SPX +20 for CALLS or SPX −20 for PUTS; the existing SPX scenario sorts continue to rank marginal pp consumption.</div>';
+  host.innerHTML='<div class="pm-cons-head"><div><div class="pm-cons-title">PM Consumption</div><div class="pm-cons-sub">Marginal portfolio attribution from the completed authoritative PM snapshot. Net Credit is remaining active-book STO proceeds for this account/ticker/side; the line beneath shows the average remaining credit per open contract. SPX/account columns show marginal utilization; PNR/EPR scales the exact active strike/expiry basket proportionally to its PNR minimum.</div></div><div class="pm-cons-active"><b>Active book · '+escHtml(label)+'</b><span>All expiries · full portfolio retained as baseline</span></div></div><div class="pm-cons-controls"><div class="pm-cons-seg">'+accountButtons+'</div><div class="pm-cons-seg side"><button type="button" data-pmc-side="CALL" class="'+(RIKI_PM_CONS_STATE_V220.side==='CALL'?'on':'')+'">CALLS</button><button type="button" data-pmc-side="PUT" class="'+(RIKI_PM_CONS_STATE_V220.side==='PUT'?'on':'')+'">PUTS</button></div><label class="pm-cons-sort">Sort <select id="pm-cons-sort-v220"><option value="OVERALL">Overall PM Use</option><option value="CREDIT">Net Credit</option><option value="EFF">Limiting $/1K</option><option value="SIDEEFF">'+escHtml(sideEffLabel)+'</option><option value="UP20">SPX +20</option><option value="UP10">SPX +10</option><option value="DN12">SPX −12</option><option value="DN20">SPX −20</option><option value="UNIFORM">Uniform −20</option><option value="NETSHORT">Net Short</option><option value="PNREFF">PNR/EPR $/1% risk</option><option value="PNRCAP">PNR/EPR capacity used</option></select></label></div><div id="pm-cons-body-v220"></div><div class="pm-cons-note"><b>Interpretation:</b> +12.4 pp means closing that ticker/side’s active-book shorts would lower the selected utilization by 12.4 percentage points. Each positive account guardrail also shows net credit per $1K marginal risk. PNR/EPR preserves every active strike and expiry, scales that exact short basket proportionally, and solves how much of its PNR capacity is already used before PNR reaches EPR + required cushion. Its efficiency is net credit per 1% PNR capacity used. The side-specific efficiency sort ranks the exact $/1K shown in SPX +20 for CALLS or SPX −20 for PUTS; the existing SPX scenario sorts continue to rank marginal pp consumption.</div>';
   var sort=document.getElementById('pm-cons-sort-v220');if(sort){sort.value=RIKI_PM_CONS_STATE_V220.sort;sort.onchange=function(){RIKI_PM_CONS_STATE_V220.sort=this.value;rikiPmConsSaveStateV220_();rikiPmConsRenderBodyV220_(risk);};}
   Array.prototype.forEach.call(host.querySelectorAll('[data-pmc-account]'),function(b){b.onclick=function(){RIKI_PM_CONS_STATE_V220.account=b.getAttribute('data-pmc-account');rikiPmConsSaveStateV220_();rikiPmConsRenderV220_(risk);};});
   Array.prototype.forEach.call(host.querySelectorAll('[data-pmc-side]'),function(b){b.onclick=function(){RIKI_PM_CONS_STATE_V220.side=b.getAttribute('data-pmc-side');rikiPmConsSaveStateV220_();rikiPmConsRenderV220_(risk);};});

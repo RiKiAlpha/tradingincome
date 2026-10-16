@@ -283,6 +283,13 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .grand-total-title{font-size:16px;font-weight:700;color:var(--text2);white-space:nowrap;}
 .grand-total-title-wrap{display:flex;align-items:baseline;gap:9px;min-width:0;}
 .grand-total-pc{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:750;color:var(--text3);letter-spacing:.01em;white-space:nowrap;}
+.grand-total-side-stack{display:inline-grid;grid-template-columns:max-content 10px max-content;grid-template-rows:auto auto;column-gap:4px;row-gap:3px;align-items:center;justify-items:center;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.grand-total-side-stack .grand-total-pc{display:block;text-align:center;}
+.grand-total-side-slash{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:650;color:var(--text3);text-align:center;}
+.grand-total-side-expiry{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:750;letter-spacing:.01em;color:rgba(40,215,173,.64);text-align:center;white-space:nowrap;}
+.grand-total-side-expiry.empty{color:var(--text3);}
+[data-theme="light"] .grand-total-side-expiry{color:rgba(0,135,105,.72);}
+
 .grand-dual-quote{display:flex;align-items:flex-start;justify-content:flex-end;gap:8px;min-width:0;}
 .grand-quote-leg{text-align:right;min-width:0;}
 .grand-quote-primary{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:900;line-height:1;letter-spacing:-.055em;font-variant-numeric:tabular-nums;white-space:nowrap;}
@@ -297,7 +304,7 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .account-quote-slash{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;line-height:1;color:var(--text3);padding-top:1px;}
 .account-quote-label{margin-top:4px;font-size:6.5px;font-weight:850;letter-spacing:.065em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
 .account-quote-leg:first-child .account-quote-label{color:var(--text2);}
-@media(max-width:420px){.grand-total-row{align-items:center;gap:9px}.grand-total-title{font-size:14px}.grand-total-title-wrap{align-items:flex-start;flex-direction:column;gap:3px}.grand-total-pc{font-size:8px}.grand-dual-quote{gap:6px}.grand-quote-primary{font-size:17px}.grand-quote-secondary{font-size:17px}.grand-quote-slash{font-size:15px}.grand-quote-label{font-size:7px;margin-top:4px}.account-dual-quote{gap:4px}.account-quote-primary{font-size:11px}.account-quote-secondary{font-size:11px}.account-quote-slash{font-size:9.5px}.account-quote-label{font-size:6px;margin-top:3px}}
+@media(max-width:420px){.grand-total-row{align-items:center;gap:9px}.grand-total-title{font-size:14px}.grand-total-title-wrap{align-items:flex-start;flex-direction:column;gap:3px}.grand-total-pc,.grand-total-side-slash,.grand-total-side-expiry{font-size:8px}.grand-dual-quote{gap:6px}.grand-quote-primary{font-size:17px}.grand-quote-secondary{font-size:17px}.grand-quote-slash{font-size:15px}.grand-quote-label{font-size:7px;margin-top:4px}.account-dual-quote{gap:4px}.account-quote-primary{font-size:11px}.account-quote-secondary{font-size:11px}.account-quote-slash{font-size:9.5px}.account-quote-label{font-size:6px;margin-top:3px}}
 @media(min-width:601px){.grand-total-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;justify-content:initial;gap:0}.grand-total-title-wrap{grid-column:1 / span 2}.grand-dual-quote{grid-column:3;justify-self:start;justify-content:flex-start}}
 .cap{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 18px;}
 .ticker-scope{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
@@ -1388,7 +1395,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.34</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.35</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1527,7 +1534,8 @@ var RIKI_RELEASE_V231='RIKI_V2_0_31_WING_IV_DIAGNOSTIC_2026_10_08';
 var RIKI_RELEASE_V232='RIKI_V2_0_32_WING_IV_DIVERGENCE_GATE_2026_10_08';
 var RIKI_RELEASE_V233='RIKI_V2_0_33_HIGH_IV_WHATIF_FIX_2026_10_09';
 var RIKI_RELEASE_V234='RIKI_V2_0_34_VISUAL_CLEANUP_2026_10_09';
-var RIKI_APP_VERSION='V2.0.34';
+var RIKI_RELEASE_V235='RIKI_V2_0_35_GRAND_SIDE_EXPIRY_2026_10_16';
+var RIKI_APP_VERSION='V2.0.35';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -2880,6 +2888,32 @@ return m?{p:parseInt(m[1]),c:parseInt(m[2])}:{p:0,c:0};
 function fmtPC(s){var o=parsePCstr(s);return o.c+'C/'+o.p+'P';}
 function openContractCount_(s){var m=String(s||'').match(/(\d+)\s*[PC]\s*\/\s*(\d+)\s*[PC]/i);return m?Number(m[1])+Number(m[2]):0;}
 function displayPCCounts_(s){var m=String(s||'').match(/(\d+)\s*C\s*\/\s*(\d+)\s*P/i);return m?{c:Number(m[1]),p:Number(m[2])}:{c:0,p:0};}
+function grandSideExpiry_(data,expiry,expectedCalls,expectedPuts){
+function blank(){return{call:null,put:null,callQty:0,putQty:0,source:''};}
+function fromOwned(){
+var out={call:0,put:0,callQty:0,putQty:0,source:'legacyOwnedPositions'},seen=false;
+(data.legacyOwnedPositions||[]).forEach(function(p){
+if(String(p.expiry||'')!==String(expiry||''))return;
+var side=String(p.side||'').toUpperCase(),qty=Number(p.openQty||0),credit=Number(p.openingCreditRemaining);
+if(!(qty>0)||!isFinite(credit)||(side!=='CALL'&&side!=='PUT'))return;
+seen=true;if(side==='CALL'){out.callQty+=qty;out.call+=credit;}else{out.putQty+=qty;out.put+=credit;}
+});
+return seen?out:null;
+}
+function fromInv(){
+var out={call:0,put:0,callQty:0,putQty:0,source:'invRows'},seen=false;
+(data.invRows||[]).forEach(function(r){
+if(String(r&&r[1]||'')!==String(expiry||''))return;
+var side=String(r&&r[3]||'').toUpperCase(),qty=Number(r&&r[5]||0),credit=Number(r&&r[7]);
+if(!(qty>0)||!isFinite(credit)||(side!=='CALL'&&side!=='PUT'))return;
+seen=true;if(side==='CALL'){out.callQty+=qty;out.call+=credit;}else{out.putQty+=qty;out.put+=credit;}
+});
+return seen?out:null;
+}
+var candidates=[fromOwned(),fromInv()].filter(Boolean),ec=Number(expectedCalls||0),ep=Number(expectedPuts||0);
+for(var i=0;i<candidates.length;i++){var x=candidates[i];if(x.callQty===ec&&x.putQty===ep)return x;}
+return blank();
+}
 var openPos={};
 (d.dashRows||[]).forEach(function(row){
 var acct=String(row[0]||'');
@@ -2905,6 +2939,7 @@ var a1OpenContracts=openContractCount_(a1pc),a2OpenContracts=openContractCount_(
 var openContractsTotal=a1OpenContracts+a2OpenContracts;
 var a1Counts=displayPCCounts_(a1pc),a2Counts=displayPCCounts_(a2pc);
 var grandCalls=a1Counts.c+a2Counts.c,grandPuts=a1Counts.p+a2Counts.p;
+var grandSideExpiry=grandSideExpiry_(d,exp,grandCalls,grandPuts);
 var hc1 = hedgeCosts['Account 1:' + exp] || 0;
 var hc2 = hedgeCosts['Account 2:' + exp] || 0;
 var totalHedge = hc1 + hc2;
@@ -2937,7 +2972,7 @@ card.innerHTML='<div class="whdr"><span class="wlabel">'+lbl+'</span><span class
 '<div class="aitem"><div class="anum-lbl">Total</div><div class="account-dual-quote"><div class="account-quote-leg"><div class="account-quote-primary '+cc(a2TotalExpiry)+'">'+fmtS(a2TotalExpiry)+'</div><div class="account-quote-label">Expiry</div></div><div class="account-quote-slash">/</div>'+rikiExitAlternatives_(a2TotalExpiry,a2OpenContracts,'account')+'</div></div></div>'+
 '<div class="prow"><div class="pbg"><div class="pfill" style="width:'+Math.min(p2,100)+'%;background:'+pc(p2)+'"></div></div><div class="ppct" style="color:'+pc(p2)+'">'+p2+'%</div></div>'+
 '<div class="ptgt">of '+fmt(g2)+' target</div></div>'+
-'<div class="wtot"><div class="grand-total-row"><div class="grand-total-title-wrap"><div class="grand-total-title">Grand Total</div><div class="grand-total-pc">'+grandCalls+'C / '+grandPuts+'P</div></div><div class="grand-dual-quote"><div class="grand-quote-leg"><div class="grand-quote-primary '+cc(grandExpiry)+'">'+fmtS(grandExpiry)+'</div><div class="grand-quote-label">Expiry</div></div><div class="grand-quote-slash">/</div>'+rikiExitAlternatives_(grandExpiry,openContractsTotal,'grand')+'</div></div></div>'+
+'<div class="wtot"><div class="grand-total-row"><div class="grand-total-title-wrap"><div class="grand-total-title">Grand Total</div><div class="grand-total-side-stack"><span class="grand-total-pc">'+grandCalls+'C</span><span class="grand-total-side-slash">/</span><span class="grand-total-pc">'+grandPuts+'P</span><span class="grand-total-side-expiry'+(grandSideExpiry.call===null?' empty':'')+'" title="Open CALL expiry credit">'+(grandSideExpiry.call===null?'—':fmtS(grandSideExpiry.call))+'</span><span></span><span class="grand-total-side-expiry'+(grandSideExpiry.put===null?' empty':'')+'" title="Open PUT expiry credit">'+(grandSideExpiry.put===null?'—':fmtS(grandSideExpiry.put))+'</span></div></div><div class="grand-dual-quote"><div class="grand-quote-leg"><div class="grand-quote-primary '+cc(grandExpiry)+'">'+fmtS(grandExpiry)+'</div><div class="grand-quote-label">Expiry</div></div><div class="grand-quote-slash">/</div>'+rikiExitAlternatives_(grandExpiry,openContractsTotal,'grand')+'</div></div></div>'+
 hedgeRow;
 dc.appendChild(card);
 });

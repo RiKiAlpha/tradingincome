@@ -340,7 +340,7 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .history-chevron{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;color:var(--text3);font-size:12px;line-height:1;transform:rotate(0deg);transition:transform .18s ease,color .18s ease;}
 .history-period-row.selected .history-chevron{transform:rotate(90deg);color:var(--green);}
 .history-period-row.selected td{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--border),0 6px 16px rgba(0,0,0,.10);}
-.history-inline-detail td{padding:0!important;background:var(--bg);border-bottom:1px solid var(--border2);}
+.history-inline-detail>td{padding:0!important;background:var(--bg);border-bottom:1px solid var(--border2);}
 .history-inline-host{padding:9px 0 16px;animation:rikiHistoryExpand .18s ease-out both;}
 .history-inline-host .history-detail-wrap{margin:8px 14px 4px;border-radius:16px;background:var(--bg2);box-shadow:0 10px 28px rgba(0,0,0,.10);overflow:hidden;}
 .history-inline-host .history-detail-title{padding:15px 18px 14px;font-size:10.5px;line-height:1.35;letter-spacing:.06em;}
@@ -1444,7 +1444,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.40</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.41</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1589,7 +1589,8 @@ var RIKI_RELEASE_V237='RIKI_V2_0_37_HISTORY_GRAND_TOTAL_2026_10_21';
 var RIKI_RELEASE_V238='RIKI_V2_0_38_HISTORY_INLINE_YTD_2026_10_21';
 var RIKI_RELEASE_V239='RIKI_V2_0_39_HISTORY_YTD_CLOSED_ROWS_2026_10_21';
 var RIKI_RELEASE_V240='RIKI_V2_0_40_HISTORY_DETAIL_SPACING_2026_10_21';
-var RIKI_APP_VERSION='V2.0.40';
+var RIKI_RELEASE_V241='RIKI_V2_0_41_HISTORY_SPACING_SELECTOR_FIX_2026_10_21';
+var RIKI_APP_VERSION='V2.0.41';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';

@@ -327,6 +327,26 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .history-total-row td:first-child{color:var(--text)!important;text-transform:uppercase;letter-spacing:.035em;}
 .history-total-row td:nth-child(2){color:var(--text);}
 [data-theme="light"] .history-total-row td{background:rgba(0,135,105,.055);border-top-color:rgba(0,135,105,.20);}
+.history-ytd-card{margin:14px 16px 4px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 26px rgba(0,0,0,.08);}
+.history-ytd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.history-ytd-title{font-size:12px;font-weight:900;letter-spacing:.075em;text-transform:uppercase;color:var(--text2);}
+.history-ytd-badge{padding:4px 7px;border-radius:999px;border:1px solid rgba(0,184,148,.24);background:rgba(0,184,148,.065);color:var(--green);font-size:7px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;}
+.history-ytd-total{margin-top:8px;font-size:27px;line-height:1;font-weight:900;letter-spacing:-.045em;font-variant-numeric:tabular-nums;}
+.history-ytd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px;padding-top:11px;border-top:1px solid var(--border2);}
+.history-ytd-metric-label{font-size:8px;font-weight:850;letter-spacing:.055em;text-transform:uppercase;color:var(--text3);}
+.history-ytd-metric-value{margin-top:3px;font-size:13px;font-weight:850;font-variant-numeric:tabular-nums;}
+.history-ytd-meta{margin-top:10px;font-size:8.5px;line-height:1.45;color:var(--text3);}
+.history-period-main{display:flex;align-items:center;gap:7px;min-width:0;}
+.history-chevron{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;color:var(--text3);font-size:12px;line-height:1;transform:rotate(0deg);transition:transform .18s ease,color .18s ease;}
+.history-period-row.selected .history-chevron{transform:rotate(90deg);color:var(--green);}
+.history-period-row.selected td{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--border),0 6px 16px rgba(0,0,0,.10);}
+.history-inline-detail td{padding:0!important;background:var(--bg);border-bottom:1px solid var(--border2);}
+.history-inline-host{padding:1px 0 3px;animation:rikiHistoryExpand .18s ease-out both;}
+.history-inline-host .history-detail-wrap{margin:8px 10px 11px;border-radius:13px;background:var(--bg2);}
+.history-inline-host .history-detail-title{padding:11px 13px;font-size:10px;}
+@keyframes rikiHistoryExpand{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+[data-theme="light"] .history-ytd-card{box-shadow:0 8px 24px rgba(20,30,40,.05);}
+@media(max-width:600px){.history-ytd-card{margin:12px 12px 3px;padding:14px}.history-ytd-total{font-size:25px}.history-ytd-grid{gap:8px}.history-inline-host .history-detail-wrap{margin:7px 7px 10px}}
 
 .ticker-summary::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:2px;background:transparent;transition:background-color .14s ease;}
 @media(hover:hover){.ticker-summary:hover{background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);transform:translateY(-1px);}.ticker-summary:hover::before{background:rgba(255,255,255,.22);}}
@@ -1399,7 +1419,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.37</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.38</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1541,7 +1561,8 @@ var RIKI_RELEASE_V234='RIKI_V2_0_34_VISUAL_CLEANUP_2026_10_09';
 var RIKI_RELEASE_V235='RIKI_V2_0_35_GRAND_SIDE_EXPIRY_2026_10_16';
 var RIKI_RELEASE_V236='RIKI_V2_0_36_REPORTING_WEEK_SIDE_EXPIRY_2026_10_21';
 var RIKI_RELEASE_V237='RIKI_V2_0_37_HISTORY_GRAND_TOTAL_2026_10_21';
-var RIKI_APP_VERSION='V2.0.37';
+var RIKI_RELEASE_V238='RIKI_V2_0_38_HISTORY_INLINE_YTD_2026_10_21';
+var RIKI_APP_VERSION='V2.0.38';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -3274,17 +3295,17 @@ var totalContractsText=totalContractsKnown?String(totalContracts):'—';
 var note=options.archiveOnly?' · MSTR-only Archive':'';var missing=Number(options.missingWeeks||0);if(missing)note+=' · '+missing+' week'+(missing===1?'':'s')+' awaiting certified detail';
 host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(period)||period)+escHtml(note)+'</div><table><thead><tr><th style="text-align:left">Ticker</th><th>Contracts</th><th>Banked</th></tr></thead><tbody>'+summary.map(function(r){var ct=r.contractsKnown?Number(r.contracts||0):'—';return '<tr><td style="text-align:left;font-weight:900">'+escHtml(r.ticker)+'</td><td>'+ct+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td></tr>';}).join('')+'<tr class="history-total-row"><td style="text-align:left">Grand Total</td><td>'+totalContractsText+'</td><td class="'+cc(totalBanked)+'">'+fmtS(totalBanked)+'</td></tr></tbody></table></div>';
 }
-function rikiV5RenderLegacyWeekDetail_(week){
-var host=ge('legacy-week-detail');if(!host)return;var rows=(week&&week.tickerRows)||[];rikiV5RenderLegacyTickerDetail_(host,week&&week.weekEnd||'',rows,{archiveOnly:!!(week&&week.archiveOnly)});
+function rikiV5RenderLegacyWeekDetail_(week,host){
+host=host||ge('legacy-week-detail');if(!host)return;var rows=(week&&week.tickerRows)||[];rikiV5RenderLegacyTickerDetail_(host,week&&week.weekEnd||'',rows,{archiveOnly:!!(week&&week.archiveOnly)});
 }
 function rikiV5LegacyWeekHasTickerRows_(week){
 return !!(week&&Array.isArray(week.tickerRows)&&week.tickerRows.length);
 }
-function rikiV5LoadLegacyWeekDetail_(period,archiveFallback){
-period=rikiCleanHistoryPeriod_(period);var archiveOnly=rikiV5LegacyArchiveOnlyWeek_(period,archiveFallback);if(archiveOnly){rikiV5RenderLegacyWeekDetail_(archiveOnly);return;}
-var year=String(period||'').substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json',host=ge('legacy-week-detail');
+function rikiV5LoadLegacyWeekDetail_(period,archiveFallback,host){
+period=rikiCleanHistoryPeriod_(period);host=host||ge('legacy-week-detail');var archiveOnly=rikiV5LegacyArchiveOnlyWeek_(period,archiveFallback);if(archiveOnly){rikiV5RenderLegacyWeekDetail_(archiveOnly,host);return;}
+var year=String(period||'').substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json';
 if(host)host.innerHTML='<div class="empty">Loading ticker detail…</div>';
-function renderIfReady_(week){if(!rikiV5LegacyWeekHasTickerRows_(week))return false;RIKI_V5_LEGACY_WEEK_CACHE[period]=week;rikiV5RenderLegacyWeekDetail_(week);return true;}
+function renderIfReady_(week){if(!rikiV5LegacyWeekHasTickerRows_(week))return false;RIKI_V5_LEGACY_WEEK_CACHE[period]=week;rikiV5RenderLegacyWeekDetail_(week,host);return true;}
 function gasFallback_(){
 fetch(BACKEND+'?action=v5LegacyHistory&period='+encodeURIComponent(period)+'&_='+Date.now()).then(function(r){return r.json();}).then(function(j){
 if(!j||!j.success||!renderIfReady_(j.week)){if(host)host.innerHTML='<div class="empty">No certified ticker summary is saved for this week.</div>';return;}
@@ -3302,11 +3323,46 @@ var w=weeks[week];if(rikiV5LegacyWeekHasTickerRows_(w))Array.prototype.push.appl
 });
 return {period:month,tickerRows:rows,archiveOnly:archiveOnly,missingWeeks:missingWeeks};
 }
-function rikiV5LoadLegacyMonthDetail_(month){
-month=String(month||'').substring(0,7);var host=ge('legacy-month-detail');if(!host||!/^\d{4}-\d{2}$/.test(month))return;var year=month.substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json';host.innerHTML='<div class="empty">Loading ticker detail…</div>';
+function rikiV5LoadLegacyMonthDetail_(month,host){
+month=String(month||'').substring(0,7);host=host||ge('legacy-month-detail');if(!host||!/^\d{4}-\d{2}$/.test(month))return;var year=month.substring(0,4),url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json';host.innerHTML='<div class="empty">Loading ticker detail…</div>';
 function finish_(file){var built=rikiV5BuildLegacyMonthDetail_(month,file||{});if(!built.tickerRows.length){host.innerHTML='<div class="empty">No finalized ticker summary is saved for this month.</div>';return;}rikiV5RenderLegacyTickerDetail_(host,month,built.tickerRows,{archiveOnly:built.archiveOnly,missingWeeks:built.missingWeeks});}
 if(RIKI_V5_LEGACY_YEAR_CACHE[year]){finish_(RIKI_V5_LEGACY_YEAR_CACHE[year]);return;}
 rikiV5StaticJson_(url).then(function(file){RIKI_V5_LEGACY_YEAR_CACHE[year]=file||{};finish_(file);}).catch(function(){finish_({weeks:{}});});
+}
+function rikiV5LegacyAuditAcceptedArchiveRow_(row){
+if(!Array.isArray(row)||String(row[11]||'').trim().toUpperCase()!=='CLOSED')return false;
+var audit=String(row[12]||'').trim().toUpperCase();
+return /\bPASS\b/.test(audit)||/\b(?:ORDERS|ARCHIVE)\s+USED\b/.test(audit);
+}
+function rikiV5LegacyYtdFromYearFile_(file,year){
+var out={year:String(year),a1:0,a2:0,total:0,weeks:0,passWeeks:0,resolvedWeeks:0,through:''},weeks=(file&&file.weeks)||{};
+Object.keys(weeks).sort().forEach(function(k){
+if(String(k).substring(0,4)!==String(year))return;
+var row=weeks[k]&&weeks[k].archiveRow;if(!rikiV5LegacyAuditAcceptedArchiveRow_(row))return;
+out.a1+=money(row[1]);out.a2+=money(row[3]);out.total+=money(row[6]);out.weeks++;
+var audit=String(row[12]||'').toUpperCase();if(/\b(?:ORDERS|ARCHIVE)\s+USED\b/.test(audit))out.resolvedWeeks++;else out.passWeeks++;
+out.through=rikiCleanHistoryPeriod_(row[0]||k)||k;
+});
+return out;
+}
+function rikiV5HistoryShortDate_(iso){
+var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return String(iso||'');
+var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mons[Number(m[2])-1]+' '+Number(m[3]);
+}
+function rikiV5RenderLegacyYtd_(host){
+if(!host)return;var year=String(new Date().getFullYear()),card=document.createElement('div');card.className='history-ytd-card';card.id='legacy-ytd-card';
+card.innerHTML='<div class="history-ytd-head"><div class="history-ytd-title">'+year+' YTD</div><div class="history-ytd-badge">Audited banked</div></div><div class="history-ytd-total dim">—</div><div class="history-ytd-meta">Loading accepted weekly audits…</div>';host.appendChild(card);
+function apply_(file){
+var y=rikiV5LegacyYtdFromYearFile_(file,year),totalEl=card.querySelector('.history-ytd-total');
+if(!y.weeks){totalEl.className='history-ytd-total dim';totalEl.textContent='—';card.querySelector('.history-ytd-meta').textContent='No accepted audited weeks are available for '+year+'.';return;}
+totalEl.className='history-ytd-total '+cc(y.total);totalEl.textContent=fmtS(y.total);
+card.innerHTML='<div class="history-ytd-head"><div class="history-ytd-title">'+year+' YTD</div><div class="history-ytd-badge">Audited banked</div></div>'+
+'<div class="history-ytd-total '+cc(y.total)+'">'+fmtS(y.total)+'</div>'+
+'<div class="history-ytd-grid"><div><div class="history-ytd-metric-label">Account 1</div><div class="history-ytd-metric-value '+cc(y.a1)+'">'+fmtS(y.a1)+'</div></div><div><div class="history-ytd-metric-label">Account 2</div><div class="history-ytd-metric-value '+cc(y.a2)+'">'+fmtS(y.a2)+'</div></div></div>'+
+'<div class="history-ytd-meta">'+y.weeks+' accepted audit'+(y.weeks===1?'':'s')+(y.through?' · through '+escHtml(rikiV5HistoryShortDate_(y.through)):'')+' · active and unaudited weeks excluded</div>';
+}
+if(RIKI_V5_LEGACY_YEAR_CACHE[year]){apply_(RIKI_V5_LEGACY_YEAR_CACHE[year]);return;}
+var url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json';rikiV5StaticJson_(url).then(function(file){RIKI_V5_LEGACY_YEAR_CACHE[year]=file||{};apply_(file||{});}).catch(function(){var meta=card.querySelector('.history-ytd-meta');if(meta)meta.textContent='Audited YTD unavailable · history file could not be loaded.';});
 }
 function rikiV5RefreshReportsButton_(btn){
 if(btn){btn.disabled=true;btn.textContent='Writing…';}toast('Writing summary reports and finalized history…',2600);
@@ -3376,14 +3432,24 @@ histMode = 'weeks';
 updateHistoryModeButtons();
 }
 var d=DATA||MOCK;var el=ge('hc');el.innerHTML='';
+rikiV5RenderLegacyYtd_(el);
 if(histMode==='weeks'){
-var rows=d.allClosed||[];
+var rows=d.allClosed||[],selectedWeek=String(RIKI_HISTORY_SELECTED_PERIOD.weeks||'');
+var knownWeeks=rows.map(function(r){return rikiCleanHistoryPeriod_(r&&r[0]||'');});
+if(selectedWeek&&knownWeeks.indexOf(selectedWeek)<0){selectedWeek='';RIKI_HISTORY_SELECTED_PERIOD.weeks='';}
 var t=document.createElement('table');
 t.innerHTML='<thead><tr><th style="text-align:left">Week</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
 var tb=document.createElement('tbody');
 if(!rows.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text3)">No closed weeks yet</td></tr>';}
-else{rows.slice().reverse().forEach(function(row){var lbl=rikiCleanHistoryPeriod_(row[0]||'\u2014');var a1=money(row[1]),a2=money(row[3]),tot=money(row[6]);var tr=document.createElement('tr');tr.style.cursor='pointer';tr.title='Open ticker and expiry detail';tr.innerHTML='<td style="text-align:left">'+lbl+'</td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';tr.addEventListener('click',function(){rikiV5LoadLegacyWeekDetail_(lbl,{weekEnd:lbl,a1:a1,a2:a2,total:tot});});tb.appendChild(tr);});}
-t.appendChild(tb);el.appendChild(t);var detail=document.createElement('div');detail.id='legacy-week-detail';detail.innerHTML='<div class="empty" style="padding-top:18px">Tap a week to see ticker contracts and banked gains.</div>';el.appendChild(detail);
+else{rows.slice().reverse().forEach(function(row){
+var lbl=rikiCleanHistoryPeriod_(row[0]||'—'),a1=money(row[1]),a2=money(row[3]),tot=money(row[6]),isOpen=lbl===selectedWeek;
+var tr=document.createElement('tr');tr.className='history-period-row'+(isOpen?' selected':'');tr.setAttribute('data-period',lbl);tr.setAttribute('aria-expanded',isOpen?'true':'false');tr.title=isOpen?'Collapse ticker breakdown':'Expand ticker breakdown';
+tr.innerHTML='<td style="text-align:left"><span class="history-period-main"><span class="history-chevron">›</span><span>'+escHtml(lbl)+'</span></span></td><td class="'+cc(a1)+'">'+fmt(a1)+'</td><td class="'+cc(a2)+'">'+fmt(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';
+tr.addEventListener('click',function(){var same=RIKI_HISTORY_SELECTED_PERIOD.weeks===lbl;RIKI_HISTORY_SELECTED_PERIOD.weeks=same?'':lbl;haptic();renderHist();});tb.appendChild(tr);
+if(isOpen){var dr=document.createElement('tr');dr.className='history-inline-detail';dr.innerHTML='<td colspan="4"><div class="history-inline-host" id="legacy-week-detail-inline"></div></td>';tb.appendChild(dr);}
+});}
+t.appendChild(tb);el.appendChild(t);
+if(selectedWeek){var selectedRow=rows.filter(function(r){return rikiCleanHistoryPeriod_(r&&r[0]||'')===selectedWeek;})[0],host=ge('legacy-week-detail-inline');if(selectedRow&&host)rikiV5LoadLegacyWeekDetail_(selectedWeek,{weekEnd:selectedWeek,a1:money(selectedRow[1]),a2:money(selectedRow[3]),total:money(selectedRow[6])},host);}
 } else {
 var monthly={};
 function normMon(k){var us=k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(us)return us[3]+'-'+us[1].padStart(2,'0')+'-'+us[2].padStart(2,'0');var usShort=k.match(/^(\d{1,2})\/(\d{4})$/);if(usShort)return usShort[2]+'-'+usShort[1].padStart(2,'0');return k;}
@@ -3393,21 +3459,24 @@ var archRows=d.archRows||[];
 var activeMonths=new Set();
 archRows.forEach(function(row){var raw=String(row[0]||'');var dm=raw.match(/(\d{4}-\d{2})/);if(!dm)return;var mo=dm[1];var a1b=money(row[1]||0),a2b=money(row[3]||0);if(!monthly[mo])monthly[mo]={a1:0,a2:0,total:0};monthly[mo].a1+=a1b;monthly[mo].a2+=a2b;monthly[mo].total+=a1b+a2b;activeMonths.add(mo);});
 var months=Object.keys(monthly).sort(function(a,b){return b.localeCompare(a);});
-if(!months.length){el.innerHTML='<div class="empty">No monthly data</div>';return;}
+if(!months.length){var empty=document.createElement('div');empty.className='empty';empty.textContent='No monthly data';el.appendChild(empty);return;}
 var t=document.createElement('table');
 t.innerHTML='<thead><tr><th style="text-align:left">Month</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
 var tb=document.createElement('tbody');
 var now=new Date(),cm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1),selectedMonth=String(RIKI_HISTORY_SELECTED_PERIOD.monthly||'');
+if(selectedMonth&&months.indexOf(selectedMonth)<0){selectedMonth='';RIKI_HISTORY_SELECTED_PERIOD.monthly='';}
 months.forEach(function(mo){
 var e=monthly[mo];var hdrtxt;
 try{hdrtxt=new Date(mo+'-02').toLocaleDateString('en-US',{month:'long',year:'numeric'});}catch(x){hdrtxt=mo;}
-var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm)||activeMonths.has(mo);
+var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm)||activeMonths.has(mo),isOpen=mo===selectedMonth;
 var dot=isCur?'&nbsp;<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;vertical-align:middle;position:relative;top:-1px;"></span>':'';
-var tr=document.createElement('tr');tr.style.cursor='pointer';tr.title='Open ticker summary';tr.setAttribute('data-period',mo);if(mo===selectedMonth)tr.className='history-period-row selected';else tr.className='history-period-row';
-tr.innerHTML='<td style="text-align:left;font-weight:600">'+hdrtxt+dot+'</td><td class="'+cc(a1)+'">'+fmtS(a1)+'</td><td class="'+cc(a2)+'">'+fmtS(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';
-tr.addEventListener('click',function(){RIKI_HISTORY_SELECTED_PERIOD.monthly=mo;Array.prototype.forEach.call(tb.querySelectorAll('.history-period-row'),function(x){x.classList.remove('selected');});tr.classList.add('selected');haptic();rikiV5LoadLegacyMonthDetail_(mo);});tb.appendChild(tr);
+var tr=document.createElement('tr');tr.className='history-period-row'+(isOpen?' selected':'');tr.setAttribute('data-period',mo);tr.setAttribute('aria-expanded',isOpen?'true':'false');tr.title=isOpen?'Collapse ticker summary':'Expand ticker summary';
+tr.innerHTML='<td style="text-align:left;font-weight:600"><span class="history-period-main"><span class="history-chevron">›</span><span>'+hdrtxt+dot+'</span></span></td><td class="'+cc(a1)+'">'+fmtS(a1)+'</td><td class="'+cc(a2)+'">'+fmtS(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';
+tr.addEventListener('click',function(){var same=RIKI_HISTORY_SELECTED_PERIOD.monthly===mo;RIKI_HISTORY_SELECTED_PERIOD.monthly=same?'':mo;haptic();renderHist();});tb.appendChild(tr);
+if(isOpen){var dr=document.createElement('tr');dr.className='history-inline-detail';dr.innerHTML='<td colspan="4"><div class="history-inline-host" id="legacy-month-detail-inline"></div></td>';tb.appendChild(dr);}
 });
-t.appendChild(tb);el.appendChild(t);var detail=document.createElement('div');detail.id='legacy-month-detail';detail.innerHTML='<div class="empty" style="padding-top:18px">Tap a month to see ticker contracts and banked gains.</div>';el.appendChild(detail);if(selectedMonth&&months.indexOf(selectedMonth)>=0)rikiV5LoadLegacyMonthDetail_(selectedMonth);
+t.appendChild(tb);el.appendChild(t);
+if(selectedMonth){var host=ge('legacy-month-detail-inline');if(host)rikiV5LoadLegacyMonthDetail_(selectedMonth,host);}
 }
 }
 function renderSettings(d){

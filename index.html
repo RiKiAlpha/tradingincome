@@ -323,6 +323,10 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 [data-theme="light"] .history-period-row.selected td{background:rgba(0,119,182,.08);}
 .history-detail-wrap{margin:14px 16px 0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
 .history-detail-title{padding:13px 16px;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--border2);}
+.history-total-row td{padding-top:10px;padding-bottom:10px;background:rgba(0,184,148,.045);border-top:1px solid rgba(0,184,148,.22);font-weight:900;}
+.history-total-row td:first-child{color:var(--text)!important;text-transform:uppercase;letter-spacing:.035em;}
+.history-total-row td:nth-child(2){color:var(--text);}
+[data-theme="light"] .history-total-row td{background:rgba(0,135,105,.055);border-top-color:rgba(0,135,105,.20);}
 
 .ticker-summary::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:2px;background:transparent;transition:background-color .14s ease;}
 @media(hover:hover){.ticker-summary:hover{background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);transform:translateY(-1px);}.ticker-summary:hover::before{background:rgba(255,255,255,.22);}}
@@ -1395,7 +1399,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.36</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.37</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1536,7 +1540,8 @@ var RIKI_RELEASE_V233='RIKI_V2_0_33_HIGH_IV_WHATIF_FIX_2026_10_09';
 var RIKI_RELEASE_V234='RIKI_V2_0_34_VISUAL_CLEANUP_2026_10_09';
 var RIKI_RELEASE_V235='RIKI_V2_0_35_GRAND_SIDE_EXPIRY_2026_10_16';
 var RIKI_RELEASE_V236='RIKI_V2_0_36_REPORTING_WEEK_SIDE_EXPIRY_2026_10_21';
-var RIKI_APP_VERSION='V2.0.36';
+var RIKI_RELEASE_V237='RIKI_V2_0_37_HISTORY_GRAND_TOTAL_2026_10_21';
+var RIKI_APP_VERSION='V2.0.37';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -3264,8 +3269,10 @@ function rikiV5RenderLegacyTickerDetail_(host,period,rows,options){
 options=options||{};if(!host)return;rows=rows||[];if(!rows.length){host.innerHTML='<div class="empty">No certified ticker summary is saved for this period.</div>';return;}
 var byTicker={};rows.forEach(function(r){var t=String(r.ticker||'').trim().toUpperCase();if(!t)return;if(!byTicker[t])byTicker[t]={ticker:t,contracts:0,contractsKnown:true,banked:0};var c=r.contracts;if(c===null||c===undefined||c==='')byTicker[t].contractsKnown=false;else byTicker[t].contracts+=Number(c||0);byTicker[t].banked+=money(r.bankedNet!==undefined?r.bankedNet:r.banked);});
 var summary=Object.keys(byTicker).map(function(k){return byTicker[k];}).sort(function(a,b){return Number(b.banked||0)-Number(a.banked||0)||String(a.ticker).localeCompare(String(b.ticker));});
+var totalContracts=0,totalContractsKnown=true,totalBanked=0;summary.forEach(function(r){if(!r.contractsKnown)totalContractsKnown=false;else totalContracts+=Number(r.contracts||0);totalBanked+=Number(r.banked||0);});
+var totalContractsText=totalContractsKnown?String(totalContracts):'—';
 var note=options.archiveOnly?' · MSTR-only Archive':'';var missing=Number(options.missingWeeks||0);if(missing)note+=' · '+missing+' week'+(missing===1?'':'s')+' awaiting certified detail';
-host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(period)||period)+escHtml(note)+'</div><table><thead><tr><th style="text-align:left">Ticker</th><th>Contracts</th><th>Banked</th></tr></thead><tbody>'+summary.map(function(r){var ct=r.contractsKnown?Number(r.contracts||0):'—';return '<tr><td style="text-align:left;font-weight:900">'+escHtml(r.ticker)+'</td><td>'+ct+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td></tr>';}).join('')+'</tbody></table></div>';
+host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(period)||period)+escHtml(note)+'</div><table><thead><tr><th style="text-align:left">Ticker</th><th>Contracts</th><th>Banked</th></tr></thead><tbody>'+summary.map(function(r){var ct=r.contractsKnown?Number(r.contracts||0):'—';return '<tr><td style="text-align:left;font-weight:900">'+escHtml(r.ticker)+'</td><td>'+ct+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td></tr>';}).join('')+'<tr class="history-total-row"><td style="text-align:left">Grand Total</td><td>'+totalContractsText+'</td><td class="'+cc(totalBanked)+'">'+fmtS(totalBanked)+'</td></tr></tbody></table></div>';
 }
 function rikiV5RenderLegacyWeekDetail_(week){
 var host=ge('legacy-week-detail');if(!host)return;var rows=(week&&week.tickerRows)||[];rikiV5RenderLegacyTickerDetail_(host,week&&week.weekEnd||'',rows,{archiveOnly:!!(week&&week.archiveOnly)});

@@ -1395,7 +1395,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.35</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.36</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1535,7 +1535,8 @@ var RIKI_RELEASE_V232='RIKI_V2_0_32_WING_IV_DIVERGENCE_GATE_2026_10_08';
 var RIKI_RELEASE_V233='RIKI_V2_0_33_HIGH_IV_WHATIF_FIX_2026_10_09';
 var RIKI_RELEASE_V234='RIKI_V2_0_34_VISUAL_CLEANUP_2026_10_09';
 var RIKI_RELEASE_V235='RIKI_V2_0_35_GRAND_SIDE_EXPIRY_2026_10_16';
-var RIKI_APP_VERSION='V2.0.35';
+var RIKI_RELEASE_V236='RIKI_V2_0_36_REPORTING_WEEK_SIDE_EXPIRY_2026_10_21';
+var RIKI_APP_VERSION='V2.0.36';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -2890,10 +2891,17 @@ function openContractCount_(s){var m=String(s||'').match(/(\d+)\s*[PC]\s*\/\s*(\
 function displayPCCounts_(s){var m=String(s||'').match(/(\d+)\s*C\s*\/\s*(\d+)\s*P/i);return m?{c:Number(m[1]),p:Number(m[2])}:{c:0,p:0};}
 function grandSideExpiry_(data,expiry,expectedCalls,expectedPuts){
 function blank(){return{call:null,put:null,callQty:0,putQty:0,source:''};}
+function reportingWeekEnd_(value){
+var m=String(value||'').match(/\d{4}-\d{2}-\d{2}/);if(!m)return'';
+var d=new Date(m[0]+'T12:00:00Z');if(!isFinite(d.getTime()))return'';
+var addDays=(5-d.getUTCDay()+7)%7;d.setUTCDate(d.getUTCDate()+addDays);
+return d.toISOString().slice(0,10);
+}
+var targetWeekEnd=reportingWeekEnd_(expiry);
 function fromOwned(){
 var out={call:0,put:0,callQty:0,putQty:0,source:'legacyOwnedPositions'},seen=false;
 (data.legacyOwnedPositions||[]).forEach(function(p){
-if(String(p.expiry||'')!==String(expiry||''))return;
+if(reportingWeekEnd_(p.expiry)!==targetWeekEnd)return;
 var side=String(p.side||'').toUpperCase(),qty=Number(p.openQty||0),credit=Number(p.openingCreditRemaining);
 if(!(qty>0)||!isFinite(credit)||(side!=='CALL'&&side!=='PUT'))return;
 seen=true;if(side==='CALL'){out.callQty+=qty;out.call+=credit;}else{out.putQty+=qty;out.put+=credit;}
@@ -2903,7 +2911,7 @@ return seen?out:null;
 function fromInv(){
 var out={call:0,put:0,callQty:0,putQty:0,source:'invRows'},seen=false;
 (data.invRows||[]).forEach(function(r){
-if(String(r&&r[1]||'')!==String(expiry||''))return;
+if(reportingWeekEnd_(r&&r[1])!==targetWeekEnd)return;
 var side=String(r&&r[3]||'').toUpperCase(),qty=Number(r&&r[5]||0),credit=Number(r&&r[7]);
 if(!(qty>0)||!isFinite(credit)||(side!=='CALL'&&side!=='PUT'))return;
 seen=true;if(side==='CALL'){out.callQty+=qty;out.call+=credit;}else{out.putQty+=qty;out.put+=credit;}

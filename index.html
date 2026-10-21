@@ -1419,7 +1419,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.38</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.39</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1562,7 +1562,8 @@ var RIKI_RELEASE_V235='RIKI_V2_0_35_GRAND_SIDE_EXPIRY_2026_10_16';
 var RIKI_RELEASE_V236='RIKI_V2_0_36_REPORTING_WEEK_SIDE_EXPIRY_2026_10_21';
 var RIKI_RELEASE_V237='RIKI_V2_0_37_HISTORY_GRAND_TOTAL_2026_10_21';
 var RIKI_RELEASE_V238='RIKI_V2_0_38_HISTORY_INLINE_YTD_2026_10_21';
-var RIKI_APP_VERSION='V2.0.38';
+var RIKI_RELEASE_V239='RIKI_V2_0_39_HISTORY_YTD_CLOSED_ROWS_2026_10_21';
+var RIKI_APP_VERSION='V2.0.39';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -3329,19 +3330,13 @@ function finish_(file){var built=rikiV5BuildLegacyMonthDetail_(month,file||{});i
 if(RIKI_V5_LEGACY_YEAR_CACHE[year]){finish_(RIKI_V5_LEGACY_YEAR_CACHE[year]);return;}
 rikiV5StaticJson_(url).then(function(file){RIKI_V5_LEGACY_YEAR_CACHE[year]=file||{};finish_(file);}).catch(function(){finish_({weeks:{}});});
 }
-function rikiV5LegacyAuditAcceptedArchiveRow_(row){
-if(!Array.isArray(row)||String(row[11]||'').trim().toUpperCase()!=='CLOSED')return false;
-var audit=String(row[12]||'').trim().toUpperCase();
-return /\bPASS\b/.test(audit)||/\b(?:ORDERS|ARCHIVE)\s+USED\b/.test(audit);
-}
-function rikiV5LegacyYtdFromYearFile_(file,year){
-var out={year:String(year),a1:0,a2:0,total:0,weeks:0,passWeeks:0,resolvedWeeks:0,through:''},weeks=(file&&file.weeks)||{};
-Object.keys(weeks).sort().forEach(function(k){
-if(String(k).substring(0,4)!==String(year))return;
-var row=weeks[k]&&weeks[k].archiveRow;if(!rikiV5LegacyAuditAcceptedArchiveRow_(row))return;
-out.a1+=money(row[1]);out.a2+=money(row[3]);out.total+=money(row[6]);out.weeks++;
-var audit=String(row[12]||'').toUpperCase();if(/\b(?:ORDERS|ARCHIVE)\s+USED\b/.test(audit))out.resolvedWeeks++;else out.passWeeks++;
-out.through=rikiCleanHistoryPeriod_(row[0]||k)||k;
+function rikiV5LegacyYtdFromClosedRows_(rows,year){
+var out={year:String(year),a1:0,a2:0,total:0,weeks:0,through:''};
+(rows||[]).forEach(function(row){
+var week=rikiCleanHistoryPeriod_(row&&row[0]||'');
+if(String(week).substring(0,4)!==String(year))return;
+out.a1+=money(row&&row[1]);out.a2+=money(row&&row[3]);out.total+=money(row&&row[6]);out.weeks++;
+if(!out.through||week>out.through)out.through=week;
 });
 return out;
 }
@@ -3350,19 +3345,15 @@ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return String(iso
 var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mons[Number(m[2])-1]+' '+Number(m[3]);
 }
 function rikiV5RenderLegacyYtd_(host){
-if(!host)return;var year=String(new Date().getFullYear()),card=document.createElement('div');card.className='history-ytd-card';card.id='legacy-ytd-card';
-card.innerHTML='<div class="history-ytd-head"><div class="history-ytd-title">'+year+' YTD</div><div class="history-ytd-badge">Audited banked</div></div><div class="history-ytd-total dim">—</div><div class="history-ytd-meta">Loading accepted weekly audits…</div>';host.appendChild(card);
-function apply_(file){
-var y=rikiV5LegacyYtdFromYearFile_(file,year),totalEl=card.querySelector('.history-ytd-total');
-if(!y.weeks){totalEl.className='history-ytd-total dim';totalEl.textContent='—';card.querySelector('.history-ytd-meta').textContent='No accepted audited weeks are available for '+year+'.';return;}
-totalEl.className='history-ytd-total '+cc(y.total);totalEl.textContent=fmtS(y.total);
-card.innerHTML='<div class="history-ytd-head"><div class="history-ytd-title">'+year+' YTD</div><div class="history-ytd-badge">Audited banked</div></div>'+
+if(!host)return;var year=String(new Date().getFullYear()),y=rikiV5LegacyYtdFromClosedRows_((DATA&&DATA.allClosed)||[],year),card=document.createElement('div');card.className='history-ytd-card';card.id='legacy-ytd-card';
+if(!y.weeks){
+card.innerHTML='<div class="history-ytd-head"><div class="history-ytd-title">'+year+' YTD</div><div class="history-ytd-badge">Banked</div></div><div class="history-ytd-total dim">—</div><div class="history-ytd-meta">No closed '+year+' weeks available.</div>';host.appendChild(card);return;
+}
+card.innerHTML='<div class="history-ytd-head"><div class="history-ytd-title">'+year+' YTD</div><div class="history-ytd-badge">Banked</div></div>'+
 '<div class="history-ytd-total '+cc(y.total)+'">'+fmtS(y.total)+'</div>'+
 '<div class="history-ytd-grid"><div><div class="history-ytd-metric-label">Account 1</div><div class="history-ytd-metric-value '+cc(y.a1)+'">'+fmtS(y.a1)+'</div></div><div><div class="history-ytd-metric-label">Account 2</div><div class="history-ytd-metric-value '+cc(y.a2)+'">'+fmtS(y.a2)+'</div></div></div>'+
-'<div class="history-ytd-meta">'+y.weeks+' accepted audit'+(y.weeks===1?'':'s')+(y.through?' · through '+escHtml(rikiV5HistoryShortDate_(y.through)):'')+' · active and unaudited weeks excluded</div>';
-}
-if(RIKI_V5_LEGACY_YEAR_CACHE[year]){apply_(RIKI_V5_LEGACY_YEAR_CACHE[year]);return;}
-var url=RIKI_V5_HISTORY_BASE+'/legacy/'+year+'.json';rikiV5StaticJson_(url).then(function(file){RIKI_V5_LEGACY_YEAR_CACHE[year]=file||{};apply_(file||{});}).catch(function(){var meta=card.querySelector('.history-ytd-meta');if(meta)meta.textContent='Audited YTD unavailable · history file could not be loaded.';});
+'<div class="history-ytd-meta">'+y.weeks+' closed week'+(y.weeks===1?'':'s')+(y.through?' · through '+escHtml(rikiV5HistoryShortDate_(y.through)):'')+'</div>';
+host.appendChild(card);
 }
 function rikiV5RefreshReportsButton_(btn){
 if(btn){btn.disabled=true;btn.textContent='Writing…';}toast('Writing summary reports and finalized history…',2600);

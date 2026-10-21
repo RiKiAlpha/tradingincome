@@ -341,12 +341,37 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .history-period-row.selected .history-chevron{transform:rotate(90deg);color:var(--green);}
 .history-period-row.selected td{position:sticky;top:0;z-index:3;box-shadow:0 1px 0 var(--border),0 6px 16px rgba(0,0,0,.10);}
 .history-inline-detail td{padding:0!important;background:var(--bg);border-bottom:1px solid var(--border2);}
-.history-inline-host{padding:1px 0 3px;animation:rikiHistoryExpand .18s ease-out both;}
-.history-inline-host .history-detail-wrap{margin:8px 10px 11px;border-radius:13px;background:var(--bg2);}
-.history-inline-host .history-detail-title{padding:11px 13px;font-size:10px;}
+.history-inline-host{padding:9px 0 16px;animation:rikiHistoryExpand .18s ease-out both;}
+.history-inline-host .history-detail-wrap{margin:8px 14px 4px;border-radius:16px;background:var(--bg2);box-shadow:0 10px 28px rgba(0,0,0,.10);overflow:hidden;}
+.history-inline-host .history-detail-title{padding:15px 18px 14px;font-size:10.5px;line-height:1.35;letter-spacing:.06em;}
+.history-inline-host table{table-layout:fixed;}
+.history-inline-host th{padding:10px 10px;font-size:9.5px;line-height:1.25;letter-spacing:.045em;}
+.history-inline-host td{padding:10px 10px;font-size:12.5px;line-height:1.3;font-weight:650;}
+.history-inline-host th:first-child,.history-inline-host td:first-child{width:44%;padding-left:18px;text-align:left;}
+.history-inline-host th:nth-child(2),.history-inline-host td:nth-child(2){width:25%;text-align:center;}
+.history-inline-host th:nth-child(3),.history-inline-host td:nth-child(3){width:31%;padding-right:18px;text-align:right;}
+.history-inline-host .history-total-row td{padding-top:14px;padding-bottom:14px;font-size:12.5px;line-height:1.35;border-top:1px solid rgba(0,184,148,.28);border-bottom:none!important;}
+.history-inline-host .history-total-row td:first-child{font-size:11.5px;letter-spacing:.025em;white-space:nowrap;}
+.history-inline-host .history-total-row td:nth-child(3){font-size:13px;}
 @keyframes rikiHistoryExpand{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 [data-theme="light"] .history-ytd-card{box-shadow:0 8px 24px rgba(20,30,40,.05);}
-@media(max-width:600px){.history-ytd-card{margin:12px 12px 3px;padding:14px}.history-ytd-total{font-size:25px}.history-ytd-grid{gap:8px}.history-inline-host .history-detail-wrap{margin:7px 7px 10px}}
+[data-theme="light"] .history-inline-host .history-detail-wrap{box-shadow:0 9px 24px rgba(20,30,40,.055);}
+@media(max-width:600px){
+.history-ytd-card{margin:12px 12px 3px;padding:14px}
+.history-ytd-total{font-size:25px}
+.history-ytd-grid{gap:8px}
+.history-inline-host{padding:10px 0 18px}
+.history-inline-host .history-detail-wrap{margin:8px 10px 4px;border-radius:15px}
+.history-inline-host .history-detail-title{padding:15px 15px 14px;font-size:10px}
+.history-inline-host th{padding:10px 7px;font-size:9px}
+.history-inline-host td{padding:9px 7px;font-size:12px;line-height:1.35}
+.history-inline-host th:first-child,.history-inline-host td:first-child{width:43%;padding-left:14px}
+.history-inline-host th:nth-child(2),.history-inline-host td:nth-child(2){width:25%}
+.history-inline-host th:nth-child(3),.history-inline-host td:nth-child(3){width:32%;padding-right:14px}
+.history-inline-host .history-total-row td{padding-top:13px;padding-bottom:14px;line-height:1.4}
+.history-inline-host .history-total-row td:first-child{font-size:10.5px;letter-spacing:.015em}
+.history-inline-host .history-total-row td:nth-child(3){font-size:12.5px}
+}
 
 .ticker-summary::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:2px;background:transparent;transition:background-color .14s ease;}
 @media(hover:hover){.ticker-summary:hover{background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.035);transform:translateY(-1px);}.ticker-summary:hover::before{background:rgba(255,255,255,.22);}}
@@ -1419,7 +1444,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.39</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.40</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1563,7 +1588,8 @@ var RIKI_RELEASE_V236='RIKI_V2_0_36_REPORTING_WEEK_SIDE_EXPIRY_2026_10_21';
 var RIKI_RELEASE_V237='RIKI_V2_0_37_HISTORY_GRAND_TOTAL_2026_10_21';
 var RIKI_RELEASE_V238='RIKI_V2_0_38_HISTORY_INLINE_YTD_2026_10_21';
 var RIKI_RELEASE_V239='RIKI_V2_0_39_HISTORY_YTD_CLOSED_ROWS_2026_10_21';
-var RIKI_APP_VERSION='V2.0.39';
+var RIKI_RELEASE_V240='RIKI_V2_0_40_HISTORY_DETAIL_SPACING_2026_10_21';
+var RIKI_APP_VERSION='V2.0.40';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';

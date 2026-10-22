@@ -344,6 +344,20 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .history-inline-host{padding:9px 0 16px;animation:rikiHistoryExpand .18s ease-out both;}
 .history-inline-host .history-detail-wrap{margin:8px 14px 4px;border-radius:16px;background:var(--bg2);box-shadow:0 10px 28px rgba(0,0,0,.10);overflow:hidden;}
 .history-inline-host .history-detail-title{padding:15px 18px 14px;font-size:10.5px;line-height:1.35;letter-spacing:.06em;}
+.history-detail-grid{width:100%;}
+.history-detail-grid-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(86px,.72fr) minmax(96px,.93fr);align-items:center;min-height:44px;padding:0 18px;border-bottom:1px solid var(--border2);font-variant-numeric:tabular-nums;}
+.history-detail-grid-row.header{min-height:46px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2);font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;}
+.history-detail-grid-row.body{font-size:12.5px;}
+.history-detail-grid-row.body .history-detail-ticker{font-weight:850;color:var(--text2);letter-spacing:.01em;}
+.history-detail-grid-row.body .history-detail-contracts{font-weight:800;color:var(--text);text-align:center;}
+.history-detail-grid-row.body .history-detail-banked{font-weight:850;text-align:right;}
+.history-detail-grid-row.total{min-height:52px;background:rgba(0,184,148,.045);border-top:1px solid rgba(0,184,148,.30);border-bottom:none;}
+.history-detail-grid-row.total .history-detail-ticker{font-size:11.5px;font-weight:900;color:var(--text);letter-spacing:.025em;text-transform:uppercase;}
+.history-detail-grid-row.total .history-detail-contracts{font-size:13px;font-weight:900;text-align:center;color:var(--text);}
+.history-detail-grid-row.total .history-detail-banked{font-size:13.5px;font-weight:900;text-align:right;}
+.history-detail-grid-row>div{min-width:0;}
+.history-detail-grid-row>div:nth-child(2){text-align:center;}
+.history-detail-grid-row>div:nth-child(3){text-align:right;}
 .history-inline-host table{table-layout:fixed;}
 .history-inline-host th{padding:10px 10px;font-size:9.5px;line-height:1.25;letter-spacing:.045em;}
 .history-inline-host td{padding:10px 10px;font-size:12.5px;line-height:1.3;font-weight:650;}
@@ -371,6 +385,12 @@ border-radius:16px;padding:22px 18px;display:-webkit-flex;display:flex;
 .history-inline-host .history-total-row td{padding-top:13px;padding-bottom:14px;line-height:1.4}
 .history-inline-host .history-total-row td:first-child{font-size:10.5px;letter-spacing:.015em}
 .history-inline-host .history-total-row td:nth-child(3){font-size:12.5px}
+.history-detail-grid-row{grid-template-columns:minmax(0,1.32fr) minmax(82px,.72fr) minmax(96px,.96fr);min-height:46px;padding:0 14px}
+.history-detail-grid-row.header{min-height:48px;font-size:9px}
+.history-detail-grid-row.body{font-size:12.5px}
+.history-detail-grid-row.total{min-height:56px}
+.history-detail-grid-row.total .history-detail-ticker{font-size:11px;letter-spacing:.015em}
+.history-detail-grid-row.total .history-detail-banked{font-size:13.5px}
 }
 
 .ticker-summary::before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:2px;border-radius:2px;background:transparent;transition:background-color .14s ease;}
@@ -1444,7 +1464,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.41</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.42</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1590,7 +1610,8 @@ var RIKI_RELEASE_V238='RIKI_V2_0_38_HISTORY_INLINE_YTD_2026_10_21';
 var RIKI_RELEASE_V239='RIKI_V2_0_39_HISTORY_YTD_CLOSED_ROWS_2026_10_21';
 var RIKI_RELEASE_V240='RIKI_V2_0_40_HISTORY_DETAIL_SPACING_2026_10_21';
 var RIKI_RELEASE_V241='RIKI_V2_0_41_HISTORY_SPACING_SELECTOR_FIX_2026_10_21';
-var RIKI_APP_VERSION='V2.0.41';
+var RIKI_RELEASE_V242='RIKI_V2_0_42_HISTORY_DETAIL_GRID_2026_10_21';
+var RIKI_APP_VERSION='V2.0.42';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -3321,7 +3342,7 @@ var summary=Object.keys(byTicker).map(function(k){return byTicker[k];}).sort(fun
 var totalContracts=0,totalContractsKnown=true,totalBanked=0;summary.forEach(function(r){if(!r.contractsKnown)totalContractsKnown=false;else totalContracts+=Number(r.contracts||0);totalBanked+=Number(r.banked||0);});
 var totalContractsText=totalContractsKnown?String(totalContracts):'—';
 var note=options.archiveOnly?' · MSTR-only Archive':'';var missing=Number(options.missingWeeks||0);if(missing)note+=' · '+missing+' week'+(missing===1?'':'s')+' awaiting certified detail';
-host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(period)||period)+escHtml(note)+'</div><table><thead><tr><th style="text-align:left">Ticker</th><th>Contracts</th><th>Banked</th></tr></thead><tbody>'+summary.map(function(r){var ct=r.contractsKnown?Number(r.contracts||0):'—';return '<tr><td style="text-align:left;font-weight:900">'+escHtml(r.ticker)+'</td><td>'+ct+'</td><td class="'+cc(r.banked)+'">'+fmtS(r.banked||0)+'</td></tr>';}).join('')+'<tr class="history-total-row"><td style="text-align:left">Grand Total</td><td>'+totalContractsText+'</td><td class="'+cc(totalBanked)+'">'+fmtS(totalBanked)+'</td></tr></tbody></table></div>';
+host.innerHTML='<div class="history-detail-wrap"><div class="history-detail-title">Ticker summary · '+escHtml(rikiCleanHistoryPeriod_(period)||period)+escHtml(note)+'</div><div class="history-detail-grid"><div class="history-detail-grid-row header"><div>Ticker</div><div>Contracts</div><div>Banked</div></div>'+summary.map(function(r){var ct=r.contractsKnown?Number(r.contracts||0):'—';return '<div class="history-detail-grid-row body"><div class="history-detail-ticker">'+escHtml(r.ticker)+'</div><div class="history-detail-contracts">'+ct+'</div><div class="history-detail-banked '+cc(r.banked)+'">'+fmtS(r.banked||0)+'</div></div>';}).join('')+'<div class="history-detail-grid-row total"><div class="history-detail-ticker">Grand Total</div><div class="history-detail-contracts">'+totalContractsText+'</div><div class="history-detail-banked '+cc(totalBanked)+'">'+fmtS(totalBanked)+'</div></div></div></div>';
 }
 function rikiV5RenderLegacyWeekDetail_(week,host){
 host=host||ge('legacy-week-detail');if(!host)return;var rows=(week&&week.tickerRows)||[];rikiV5RenderLegacyTickerDetail_(host,week&&week.weekEnd||'',rows,{archiveOnly:!!(week&&week.archiveOnly)});

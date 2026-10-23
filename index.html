@@ -1444,7 +1444,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.45</div>
+<div class="sver" id="riki-global-version">RiKi V2.0.46</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1594,7 +1594,8 @@ var RIKI_RELEASE_V242='RIKI_V2_0_42_HISTORY_DETAIL_GRID_2026_10_21';
 var RIKI_RELEASE_V243='RIKI_V2_0_43_HISTORY_DETAIL_COMPACT_PREMIUM_2026_10_21';
 var RIKI_RELEASE_V244='RIKI_V2_0_44_HISTORY_ORIGINAL_DETAIL_SIZING_2026_10_22';
 var RIKI_RELEASE_V245='RIKI_V2_0_45_SCREENER_SPX_EFFICIENCY_SORT_2026_10_22';
-var RIKI_APP_VERSION='V2.0.45';
+var RIKI_RELEASE_V246='RIKI_V2_0_46_POSITION_DRIVEN_PERIOD_VISIBILITY_2026_10_23';
+var RIKI_APP_VERSION='V2.0.46';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -2998,11 +2999,11 @@ var raw=String(row[0]),dm=raw.match(/(\d{4}-\d{2}-\d{2})/),exp=dm?dm[1]:'';
 var wi=KEYS.findIndex(function(l){return raw.toUpperCase().indexOf(l)>=0;});
 var lbl=wi>=0?LBLS[wi]:raw;
 var a1b=money(row[1]),a1p=money(row[2]),a2b=money(row[3]),a2p=money(row[4]),grand=money(row[6]);
-if(wi===3 && a1b===0 && a1p===0 && a2b===0 && a2p===0) return;
 var a1pc=(wi>=0&&openPos['Account 1'])?openPos['Account 1'][wi]:'';
 var a2pc=(wi>=0&&openPos['Account 2'])?openPos['Account 2'][wi]:'';
 var a1OpenContracts=openContractCount_(a1pc),a2OpenContracts=openContractCount_(a2pc);
 var openContractsTotal=a1OpenContracts+a2OpenContracts;
+if(openContractsTotal<=0)return;
 var a1Counts=displayPCCounts_(a1pc),a2Counts=displayPCCounts_(a2pc);
 var grandCalls=a1Counts.c+a2Counts.c,grandPuts=a1Counts.p+a2Counts.p;
 var grandSideExpiry=grandSideExpiry_(d,exp,grandCalls,grandPuts);
@@ -3478,19 +3479,29 @@ function normMon(k){var us=k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(us)retu
 var mBase=d.monthly||{};
 Object.keys(mBase).forEach(function(k){var nk=normMon(k).substring(0,7);if(!monthly[nk])monthly[nk]={a1:0,a2:0,total:0};monthly[nk].a1+=mBase[k].a1||0;monthly[nk].a2+=mBase[k].a2||0;monthly[nk].total+=mBase[k].total||0;});
 var archRows=d.archRows||[];
-var activeMonths=new Set();
-archRows.forEach(function(row){var raw=String(row[0]||'');var dm=raw.match(/(\d{4}-\d{2})/);if(!dm)return;var mo=dm[1];var a1b=money(row[1]||0),a2b=money(row[3]||0);if(!monthly[mo])monthly[mo]={a1:0,a2:0,total:0};monthly[mo].a1+=a1b;monthly[mo].a2+=a2b;monthly[mo].total+=a1b+a2b;activeMonths.add(mo);});
+var activeMonths=new Set(),weekOpenCounts=[0,0,0,0];
+function historyOpenCount_(value){var m=String(value||'').match(/(\d+)P\s*\/\s*(\d+)C/i);return m?Number(m[1])+Number(m[2]):0;}
+(d.dashRows||[]).forEach(function(r){if(!r||String(r[0]||'')==='GRAND TOTAL')return;weekOpenCounts[0]+=historyOpenCount_(r[3]);weekOpenCounts[1]+=historyOpenCount_(r[5]);weekOpenCounts[2]+=historyOpenCount_(r[7]);weekOpenCounts[3]+=historyOpenCount_(r[9]);});
+var historyWeekKeys=['THIS WEEK','NEXT WEEK','WEEK AFTER','+3 WEEKS'];
+archRows.forEach(function(row){
+var raw=String(row[0]||''),dm=raw.match(/(\d{4}-\d{2})/);if(!dm)return;
+var mo=dm[1],a1b=money(row[1]||0),a2b=money(row[3]||0),wi=historyWeekKeys.findIndex(function(k){return raw.toUpperCase().indexOf(k)>=0;}),hasOpen=wi>=0&&Number(weekOpenCounts[wi]||0)>0;
+if(!hasOpen&&Math.abs(a1b)<0.005&&Math.abs(a2b)<0.005)return;
+if(!monthly[mo])monthly[mo]={a1:0,a2:0,total:0};
+monthly[mo].a1+=a1b;monthly[mo].a2+=a2b;monthly[mo].total+=a1b+a2b;
+if(hasOpen)activeMonths.add(mo);
+});
 var months=Object.keys(monthly).sort(function(a,b){return b.localeCompare(a);});
 if(!months.length){var empty=document.createElement('div');empty.className='empty';empty.textContent='No monthly data';el.appendChild(empty);return;}
 var t=document.createElement('table');
 t.innerHTML='<thead><tr><th style="text-align:left">Month</th><th>A1 Banked</th><th>A2 Banked</th><th>Total</th></tr></thead>';
 var tb=document.createElement('tbody');
-var now=new Date(),cm=now.getFullYear()+'-'+(now.getMonth()<9?'0':'')+(now.getMonth()+1),selectedMonth=String(RIKI_HISTORY_SELECTED_PERIOD.monthly||'');
+var selectedMonth=String(RIKI_HISTORY_SELECTED_PERIOD.monthly||'');
 if(selectedMonth&&months.indexOf(selectedMonth)<0){selectedMonth='';RIKI_HISTORY_SELECTED_PERIOD.monthly='';}
 months.forEach(function(mo){
 var e=monthly[mo];var hdrtxt;
 try{hdrtxt=new Date(mo+'-02').toLocaleDateString('en-US',{month:'long',year:'numeric'});}catch(x){hdrtxt=mo;}
-var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=(mo===cm)||activeMonths.has(mo),isOpen=mo===selectedMonth;
+var a1=e.a1||0,a2=e.a2||0,tot=e.total||0,isCur=activeMonths.has(mo),isOpen=mo===selectedMonth;
 var dot=isCur?'&nbsp;<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;vertical-align:middle;position:relative;top:-1px;"></span>':'';
 var tr=document.createElement('tr');tr.className='history-period-row'+(isOpen?' selected':'');tr.setAttribute('data-period',mo);tr.setAttribute('aria-expanded',isOpen?'true':'false');tr.title=isOpen?'Collapse ticker summary':'Expand ticker summary';
 tr.innerHTML='<td style="text-align:left;font-weight:600"><span class="history-period-main"><span class="history-chevron">›</span><span>'+hdrtxt+dot+'</span></span></td><td class="'+cc(a1)+'">'+fmtS(a1)+'</td><td class="'+cc(a2)+'">'+fmtS(a2)+'</td><td class="'+cc(tot)+'">'+fmtS(tot)+'</td>';

@@ -428,6 +428,10 @@ tbody tr:last-child td{border-bottom:none;}
 .tog-thumb{position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.3);-webkit-transition:-webkit-transform .2s cubic-bezier(.4,0,.2,1);transition:transform .2s cubic-bezier(.4,0,.2,1);}
 .tog.on .tog-thumb{-webkit-transform:translateX(20px);transform:translateX(20px);}
 .sver{text-align:center;font-size:10px;color:var(--text3);padding:18px;}
+/* Compact version chip below Cancel Working Orders, before audit/status content. */
+.controls-version-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;margin:10px 0 12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.025);}
+.controls-version-label{font-size:10px;font-weight:800;letter-spacing:.07em;color:var(--text3);}
+.controls-version-row #riki-global-version{font-size:12px;font-weight:850;letter-spacing:.02em;color:var(--green);white-space:nowrap;}
 /* RIKI_MULTI_TICKER_FRONTEND_CONFIG_V1 */
 .strategy-editor{padding:14px 18px 16px;border-top:1px solid var(--border2);}
 .strategy-field{width:100%;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:inherit;font-size:12px;font-weight:650;padding:0 11px;outline:none;}
@@ -1443,10 +1447,10 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 </div>
 <div id="nc-section"></div>
 <div id="cancel-section"></div>
+<div class="controls-version-row" aria-label="RiKi application version"><span class="controls-version-label">APP VERSION</span><span id="riki-global-version">RiKi V2.0.48</span></div>
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
-<div class="sver" id="riki-global-version">RiKi V2.0.47</div>
 </div>
 </div>
 <div id="tabs-wrap">
@@ -1597,7 +1601,7 @@ var RIKI_RELEASE_V243='RIKI_V2_0_43_HISTORY_DETAIL_COMPACT_PREMIUM_2026_10_21';
 var RIKI_RELEASE_V244='RIKI_V2_0_44_HISTORY_ORIGINAL_DETAIL_SIZING_2026_10_22';
 var RIKI_RELEASE_V245='RIKI_V2_0_45_SCREENER_SPX_EFFICIENCY_SORT_2026_10_22';
 var RIKI_RELEASE_V246='RIKI_V2_0_46_POSITION_DRIVEN_PERIOD_VISIBILITY_2026_10_23';
-var RIKI_APP_VERSION='V2.0.47';
+var RIKI_APP_VERSION='V2.0.48';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';

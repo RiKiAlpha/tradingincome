@@ -1447,7 +1447,7 @@ body.churner-mode .pos-sort-btn.active.asc .pos-sort-caret::before,body.churner-
 </div>
 <div id="nc-section"></div>
 <div id="cancel-section"></div>
-<div class="scard controls-version-card" aria-label="RiKi application version"><div class="srow controls-version-row"><div class="slbl">App version</div><span id="riki-global-version">RiKi V2.0.50</span></div></div>
+<div class="scard controls-version-card" aria-label="RiKi application version"><div class="srow controls-version-row"><div class="slbl">App version</div><span id="riki-global-version">RiKi V2.0.51</span></div></div>
 <div id="tally-section"></div>
 <div class="scroll-spacer"></div>
 <div class="scroll-spacer"></div>
@@ -1601,7 +1601,7 @@ var RIKI_RELEASE_V243='RIKI_V2_0_43_HISTORY_DETAIL_COMPACT_PREMIUM_2026_10_21';
 var RIKI_RELEASE_V244='RIKI_V2_0_44_HISTORY_ORIGINAL_DETAIL_SIZING_2026_10_22';
 var RIKI_RELEASE_V245='RIKI_V2_0_45_SCREENER_SPX_EFFICIENCY_SORT_2026_10_22';
 var RIKI_RELEASE_V246='RIKI_V2_0_46_POSITION_DRIVEN_PERIOD_VISIBILITY_2026_10_23';
-var RIKI_APP_VERSION='V2.0.50';
+var RIKI_APP_VERSION='V2.0.51';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -4248,6 +4248,7 @@ function r4NormalizedPnrPressure_(pnr,epr,buffer,hasPosition){
 }
 window.rikiPmTickerBadge_=function(ticker,d,account){
   var risk=((d||window.DATA||{}).pmRisk)||{},a=(risk.accounts||[]).filter(function(x){return x.account===account;})[0],r=r4PmRow(ticker,d,account),reason=!a?'risk snapshot unavailable':a.isPortfolioMargin!==true?'PM not active':'no modeled PNR crossing';
+  if(!rikiPmBetaIntegrity_(risk).ok)return '<div class="r4-account-bars unknown" title="PM risk blocked: invalid beta; use Schwab/TOS"><span class="r4-mini-risk unknown"></span><span class="r4-mini-risk unknown"></span></div>';
   function one(kind,p,e,buffer,hasPosition){var title=account+' · '+r4PnrTitle(kind,p,e,buffer),m=r4NormalizedPnrPressure_(p,e,buffer,hasPosition),hue=166;if(!hasPosition){title=account+' · '+kind+' · no option position';return '<span class="r4-mini-risk unknown" title="'+escHtml(title)+'" aria-label="'+escHtml(title)+'"><i style="width:0%"></i></span>';}if(m.noCross){title=account+' · '+kind+' · no modeled PNR crossing · EPR '+(r4Num(e)===null?'unavailable':Math.abs(Number(e)).toFixed(1)+'%')+' · normalized pressure 5%';hue=166;}else if(m.pressure!==null){title+=' · normalized pressure '+m.pressure.toFixed(0)+'%';hue=m.tone==='risk'?6:m.tone==='warn'?42:Math.max(66,166-100*((m.fill-5)/95));}return '<span class="r4-mini-risk '+m.tone+'" title="'+escHtml(title)+'" aria-label="'+escHtml(title)+'"><i style="width:'+m.fill.toFixed(0)+'%;'+(m.pressure===null?'':'background:hsl('+Math.max(6,Math.min(166,hue)).toFixed(0)+' 72% 54%);')+'"></i></span>'; }
   if(!r)return '<div class="r4-account-bars unknown" title="'+escHtml(account+' · '+reason)+'"><span class="r4-mini-risk unknown"></span><span class="r4-mini-risk unknown"></span></div>';
   var b=r4Buffer(risk,ticker,r),putPos=r4SideHasPosition_(risk,account,ticker,'PUT'),callPos=r4SideHasPosition_(risk,account,ticker,'CALL');return '<div class="r4-account-bars" aria-label="'+escHtml(account)+' normalized risk pressure; left PUT, right CALL">'+one('PUT',r.downPnr,r.downEpr,b,putPos)+one('CALL',r.upPnr,r.upEpr,b,callPos)+'</div>';
@@ -4255,6 +4256,7 @@ window.rikiPmTickerBadge_=function(ticker,d,account){
 window.rikiPmRows_=function(ticker,d){return ['Account 1','Account 2'].map(function(account){return r4PmRow(ticker,d,account);}).filter(Boolean);};
 window.rikiPmRiskDetail_=function(ticker,d){
   var risk=((d||window.DATA||{}).pmRisk)||{};
+  if(!rikiPmBetaIntegrity_(risk).ok)return '<div class="pm-risk-detail"><b>PM risk unavailable</b><div class="pm-risk-line risk">Invalid beta in authoritative snapshot. Risk pressures and PNR are hidden; verify in Schwab/TOS.</div></div>';
   return ['Account 1','Account 2'].map(function(account){
     var r=r4PmRow(ticker,d,account),buffer=r4Buffer(risk,ticker,r);
     if(!r)return '<div class="pm-risk-detail"><b>'+escHtml(ticker)+' · '+escHtml(account)+'</b><div class="pm-risk-line unknown">No PM position or modeled PNR for this account and ticker.</div></div>';
@@ -4515,6 +4517,40 @@ function rikiBetaValidForTicker_(ticker,beta){
   if(ticker==='IBIT')return beta>0.02&&beta<=20;
   return beta>0&&beta<=20;
 }
+
+/* Fail-closed beta integrity gate. Never repair a beta by guessing or
+   reusing a previous value; the authoritative GAS risk snapshot must be
+   rebuilt from trustworthy inputs before PM stress/sizing is displayed. */
+function rikiPmBetaIntegrity_(risk){
+  var issues=[],seen={};
+  if(!risk||!risk.localModel)return{ok:true,issues:[],tickers:[]};
+  function report(t,beta,source){
+    t=String(t||'').trim().toUpperCase();if(!t||rikiBetaValidForTicker_(t,beta))return;
+    if(seen[t])return;seen[t]=true;
+    var n=rikiBetaNum_(beta);
+    issues.push({ticker:t,beta:n,source:String(source||''),reason:n===null?'beta unavailable':'beta outside validated range'});
+  }
+  (risk.rows||[]).forEach(function(r){
+    if(r&&r.isPortfolioMargin===true)report(r.ticker,r.beta,'PM row');
+  });
+  var accounts=((risk.localModel||{}).accounts)||{};
+  Object.keys(accounts).forEach(function(a){
+    var books=(accounts[a]||{}).tickerBooks||{};
+    Object.keys(books).forEach(function(t){
+      var b=books[t]||{};report(t,b.beta,a+' PM book');
+      (b.legs||[]).forEach(function(l){report(t,l.beta,a+' option leg');});
+    });
+  });
+  var runtime=(risk.betaRuntime||{});
+  (runtime.issues||[]).forEach(function(x){
+    if(!x||String(x.severity||'').toLowerCase()!=='red')return;
+    var t=String(x.ticker||'').toUpperCase();if(!t||seen[t])return;
+    seen[t]=true;issues.push({ticker:t,beta:null,source:'Beta Manager',reason:String(x.reason||'trusted beta unresolved')});
+  });
+  return{ok:!issues.length,issues:issues,tickers:issues.map(function(x){return x.ticker;})};
+}
+window.rikiPmBetaIntegrity_=rikiPmBetaIntegrity_;
+
 function rikiBetaChoice_(risk,ticker,row,statusMap){
   ticker=String(ticker||'').toUpperCase();row=row||{};
   var baseBeta=rikiBetaNum_(row._serverBeta!==undefined?row._serverBeta:row.beta),baseSource=String(row._serverBetaSource!==undefined?row._serverBetaSource:(row.betaSource||'')),e=statusMap[ticker]||null,tosFresh=rikiBetaTosFreshToday_(risk),b=null,age=null;
@@ -4645,6 +4681,8 @@ function rikiBetaStatusText_(risk){
   return (b.authoritative===true?'Beta: ':'Beta pending backend confirmation: ')+bits.join(' · ');
 }
 function rikiBetaBannerModel_(risk){
+  var integrity=rikiPmBetaIntegrity_(risk);
+  if(!integrity.ok)return{severity:'red',title:'PM risk unavailable — invalid beta',body:'Affected: '+integrity.tickers.join(', ')+'. Do not use RiKi PM stress/headroom or sizing until the GAS beta input is repaired and Risk is refreshed. Compare Schwab/TOS directly.',tickers:integrity.tickers};
   var b=(risk&&risk.betaRuntime)||{},issues=(b.issues||[]).slice(),red=issues.filter(function(x){return x.severity==='red';}),amber=issues.filter(function(x){return x.severity==='amber';});
   if(b.version&&b.authoritative!==true)return{severity:'amber',title:'Beta awaiting backend confirmation',body:'The browser has a temporary beta overlay. RiKi is requesting the authoritative backend PM snapshot; do not use this interim state as the final risk reading.',tickers:[]};
   if(red.length)return{severity:'red',title:'Beta protection requires attention',body:red.map(function(x){return x.ticker;}).join(', ')+' · no sufficiently fresh Schwab beta. Update from Schwab or upload a current expanded TOS Position CSV.',tickers:red.map(function(x){return x.ticker;})};
@@ -4754,13 +4792,14 @@ function rikiBetaLastSchwabStamp_(risk){
   }catch(e){return 'Schwab checked '+String(lr.attemptAtEt||'').trim();}
 }
 function rikiBetaHealthHtml_(risk){
+  var integrity=rikiPmBetaIntegrity_(risk);
   var b=(risk&&risk.betaRuntime)||{},fresh=Number(b.freshSchwab||0),cached=Number(b.cachedSchwab||0),temp=Number(b.tosTemp||0),override=Number(b.trustedOverride||0),fallback=Number(b.emergency||0),issues=(b.issues||[]).slice();
   var red=issues.filter(function(x){return x&&x.severity==='red';}),amber=issues.filter(function(x){return x&&x.severity==='amber';});
-  var tone=fallback>0||red.length?'risk':(cached>0||temp>0||amber.length?'warn':'good'),title=tone==='risk'?'Review beta fallbacks':(tone==='warn'?'Protected with fallback':'Beta healthy');
+  var tone=!integrity.ok||fallback>0||red.length?'risk':(cached>0||temp>0||amber.length?'warn':'good'),title=!integrity.ok?'PM risk blocked · invalid beta':(tone==='risk'?'Review beta fallbacks':(tone==='warn'?'Protected with fallback':'Beta healthy'));
   var chips=['<span class="r4-beta-chip good">'+fresh+' Schwab live</span>'];
   if(cached)chips.push('<span class="r4-beta-chip warn">'+cached+' cached Schwab</span>');
   if(temp)chips.push('<span class="r4-beta-chip warn">'+temp+' TOS temporary</span>');
-  if(override)chips.push('<span class="r4-beta-chip">'+override+' trusted override</span>');
+  if(override)chips.push(integrity.ok?'<span class="r4-beta-chip">'+override+' trusted override</span>':'<span class="r4-beta-chip risk">'+override+' override reported · NOT VERIFIED</span>');
   if(fallback){
     var issueByTicker={};issues.forEach(function(x){var t=String(x&&x.ticker||'').toUpperCase();if(t)issueByTicker[t]=x;});
     var fallbackSeen={},fallbackItems=[];
@@ -4779,7 +4818,8 @@ function rikiBetaHealthHtml_(risk){
     chips.push('<span class="r4-beta-chip risk r4-beta-chip-tip" tabindex="0">'+fallback+' fallback · hover'+tip+'</span>');
   }
   var detail='';
-  if(red.length)detail='Review: '+red.map(function(x){return String(x.ticker||'')+(x.reason?' · '+String(x.reason):'');}).join('  |  ');
+  if(!integrity.ok)detail='Invalid PM input: '+integrity.issues.map(function(x){return x.ticker+(x.beta===null?' · missing/untrusted beta':' · beta '+Number(x.beta).toFixed(6))+' · '+x.reason;}).join('  |  ')+' · use Schwab/TOS until backend repaired';
+  else if(red.length)detail='Review: '+red.map(function(x){return String(x.ticker||'')+(x.reason?' · '+String(x.reason):'');}).join('  |  ');
   else if(amber.length)detail='Aging protection: '+amber.map(function(x){return String(x.ticker||'')+(x.age!=null?' · '+x.age+'d':'');}).join('  |  ');
   else detail='Schwab fundamental beta is primary. Known overrides remain isolated and do not replace healthy Schwab values.';
   return '<div class="r4-beta-health '+tone+'"><div class="r4-beta-health-top"><div><div class="r4-beta-health-label">Beta health</div><div class="r4-beta-health-title">'+title+'</div></div><div class="r4-beta-health-time">'+escHtml(rikiBetaLastSchwabStamp_(risk))+'</div></div><div class="r4-beta-chips">'+chips.join('')+'</div><div class="r4-beta-detail">'+escHtml(detail)+'</div></div>';
@@ -5138,6 +5178,15 @@ window.rikiPmRenderPanel_=function(host,d){
   r4InstallStyles();var risk=(d||{}).pmRisk||{},box=document.createElement('div');box.className='pm-panel';
   box.innerHTML='<div class="bp-head r4-risk-heading"><div><div class="scr-title">Portfolio Risk Lab</div><div class="scr-sub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+'</div></div><button class="abtn" id="r4-refresh">Refresh risk</button></div>';
   if(!r4Ready(d)){box.innerHTML+='<div class="r4-result"><strong>Backend V4 required.</strong><br>Current risk snapshot: '+escHtml(risk.version||'none')+'. Replace the V3 risk backend module with V4, deploy the existing web app, then press Refresh risk.</div>';host.appendChild(box);var b0=box.querySelector('#r4-refresh');b0.onclick=function(){toast('Deploy Risk backend V4 first',4500);};rikiBetaSyncRiskRefreshUi_();return;}
+  var integrity=rikiPmBetaIntegrity_(risk);
+  if(!integrity.ok){
+    var problems=integrity.issues.map(function(x){return escHtml(x.ticker)+(x.beta===null?' (beta unavailable)':' (beta '+Number(x.beta).toFixed(6)+')');}).join(' · ');
+    box.insertAdjacentHTML('beforeend','<div class="r4-result" role="alert" style="border:1px solid var(--red);color:var(--text);padding:16px;margin:12px 16px;border-radius:12px;background:rgba(229,83,83,.11)"><strong style="color:var(--red)">PM RISK UNAVAILABLE — INVALID BETA</strong><div class="ssub" style="margin-top:8px;color:var(--text2)">Affected: '+problems+'. The current Schwab stress and headroom cards, PNR signals, and What-If simulations are withheld because this snapshot is not reliable. Use Schwab/thinkorswim risk directly; repair the GAS beta source and refresh Risk. No beta is substituted automatically.</div></div>');
+    r4Controls(box,risk,d);host.appendChild(box);
+    var blockedRefresh=box.querySelector('#r4-refresh');
+    blockedRefresh.onclick=function(){var p=rikiBetaRefreshRiskAuthoritative_({reason:'MANUAL_RISK_REFRESH'});rikiBetaSyncRiskRefreshUi_();p.then(function(){toast('Risk refreshed · beta validity rechecked',3000);}).catch(function(e){toast(errMsg(e),7000);});};
+    rikiBetaSyncRiskRefreshUi_();return;
+  }
   var wingDiag=r4WingIvDiagHtml_(risk);if(wingDiag)box.insertAdjacentHTML('beforeend',wingDiag);
   var accountGrid=document.createElement('div');accountGrid.className='r4-accounts-grid';(risk.accounts||[]).forEach(function(a){accountGrid.insertAdjacentHTML('beforeend',r4AccountHtml(risk,a));});box.appendChild(accountGrid);
   var anyPm=(risk.accounts||[]).some(function(a){return a&&a.isPortfolioMargin===true;});if(anyPm){var gn=document.createElement('div');gn.className='r4-guard-note';gn.innerHTML='Card fill = percentage of Schwab threshold used. Color only: green &lt; '+(r4Warn(risk)*100).toFixed(0)+'% · amber '+(r4Warn(risk)*100).toFixed(0)+'–&lt;'+r4GuardPct(risk).toFixed(0)+'% · red ≥ '+r4GuardPct(risk).toFixed(0)+'%. Marker = RiKi threshold. PNR/EPR remains ticker-specific.';box.appendChild(gn);}
@@ -5282,6 +5331,7 @@ function rikiScreenResolvePmModel_(risk,ar){
 }
 function rikiScreenCompactPmRisk_(risk){
   if(!risk||!/^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||'')))return null;
+  if(window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(risk).ok)return null;
   var ar=rikiScreenPmAccountRow_(risk);if(!ar)return null;
   var resolved=rikiScreenResolvePmModel_(risk,ar);if(!resolved)return null;
   var m=resolved.model||{},books=resolved.books||{},acct=String(ar.account||resolved.key||'Account 1'),pmRows=(risk.rows||[]).filter(function(r){return r&&r.isPortfolioMargin===true;});
@@ -5297,6 +5347,7 @@ function rikiScreenCompactPmRisk_(risk){
 }
 function rikiScreenPmSnapshotValid_(risk){
   if(!(risk&&/^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||''))))return false;
+  if(window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(risk).ok)return false;
   var ar=rikiScreenPmAccountRow_(risk);if(!ar)return false;
   var resolved=rikiScreenResolvePmModel_(risk,ar);return !!(resolved&&resolved.model);
 }
@@ -5315,6 +5366,7 @@ function rikiScreenStorePmSnapshot_(risk,buyingPower){
 }
 function rikiScreenBestPmBundle_(){
   var candidates=[],live=((window.DATA||{}).pmRisk)||null,saved=rikiScreenLoadStoredPmSnapshot_();
+  if(live&&window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(live).ok)return null;
   if(RIKI_SCREEN_PM_RUNTIME&&rikiScreenPmSnapshotValid_(RIKI_SCREEN_PM_RUNTIME.pmRisk))candidates.push({rank:2,pmRisk:RIKI_SCREEN_PM_RUNTIME.pmRisk,accountBuyingPower:RIKI_SCREEN_PM_RUNTIME.accountBuyingPower||null});
   if(rikiScreenPmSnapshotValid_(live))candidates.push({rank:3,pmRisk:live,accountBuyingPower:(window.DATA||{}).accountBuyingPower||null});
   if(saved&&rikiScreenPmSnapshotValid_(saved.pmRisk))candidates.push({rank:1,pmRisk:saved.pmRisk,accountBuyingPower:saved.accountBuyingPower||null});
@@ -5329,7 +5381,11 @@ function rikiScreenBestPmBundle_(){
 }
 function rikiScreenBestPmRisk_(){var b=rikiScreenBestPmBundle_();return b?b.pmRisk:(((window.DATA||{}).pmRisk)||{});}
 function rikiScreenMergeNewestPmIntoData_(incoming,current){
-  incoming=incoming||{};var saved=rikiScreenLoadStoredPmSnapshot_(),choices=[];
+  incoming=incoming||{};
+  // Do not replace an invalid authoritative refresh with an older cached
+  // "healthy" snapshot: that would hide the actual corruption.
+  if(incoming.pmRisk&&window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(incoming.pmRisk).ok)return incoming;
+  var saved=rikiScreenLoadStoredPmSnapshot_(),choices=[];
   function add(risk,bp,rank){if(rikiScreenPmSnapshotValid_(risk))choices.push({risk:risk,bp:bp||null,rank:rank,ms:rikiScreenPmCapturedMs_(risk)});}
   add(incoming.pmRisk,incoming.accountBuyingPower,4);add(current&&current.pmRisk,current&&current.accountBuyingPower,3);add(RIKI_SCREEN_PM_RUNTIME&&RIKI_SCREEN_PM_RUNTIME.pmRisk,RIKI_SCREEN_PM_RUNTIME&&RIKI_SCREEN_PM_RUNTIME.accountBuyingPower,2);add(saved&&saved.pmRisk,saved&&saved.accountBuyingPower,1);
   if(!choices.length)return incoming;
@@ -5368,7 +5424,10 @@ function rikiScreenCurrentPmRisk_(){return rikiScreenBestPmRisk_();}
 function rikiScreenRiskRows_(){return (((rikiScreenCurrentPmRisk_()||{}).rows)||[]).filter(function(r){return r&&r.isPortfolioMargin===true&&r.ticker;});}
 function rikiScreenRiskMap_(){var map={};rikiScreenRiskRows_().forEach(function(r){var t=String(r.ticker||'').toUpperCase();if(!map[t])map[t]=r;});return map;}
 function rikiScreenPmContext_(){
+  var latest=((window.DATA||{}).pmRisk)||null;
+  if(latest&&window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(latest).ok)return{ready:false,reason:'PM RISK BLOCKED · invalid beta in current authoritative snapshot. Verify Schwab/TOS; fix source and refresh Risk.'};
   var risk=rikiScreenCurrentPmRisk_();
+  if(risk&&window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(risk).ok)return{ready:false,reason:'PM RISK BLOCKED · invalid beta in risk snapshot'};
   if(!risk||!risk.version)return{ready:false,reason:'No completed PM snapshot in browser memory or local storage'};
   var ar=rikiScreenPmAccountRow_(risk);if(!ar)return{ready:false,reason:'No Portfolio Margin account in the current risk snapshot'};
   var resolved=rikiScreenResolvePmModel_(risk,ar);if(!resolved)return{ready:false,reason:'Portfolio Margin local model could not be linked to '+String(ar.account||'PM account')};

@@ -1601,7 +1601,7 @@ var RIKI_RELEASE_V243='RIKI_V2_0_43_HISTORY_DETAIL_COMPACT_PREMIUM_2026_10_21';
 var RIKI_RELEASE_V244='RIKI_V2_0_44_HISTORY_ORIGINAL_DETAIL_SIZING_2026_10_22';
 var RIKI_RELEASE_V245='RIKI_V2_0_45_SCREENER_SPX_EFFICIENCY_SORT_2026_10_22';
 var RIKI_RELEASE_V246='RIKI_V2_0_46_POSITION_DRIVEN_PERIOD_VISIBILITY_2026_10_23';
-var RIKI_APP_VERSION='V2.0.51';
+var RIKI_APP_VERSION='V2.0.52';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -5174,10 +5174,47 @@ function r4RenderLab(box,risk){
   fillList();fromSnapshot();ticker.onchange=function(){invalidate();var t=r4GlobalTicker_(this.value);this.value=t;if(t!==R4_STATE.ticker){clearFields();show('Ticker changed · inputs cleared.','warn');}save();fromSnapshot();};acct.onchange=function(){invalidate();save();fillList();clearFields();fromSnapshot();show('Account changed · using its separate PM book.','good');};side.onchange=function(){invalidate();save();clearAuto('iv');clearAuto('epr');fromSnapshot();};exp.onchange=function(){invalidate();save();clearAuto('iv');};strike.onchange=function(){invalidate();save();clearAuto('iv');};qty.onchange=function(){invalidate();save();};Object.keys(fields).forEach(function(k){fields[k].oninput=function(){invalidate();this.dataset.source=r4GlobalMissing_(this.value)?'':'MANUAL';ge('r4-src-'+k).textContent=this.dataset.source;};});ca.onchange=fillCloseTickers;ct.onchange=function(){fillClosePositions();fillCloseExpiries();syncCloseScopeUi();};cs.onchange=function(){syncCloseScopeUi();res.innerHTML='';};ce.onchange=function(){res.innerHTML='';};cp.onchange=function(){var ps=r4ShortPositions_(risk,ca.value,ct.value),sel=ps.filter(function(x){return String(x.legIndex)===String(cp.value);})[0];if(sel){cq.max=String(sel.maxClose);cq.value=String(Math.min(Math.max(1,Number(cq.value)||sel.maxClose),sel.maxClose));}};setMode('OPEN');
 }
 
+// Broker-only view for backend beta-integrity failures.
+// Never substitutes betas or derives stress/PNR/headroom from incomplete data.
+function rikiPmBrokerOnlyFallbackHtml_(d){
+  d=d||{};
+  var risk=d.pmRisk||{},runtime=risk.betaRuntime||{},bp=d.accountBuyingPower||{};
+  var reason=String(risk.error||runtime.error||'The authoritative PM risk model is unavailable.');
+  var at=String(bp.capturedAtEt||'unknown');
+  var rows=(Array.isArray(bp.accounts)?bp.accounts:[]).filter(function(a){return a&&a.isPortfolioMargin===true;});
+  function money(v){return v===null||v===undefined||v===''||!isFinite(Number(v))?'Unavailable':r4Money(Number(v));}
+  function metric(name,v){return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:9px"><span style="color:var(--text2)">'+name+'</span><strong>'+money(v)+'</strong></div>';}
+  var html='<div class="r4-result" role="alert" style="border:1px solid var(--red);color:var(--text);padding:16px;margin:12px 16px;border-radius:12px;background:rgba(229,83,83,.11)"><strong style="color:var(--red)">PM MODEL BLOCKED — BETA SOURCE MISSING</strong>'+
+    '<div class="ssub" style="margin-top:8px;color:var(--text2)">'+escHtml(reason)+'</div>'+
+    '<div class="ssub" style="margin-top:8px;color:var(--text2)">SPX stress, portfolio-margin headroom, PNR, What-if, and portfolio-aware sizing remain unavailable. No external beta has been installed or used for these calculations.</div></div>';
+  if(!rows.length)return html+'<div class="r4-result">No broker account values are available in this data snapshot. Use Schwab/thinkorswim directly.</div>';
+  html+='<div style="margin:18px 16px 10px"><strong>Broker account snapshot — informational only</strong><div class="ssub">Schwab account figures captured '+escHtml(at)+' ET; these are not SPX shock estimates or trading-risk clearance.</div></div><div class="r4-accounts-grid">';
+  rows.forEach(function(a){
+    html+='<div class="r4-account" style="padding:17px"><div class="r4-title">'+escHtml(String(a.account||'PM account'))+'</div>'+
+      metric('Net liquidation value',a.liquidationValue)+
+      metric('Available funds',a.availableFunds)+
+      metric('Maintenance requirement',a.maintenanceRequirement)+
+      metric('Maintenance call',a.maintenanceCall)+'</div>';
+  });
+  html+='</div><div class="r4-guard-note">Available funds and maintenance requirement reflect broker balances, NOT remaining SPX stress capacity. Values may be stale as markets move. For live margin risk, use Schwab/thinkorswim until GAS beta input is repaired.</div>';
+  return html;
+}
+
 window.rikiPmRenderPanel_=function(host,d){
   r4InstallStyles();var risk=(d||{}).pmRisk||{},box=document.createElement('div');box.className='pm-panel';
   box.innerHTML='<div class="bp-head r4-risk-heading"><div><div class="scr-title">Portfolio Risk Lab</div><div class="scr-sub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+'</div></div><button class="abtn" id="r4-refresh">Refresh risk</button></div>';
-  if(!r4Ready(d)){box.innerHTML+='<div class="r4-result"><strong>Backend V4 required.</strong><br>Current risk snapshot: '+escHtml(risk.version||'none')+'. Replace the V3 risk backend module with V4, deploy the existing web app, then press Refresh risk.</div>';host.appendChild(box);var b0=box.querySelector('#r4-refresh');b0.onclick=function(){toast('Deploy Risk backend V4 first',4500);};rikiBetaSyncRiskRefreshUi_();return;}
+  if(!r4Ready(d)){
+    box.insertAdjacentHTML('beforeend',rikiPmBrokerOnlyFallbackHtml_(d));
+    host.appendChild(box);
+    var b0=box.querySelector('#r4-refresh');
+    b0.onclick=function(){
+      var p=rikiBetaRefreshRiskAuthoritative_({reason:'MANUAL_RISK_REFRESH'});
+      rikiBetaSyncRiskRefreshUi_();
+      p.then(function(){toast('PM risk refreshed from backend',3000);}).catch(function(e){toast(errMsg(e),7000);});
+    };
+    rikiBetaSyncRiskRefreshUi_();
+    return;
+  }
   var integrity=rikiPmBetaIntegrity_(risk);
   if(!integrity.ok){
     var problems=integrity.issues.map(function(x){return escHtml(x.ticker)+(x.beta===null?' (beta unavailable)':' (beta '+Number(x.beta).toFixed(6)+')');}).join(' · ');

@@ -1601,7 +1601,7 @@ var RIKI_RELEASE_V243='RIKI_V2_0_43_HISTORY_DETAIL_COMPACT_PREMIUM_2026_10_21';
 var RIKI_RELEASE_V244='RIKI_V2_0_44_HISTORY_ORIGINAL_DETAIL_SIZING_2026_10_22';
 var RIKI_RELEASE_V245='RIKI_V2_0_45_SCREENER_SPX_EFFICIENCY_SORT_2026_10_22';
 var RIKI_RELEASE_V246='RIKI_V2_0_46_POSITION_DRIVEN_PERIOD_VISIBILITY_2026_10_23';
-var RIKI_APP_VERSION='V2.0.52';
+var RIKI_APP_VERSION='V2.0.53';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -4739,7 +4739,21 @@ function rikiBetaRefreshRiskAuthoritative_(opts){
   if(RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE){rikiBetaSyncRiskRefreshUi_();return RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE;}
   RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE=fetch(BACKEND+'?action=pmRiskRefresh&_='+Date.now(),{cache:'no-store'})
     .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json();})
-    .then(function(j){return rikiBetaAdoptAuthoritativeRisk_(j);})
+    .then(function(j){
+      if(j&&(j.success===false||rikiScreenPmServerFailure_(j.pmRisk))){
+        var message=String(((j.pmRisk||{}).error)||j.error||'Risk refresh failed: authoritative backend unavailable');
+        if(window.DATA){
+          DATA.pmRisk=j.pmRisk||{
+            version:'RIKI_PM_RISK_LAB_V4_0_0_2026_09_23',accounts:[],rows:[],
+            error:message,capturedMs:0,betaRuntime:{authoritative:false,error:message}
+          };
+          if(j.accountBuyingPower)DATA.accountBuyingPower=j.accountBuyingPower;
+          saveCache(DATA);renderAll(DATA);
+        }
+        throw Error(message);
+      }
+      return rikiBetaAdoptAuthoritativeRisk_(j);
+    })
     .finally(function(){RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE=null;rikiBetaSyncRiskRefreshUi_();});
   rikiBetaSyncRiskRefreshUi_();
   return RIKI_BETA_AUTHORITATIVE_REFRESH_PROMISE;
@@ -5382,7 +5396,16 @@ function rikiScreenCompactPmRisk_(risk){
   compact.localModel.accounts[acct]={netLiq:Number(m.netLiq!=null?m.netLiq:ar.netLiq||0),isPortfolioMargin:true,tickerBooks:books,baseNetShort:m.baseNetShort||{},shortDetail:m.shortDetail||[]};
   return compact;
 }
+// A failed published GAS PM refresh must take precedence over older browser snapshots.
+// The invalid PM model is intentionally unavailable; keep current broker balances.
+function rikiScreenPmServerFailure_(risk){
+  if(!risk)return false;
+  return !!(String(risk.error||'').trim()||
+    (risk.betaRuntime&&risk.betaRuntime.authoritative===false)||
+    (risk.publishCheck&&risk.publishCheck.success===false));
+}
 function rikiScreenPmSnapshotValid_(risk){
+  if(rikiScreenPmServerFailure_(risk))return false;
   if(!(risk&&/^RIKI_PM_RISK_LAB_V4_/.test(String(risk.version||''))))return false;
   if(window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(risk).ok)return false;
   var ar=rikiScreenPmAccountRow_(risk);if(!ar)return false;
@@ -5403,6 +5426,7 @@ function rikiScreenStorePmSnapshot_(risk,buyingPower){
 }
 function rikiScreenBestPmBundle_(){
   var candidates=[],live=((window.DATA||{}).pmRisk)||null,saved=rikiScreenLoadStoredPmSnapshot_();
+  if(rikiScreenPmServerFailure_(live))return null;
   if(live&&window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(live).ok)return null;
   if(RIKI_SCREEN_PM_RUNTIME&&rikiScreenPmSnapshotValid_(RIKI_SCREEN_PM_RUNTIME.pmRisk))candidates.push({rank:2,pmRisk:RIKI_SCREEN_PM_RUNTIME.pmRisk,accountBuyingPower:RIKI_SCREEN_PM_RUNTIME.accountBuyingPower||null});
   if(rikiScreenPmSnapshotValid_(live))candidates.push({rank:3,pmRisk:live,accountBuyingPower:(window.DATA||{}).accountBuyingPower||null});
@@ -5419,6 +5443,9 @@ function rikiScreenBestPmBundle_(){
 function rikiScreenBestPmRisk_(){var b=rikiScreenBestPmBundle_();return b?b.pmRisk:(((window.DATA||{}).pmRisk)||{});}
 function rikiScreenMergeNewestPmIntoData_(incoming,current){
   incoming=incoming||{};
+  // Failed GAS publications take precedence over older successful cached models.
+  // Never turn a 2026-11-23 beta block into green 2026-11-20 risk cards.
+  if(rikiScreenPmServerFailure_(incoming.pmRisk))return incoming;
   // Do not replace an invalid authoritative refresh with an older cached
   // "healthy" snapshot: that would hide the actual corruption.
   if(incoming.pmRisk&&window.rikiPmBetaIntegrity_&&!window.rikiPmBetaIntegrity_(incoming.pmRisk).ok)return incoming;

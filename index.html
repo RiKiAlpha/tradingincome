@@ -1601,7 +1601,7 @@ var RIKI_RELEASE_V243='RIKI_V2_0_43_HISTORY_DETAIL_COMPACT_PREMIUM_2026_10_21';
 var RIKI_RELEASE_V244='RIKI_V2_0_44_HISTORY_ORIGINAL_DETAIL_SIZING_2026_10_22';
 var RIKI_RELEASE_V245='RIKI_V2_0_45_SCREENER_SPX_EFFICIENCY_SORT_2026_10_22';
 var RIKI_RELEASE_V246='RIKI_V2_0_46_POSITION_DRIVEN_PERIOD_VISIBILITY_2026_10_23';
-var RIKI_APP_VERSION='V2.0.53';
+var RIKI_APP_VERSION='V2.0.54';
 function rikiAppVersionLabel_(){return 'RiKi '+RIKI_APP_VERSION;}
 (function(){var el=document.getElementById('riki-global-version');if(el)el.textContent=rikiAppVersionLabel_();})();
 var RIKI_RELEASE_V229='RIKI_V2_0_29_SIDE_SPX_EFFICIENCY_SORT_2026_10_07';
@@ -5214,11 +5214,62 @@ function rikiPmBrokerOnlyFallbackHtml_(d){
   return html;
 }
 
+// Recovery uploader stays available when GAS cannot publish any PM localModel.
+// Uses the normal pmSaveEpr/tosImport endpoint, without changing trade or risk math.
+function rikiPmBlockedTosRecovery_(box){
+  var wrap=document.createElement('div');
+  wrap.className='r4-upload';
+  wrap.style.margin='16px';
+  wrap.innerHTML='<div style="font-weight:700;margin-bottom:8px">Restore PM beta · TOS Position Statement</div>'+
+    '<div class="ssub" style="margin-bottom:12px;color:var(--text2)">In thinkorswim, enable Beta Weighting on SPX, expand Equity and Options in Monitor → Activity and Positions → Position Statement, and export the current Position Statement to CSV. This import does not place trades.</div>'+
+    '<div class="r4-upload-row"><input class="r4-file-input" id="r4-tos-file" type="file" accept=".csv,text/csv">'+
+    '<label class="r4-file-picker" for="r4-tos-file"><span>Choose TOS CSV</span><small id="r4-tos-file-name">No file selected</small></label>'+
+    '<button class="abtn" id="r4-tos-import">Upload CSV &amp; refresh risk</button></div>'+
+    '<div class="ssub" id="r4-tos-recovery-status" role="status" aria-live="polite" style="margin-top:10px;color:var(--text2)">PM risk stays blocked until the backend verifies the new beta and publishes a successful calculation.</div>';
+  box.appendChild(wrap);
+  var file=wrap.querySelector('#r4-tos-file'),name=wrap.querySelector('#r4-tos-file-name'),
+      btn=wrap.querySelector('#r4-tos-import'),status=wrap.querySelector('#r4-tos-recovery-status');
+  function message(t,bad){status.textContent=t;status.style.color=bad?'var(--red)':'var(--text2)';}
+  file.onchange=function(){name.textContent=(file.files&&file.files[0])?file.files[0].name:'No file selected';};
+  btn.onclick=function(){
+    if(!file.files||!file.files[0]){message('Select the SPX-beta-weighted TOS Position Statement CSV first.',true);return;}
+    var chosen=file.files[0];
+    if(chosen.size>300000){message('CSV is unexpectedly large; choose the expanded TOS Position Statement export.',true);return;}
+    btn.disabled=true;btn.textContent='Reading CSV…';
+    var reader=new FileReader();
+    reader.onerror=function(){btn.disabled=false;btn.textContent='Upload CSV & refresh risk';message('Could not read the selected CSV.',true);};
+    reader.onload=function(){
+      var csv=String(reader.result||'');
+      if(!/using\s+Beta\s+Weighing\s+on\s*['"]?\$?SPX['"]?/i.test(csv)){
+        btn.disabled=false;btn.textContent='Upload CSV & refresh risk';
+        message('This export does not confirm Beta Weighing on SPX. Enable SPX beta weighting in thinkorswim and export again; nothing was uploaded.',true);
+        return;
+      }
+      btn.textContent='Uploading…';message('Uploading TOS calibration to GAS…',false);
+      var uploaded=false;
+      rikiPmPost_('pmSaveEpr',{op:'tosImport',csvText:csv}).then(function(j){
+        if(!j||j.success===false)throw Error((j&&j.error)||'TOS calibration import rejected');
+        uploaded=true;
+        RIKI_PM_SETTINGS_LOCAL=j.settings||((j.pmRisk||{}).settings)||RIKI_PM_SETTINGS_LOCAL;
+        message('Calibration saved. Recalculating authoritative PM risk…',false);
+        return rikiBetaRefreshRiskAuthoritative_({reason:'TOS_TEMP_OVERRIDE_REFRESH'});
+      }).then(function(){
+        toast('TOS beta updated · full PM risk refreshed',4000);
+      }).catch(function(e){
+        message((uploaded?'Calibration saved, but PM risk refresh still blocked: ':'TOS import failed: ')+errMsg(e),true);
+        btn.disabled=false;btn.textContent='Upload CSV & refresh risk';
+      });
+    };
+    reader.readAsText(chosen);
+  };
+}
+
 window.rikiPmRenderPanel_=function(host,d){
   r4InstallStyles();var risk=(d||{}).pmRisk||{},box=document.createElement('div');box.className='pm-panel';
   box.innerHTML='<div class="bp-head r4-risk-heading"><div><div class="scr-title">Portfolio Risk Lab</div><div class="scr-sub">'+escHtml(risk.capturedAtEt?'Snapshot '+risk.capturedAtEt+' ET':'No risk snapshot yet')+'</div></div><button class="abtn" id="r4-refresh">Refresh risk</button></div>';
   if(!r4Ready(d)){
     box.insertAdjacentHTML('beforeend',rikiPmBrokerOnlyFallbackHtml_(d));
+    rikiPmBlockedTosRecovery_(box);
     host.appendChild(box);
     var b0=box.querySelector('#r4-refresh');
     b0.onclick=function(){
